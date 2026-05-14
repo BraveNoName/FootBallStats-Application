@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="#{players.title}">Players</title>
+  <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/players.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="/"><img src="/Images/TabIcon.png" class="nav-logo" alt="logo"></a>
+  </div>
+  <div class="nav-search">
+    <div class="search-box">
+      <input type="text" th:placeholder="#{search.placeholder}">
+      <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="/" th:text="#{nav.home}">Home</a></li>
+    <li><a href="" th:text="#{nav.matches}">Matches</a></li>
+    <li><a href="" th:text="#{nav.teams}">Teams</a></li>
+    <li class="dropdown">
+      <a href="#">
+        <span th:text="#{nav.players}">Players</span>
+        <i class="fa-solid fa-angle-down"></i>
+      </a>
+
+      <div class="dropdown-content">
+        <a href="/players/real">
+          <i class="fa-solid fa-user"></i>
+          Real Players
+
+          <i th:if="${currentPage == 'real'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="/players/generated">
+          <i class="fa-solid fa-shuffle"></i>
+          Generated Players
+
+          <i th:if="${currentPage == 'generated'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+      </div>
+    </li>
+    <li><a href="" th:text="#{nav.stats}">Stats</a></li>
+    <li class="dropdown">
+      <a href="#"><span th:text="#{nav.language}">Language</span> <i class="fa-solid fa-angle-down"></i></a>
+      <div class="dropdown-content">
+        <a href="?lang=en"><span class="fi fi-gb"></span> English</a>
+        <a href="?lang=it"><span class="fi fi-it"></span> Italiano</a>
+        <a href="?lang=es"><span class="fi fi-es"></span> Español</a>
+        <a href="?lang=de"><span class="fi fi-de"></span> Deutsch</a>
+        <a href="?lang=fr"><span class="fi fi-fr"></span> Français</a>
+        <a href="?lang=pl"><span class="fi fi-pl"></span> Polski</a>
+        <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe</a>
+        <a href="?lang=pt"><span class="fi fi-pt"></span> Português</a>
+      </div>
+    </li>
+    <li class="dropdown">
+      <a href="#"><i class="fa-regular fa-circle-user"></i></a>
+      <div class="dropdown-content">
+        <a href="#"><i class="fa-solid fa-right-to-bracket"></i> <span th:text="#{auth.login}">Log In</span></a>
+        <a href="#"><i class="fa-solid fa-user-plus"></i> <span th:text="#{auth.register}">Create profile</span></a>
+      </div>
+    </li>
+  </ul>
+</nav>
+<main class="players-page">
+  <h1 th:text="#{players.title}">Players Database</h1>
+  <div class="players-table-wrapper">
+    <table>
+      <thead>
+      <tr>
+        <th th:text="#{players.photo}">Photo</th>
+        <th th:text="#{players.firstName}">First Name</th>
+        <th th:text="#{players.lastName}">Last Name</th>
+        <th th:text="#{players.birthDate}">Birth Date</th>
+        <th th:text="#{players.age}">Age</th>
+        <th th:text="#{players.height}">Height</th>
+        <th th:text="#{players.nationality}">Nationality</th>
+        <th th:text="#{players.position}">Position</th>
+        <th th:text="#{players.foot}">Preferred Foot</th>
+        <th th:text="#{players.number}">Number</th>
+        <th th:text="#{players.club}">Club</th>
+        <th th:text="#{players.joined}">Joined</th>
+        <th th:text="#{players.contractUntil}">Contract Until</th>
+        <th th:text="#{players.extension}">Last Extension</th>
+        <th th:text="#{players.marketValue}">Market Value</th>
+        <th th:text="#{players.status}">Status</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="player : ${players}">
+        <td><img th:src="${player.imageUrl}" alt="player image"></td>
+        <td th:text="${player.firstName}"></td>
+        <td th:text="${player.lastName}"></td>
+        <td th:text="${player.birthDate}"></td>
+        <td th:text="${player.age}"></td>
+        <td th:text="${player.height + ' cm'}"></td>
+        <td class="nationality-cell">
+          <span th:class="'fi fi-' + ${player.countryCode}"></span>
+          <span th:text="${player.nationality}"></span>
+        </td>
+        <td th:text="${player.position}"></td>
+        <td th:text="${player.preferredFoot}"></td>
+        <td th:text="${player.shirtNumber}"></td>
+        <td th:text="${player.currentClub}"></td>
+        <td th:text="${player.joinedClubDate}"></td>
+        <td th:text="${player.contractUntil}"></td>
+        <td th:text="${player.lastContractExtension}"></td>
+        <td th:text="${player.formattedMarketValue}"></td>
+        <td th:text="${player.active} ? #{players.active} : #{players.retired}"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<footer>
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3 class="footer-brand">Football<span>Stats</span></h3>
+      <ul>
+        <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3 th:text="#{footer.social}">Social</h3>
+      <div class="social-icons">
+        <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+        <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+        <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+      </div>
+    </div>
+    <div class="footer-section">
+      <h3 th:text="#{footer.apps}">Apps</h3>
+      <ul class="app-links">
+        <li><a href="https://play.google.com/" target="_blank" class="google-play"><i class="fa-brands fa-google-play"></i> Google Play</a></li>
+        <li><a href="https://apps.apple.com/" target="_blank" class="app-store"><i class="fa-brands fa-apple"></i> App Store</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>&copy; 2026 FootballStats System. All rights reserved.</p></div>
+</footer>
+</body>
+</html>```

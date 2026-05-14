@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{welcome.title}">FootballStats System</title>
@@ -38,7 +37,30 @@
         <li><a href="/" th:text="#{nav.home}">Home</a></li>
         <li><a href="" th:text="#{nav.matches}">Matches</a></li>
         <li><a href="" th:text="#{nav.teams}">Teams</a></li>
-        <li><a href="" th:text="#{nav.players}">Players</a></li>
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.players}">Players</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="/players/real">
+                    <i class="fa-solid fa-user"></i>
+                    Real Players
+
+                    <i th:if="${currentPage == 'real'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="/players/generated">
+                    <i class="fa-solid fa-shuffle"></i>
+                    Generated Players
+
+                    <i th:if="${currentPage == 'generated'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+            </div>
+        </li>
         <li><a href="" th:text="#{nav.stats}">Stats</a></li>
 
         <li class="dropdown">
