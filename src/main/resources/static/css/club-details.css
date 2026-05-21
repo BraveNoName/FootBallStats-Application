@@ -1,0 +1,361 @@
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    background:
+            radial-gradient(circle at top left, rgba(22,163,74,0.35), transparent 35%),
+            radial-gradient(circle at top right, rgba(59,130,246,0.30), transparent 35%),
+            linear-gradient(135deg, #07111f 0%, #0f172a 45%, #052e16 100%);
+
+    font-family: Arial, sans-serif;
+}
+
+.club-page {
+    flex: 1;
+    padding-top: 125px;
+    padding-bottom: 70px;
+}
+
+/* HERO */
+
+.club-hero {
+    width: 90%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 34px 38px;
+
+    border-radius: 34px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+
+    background: rgba(15, 23, 42, 0.76);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+    backdrop-filter: blur(14px);
+}
+
+/* LEFT */
+
+.club-main-info {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.club-main-info img {
+    width: 145px;
+    height: 145px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+}
+
+.club-main-info h1 {
+    margin: 12px 0 10px;
+    color: white;
+    font-size: 2.9em;
+    line-height: 1.1;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 24px rgba(34,197,94,0.35);
+}
+
+.club-main-info p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 1.08em;
+}
+
+/* BACK */
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 9px 15px;
+    border-radius: 999px;
+
+    color: #86efac;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.32);
+
+    text-decoration: none;
+    font-weight: 800;
+
+    transition: 0.2s ease;
+}
+
+.back-link:hover {
+    background: rgba(34,197,94,0.22);
+    transform: translateY(-2px);
+}
+
+/* STATS */
+
+.club-stats-card {
+    min-width: 320px;
+    padding: 24px;
+    border-radius: 26px;
+
+    background:
+            linear-gradient(
+                    145deg,
+                    rgba(255,255,255,0.11),
+                    rgba(255,255,255,0.045)
+            );
+
+    border: 1px solid rgba(255,255,255,0.13);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+}
+
+.club-stats-card h3 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    color: white;
+    font-size: 1.2em;
+}
+
+.club-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.club-stat:last-child {
+    border-bottom: none;
+}
+
+.club-stat span {
+    color: #cbd5e1;
+    font-size: 0.95em;
+}
+
+.club-stat strong {
+    color: white;
+    font-size: 0.95em;
+    text-align: right;
+}
+
+/* SQUAD */
+
+.squad-section {
+    width: 90%;
+    max-width: 1180px;
+    margin: 40px auto 0;
+}
+
+.squad-section h2 {
+    color: white;
+    margin-bottom: 24px;
+    font-size: 2em;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.squad-table-wrapper {
+    overflow: hidden;
+    border-radius: 26px;
+
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+    backdrop-filter: blur(14px);
+}
+
+.squad-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.squad-table thead {
+    background: rgba(22,163,74,0.22);
+}
+
+.squad-table th {
+    padding: 16px 20px;
+    color: #d1fae5;
+    text-align: left;
+
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.squad-table td {
+    padding: 14px 20px;
+    color: #e5e7eb;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.squad-table tbody tr {
+    transition: 0.2s ease;
+}
+
+.squad-table tbody tr:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+.player-cell {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    font-weight: 800;
+    color: white;
+    min-width: 240px;
+}
+
+.player-cell img {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+    object-fit: cover;
+
+    background: rgba(255,255,255,0.08);
+}
+
+.player-cell div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.player-cell strong {
+    color: white;
+    font-size: 0.95em;
+}
+
+.player-cell span {
+    color: #94a3b8;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.player-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 34px;
+    height: 34px;
+
+    border-radius: 999px;
+
+    background: #16a34a;
+    color: white;
+
+    font-weight: 900;
+}
+
+/* FOOTER */
+
+footer {
+    margin-top: auto;
+}
+
+/* MOBILE */
+
+@media (max-width: 1100px) {
+
+    .club-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .club-stats-card {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 950px) {
+
+    .squad-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .squad-table {
+        min-width: 980px;
+    }
+}
+
+@media (max-width: 850px) {
+
+    .club-page {
+        padding-top: 110px;
+    }
+
+    .club-hero {
+        padding: 28px;
+    }
+
+    .club-main-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .club-main-info h1 {
+        font-size: 2.2em;
+    }
+}
+
+.squad-table th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.squad-table th i {
+    margin-left: 6px;
+    opacity: 0.55;
+}
+
+.market-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px 13px;
+
+    border-radius: 999px;
+
+    background: rgba(34,197,94,0.14);
+    border: 1px solid rgba(34,197,94,0.32);
+
+    color: #86efac;
+
+    font-weight: 900;
+}
+
+.muted-value {
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.player-flag {
+    width: 28px;
+    height: 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.squad-table .fi {
+    display: inline-block;
+    width: 28px;
+    height: 20px;
+    border-radius: 4px;
+}

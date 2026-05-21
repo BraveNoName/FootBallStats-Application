@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${leagueName}">League Clubs</title>
+
+    <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/league-clubs.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/">
+            <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
+        </a>
+    </div>
+
+    <div class="nav-search">
+        <div class="search-box">
+            <input type="text" th:placeholder="#{search.placeholder}">
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="/" th:text="#{nav.home}">Home</a></li>
+        <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
+        <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.players}">Players</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="/players/real">
+                    <i class="fa-solid fa-user"></i>
+                    Real Players
+
+                    <i th:if="${currentPage == 'real'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="/players/generated">
+                    <i class="fa-solid fa-shuffle"></i>
+                    Generated Players
+
+                    <i th:if="${currentPage == 'generated'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+            </div>
+        </li>
+
+        <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.language}">Language</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="?lang=en">
+                    <span class="fi fi-gb"></span> English
+                    <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=it">
+                    <span class="fi fi-it"></span> Italiano
+                    <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=es">
+                    <span class="fi fi-es"></span> Español
+                    <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=de">
+                    <span class="fi fi-de"></span> Deutsch
+                    <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=fr">
+                    <span class="fi fi-fr"></span> Français
+                    <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pl">
+                    <span class="fi fi-pl"></span> Polski
+                    <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=tr">
+                    <span class="fi fi-tr"></span> Türkçe
+                    <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pt">
+                    <span class="fi fi-pt"></span> Português
+                    <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+            </div>
+        </li>
+
+        <li class="dropdown">
+            <a href="#" id="loginLink"><i class="fa-regular fa-circle-user"></i></a>
+            <div class="dropdown-content">
+                <a href="#"><i class="fa-solid fa-right-to-bracket"></i> <span th:text="#{auth.login}">Log In</span></a>
+                <a href="#"><i class="fa-solid fa-user-plus"></i> <span th:text="#{auth.register}">Create profile</span></a>
+            </div>
+        </li>
+    </ul>
+</nav>
+
+<main class="league-clubs-page">
+
+    <section class="league-clubs-hero">
+
+        <div class="league-hero-left">
+
+            <img th:src="${leagueLogo}"
+                 alt="league logo">
+
+            <div>
+
+                <div class="hero-actions">
+
+                    <a href="/leagues"
+                       class="back-link">
+
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back to leagues
+
+                    </a>
+
+                    <span class="league-pill">
+                    <i class="fa-solid fa-trophy"></i>
+                    Division 1
+                </span>
+
+                </div>
+
+                <h1 th:text="${leagueName}">
+                    England - Premier League
+                </h1>
+
+                <p>
+                    Choose a club to view details, players and statistics.
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT STATS -->
+
+        <div class="league-stats-card">
+
+            <h3>
+                League Stats
+            </h3>
+
+            <div class="league-stat">
+                <span>Total market value</span>
+                <strong>12.58bn €</strong>
+            </div>
+
+            <div class="league-stat">
+                <span>Players</span>
+                <strong>528</strong>
+            </div>
+
+            <div class="league-stat">
+                <span>Foreigners</span>
+                <strong>380</strong>
+            </div>
+
+            <div class="league-stat">
+                <span>Average age</span>
+                <strong>26.5</strong>
+            </div>
+
+            <div class="league-stat">
+                <span>Most valuable player</span>
+                <strong>Erling Haaland</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="clubs-panel">
+
+        <div class="clubs-panel-header">
+
+            <div class="clubs-switcher">
+
+                <button class="clubs-switch active">
+                    Clubs
+                </button>
+
+                <button class="clubs-switch">
+                    Table
+                </button>
+
+            </div>
+
+        </div>
+        <div class="clubs-grid">
+
+            <a th:href="@{'/clubs/' + ${club.slug()}}"
+               class="club-card"
+               th:each="club : ${clubs}">
+
+                <img th:src="${club.logo()}"
+                     th:alt="${club.name()}">
+
+                <span th:text="${club.name()}">
+                    Club name
+                </span>
+
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3 class="footer-brand">Football<span>Stats</span></h3>
+            <ul>
+                <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3 th:text="#{footer.social}">Social</h3>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3 th:text="#{footer.apps}">Apps</h3>
+            <ul class="app-links">
+                <li>
+                    <a href="https://play.google.com/" target="_blank" class="google-play">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </li>
+                <li>
+                    <a href="https://apps.apple.com/" target="_blank" class="app-store">
+                        <i class="fa-brands fa-apple"></i>&nbsp;&nbsp;App Store
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

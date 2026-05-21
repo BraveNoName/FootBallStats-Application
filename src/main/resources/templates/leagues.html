@@ -75,12 +75,46 @@
 </nav>
 
 <main class="leagues-page">
-  <h1 class="leagues-title" th:text="#{nav.leagues}">Football Leagues</h1>
+
+  <section class="leagues-hero">
+    <h1 class="leagues-title" th:text="#{nav.leagues}">Football Leagues</h1>
+
+    <p class="leagues-subtitle">
+      Explore football competitions, clubs and league statistics in one place.
+    </p>
+  </section>
 
   <section class="leagues-panel">
-    <div class="league-filters">
-      <button class="league-filter active" data-filter="all">All leagues</button>
-      <button class="league-filter" data-filter="top">Top 5 leagues</button>
+
+    <div class="league-tools">
+
+      <div class="league-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+
+        <input type="text"
+               id="leagueSearch"
+               placeholder="Search league...">
+      </div>
+
+      <div class="league-filters">
+
+        <button class="league-filter active"
+                data-filter="all">
+          All leagues
+        </button>
+
+        <button class="league-filter"
+                data-filter="top">
+          Top 5 leagues
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="no-leagues-message"
+         id="noLeaguesMessage">
+      No leagues found.
     </div>
 
     <div class="leagues-grid">
@@ -99,7 +133,10 @@
 
         <img src="/Images/leagues/England - Premier League/premierleague.png">
 
-        <span>England - Premier League</span>
+        <span data-meta="Division: 1 • Clubs: 20">
+            England - Premier League
+        </span>
+
       </a>
 
       <a href="/leagues/spain"
@@ -114,7 +151,10 @@
 
         <img src="/Images/leagues/Spain - LaLiga/laliga.png">
 
-        <span>Spain - LaLiga</span>
+        <span data-meta="Division: 1 • Clubs: 20">
+            Spain - LaLiga
+        </span>
+
       </a>
 
       <a href="/leagues/germany"
@@ -129,7 +169,10 @@
 
         <img src="/Images/leagues/Germany - Bundesliga/bundesliga.png">
 
-        <span>Germany - Bundesliga</span>
+        <span data-meta="Division: 1 • Clubs: 18">
+            Germany - Bundesliga
+        </span>
+
       </a>
 
       <a href="/leagues/italy"
@@ -144,7 +187,10 @@
 
         <img src="/Images/leagues/Italy - Serie A/seriea.png">
 
-        <span>Italy - Serie A</span>
+        <span data-meta="Division: 1 • Clubs: 20">
+            Italy - Serie A
+        </span>
+
       </a>
 
       <a href="/leagues/france"
@@ -159,8 +205,13 @@
 
         <img src="/Images/leagues/France - Ligue 1/ligue1.png">
 
-        <span>France - Ligue 1</span>
+        <span data-meta="Division: 1 • Clubs: 18">
+            France - Ligue 1
+        </span>
+
       </a>
+
+      <!-- OTHER LEAGUES -->
 
       <a href="/leagues/austria"
          class="league-card"
@@ -172,7 +223,10 @@
 
         <img src="/Images/leagues/Austria - Bundesliga/austriabundesliga.png">
 
-        <span>Austria - Bundesliga</span>
+        <span data-meta="Division: 1 • Clubs: 12">
+            Austria - Bundesliga
+        </span>
+
       </a>
 
       <a href="/leagues/belgium"
@@ -185,7 +239,10 @@
 
         <img src="/Images/leagues/Belgium - Jupiler Pro League/proleague.png">
 
-        <span>Belgium - Jupiler Pro League</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+            Belgium - Jupiler Pro League
+        </span>
+
       </a>
 
       <a href="/leagues/bulgaria"
@@ -198,7 +255,10 @@
 
         <img src="/Images/leagues/Bulgaria - efbet Liga/efbetliga.png">
 
-        <span>Bulgaria - efbet Liga</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+            Bulgaria - efbet Liga
+        </span>
+
       </a>
 
       <a href="/leagues/croatia"
@@ -211,7 +271,10 @@
 
         <img src="/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png">
 
-        <span>Croatia - SuperSport HNL</span>
+        <span data-meta="Division: 1 • Clubs: 10">
+            Croatia - SuperSport HNL
+        </span>
+
       </a>
 
       <a href="/leagues/czech"
@@ -224,7 +287,10 @@
 
         <img src="/Images/leagues/Czech Republic - Chance Liga/chanceliga.png">
 
-        <span>Czech Republic - Chance Liga</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+            Czech Republic - Chance Liga
+        </span>
+
       </a>
 
       <a href="/leagues/denmark"
@@ -237,7 +303,10 @@
 
         <img src="/Images/leagues/Denmark - Superliga/superliga.png">
 
-        <span>Denmark - Superliga</span>
+        <span data-meta="Division: 1 • Clubs: 12">
+            Denmark - Superliga
+        </span>
+
       </a>
 
       <a href="/leagues/greece"
@@ -250,7 +319,10 @@
 
         <img src="/Images/leagues/Greece - Super League 1/superleague1.png">
 
-        <span>Greece - Super League 1</span>
+        <span data-meta="Division: 1 • Clubs: 14">
+            Greece - Super League 1
+        </span>
+
       </a>
 
       <a href="/leagues/israel"
@@ -263,7 +335,10 @@
 
         <img src="/Images/leagues/Israel - Ligat ha'Al/ligathaai.png">
 
-        <span>Israel - Ligat ha'Al</span>
+        <span data-meta="Division: 1 • Clubs: 14">
+            Israel - Ligat ha'Al
+        </span>
+
       </a>
 
       <a href="/leagues/netherlands"
@@ -276,7 +351,10 @@
 
         <img src="/Images/leagues/Netherlands - Eredivisie/eredivise.png">
 
-        <span>Netherlands - Eredivisie</span>
+        <span data-meta="Division: 1 • Clubs: 18">
+            Netherlands - Eredivisie
+        </span>
+
       </a>
 
       <a href="/leagues/norway"
@@ -289,7 +367,10 @@
 
         <img src="/Images/leagues/Norway - Eliteserien/eliteserien.png">
 
-        <span>Norway - Eliteserien</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+            Norway - Eliteserien
+        </span>
+
       </a>
 
       <a href="/leagues/poland"
@@ -302,7 +383,10 @@
 
         <img src="/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png">
 
-        <span>Poland - PKO BP Ekstraklasa</span>
+        <span data-meta="Division: 1 • Clubs: 18">
+            Poland - PKO BP Ekstraklasa
+        </span>
+
       </a>
 
       <a href="/leagues/portugal"
@@ -315,7 +399,10 @@
 
         <img src="/Images/leagues/Portugal - Liga Portugal/ligaportugal.png">
 
-        <span>Portugal - Liga Portugal</span>
+        <span data-meta="Division: 1 • Clubs: 18">
+            Portugal - Liga Portugal
+        </span>
+
       </a>
 
       <a href="/leagues/romania"
@@ -328,7 +415,10 @@
 
         <img src="/Images/leagues/Romania - SuperLiga/romaniasuperliga.png">
 
-        <span>Romania - SuperLiga</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+        Romania - SuperLiga
+    </span>
+
       </a>
 
       <a href="/leagues/russia"
@@ -341,7 +431,10 @@
 
         <img src="/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg">
 
-        <span>Russia - Premier Liga</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+        Russia - Premier Liga
+    </span>
+
       </a>
 
       <a href="/leagues/scotland"
@@ -354,7 +447,10 @@
 
         <img src="/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png">
 
-        <span>Scotland - Scottish Premiership</span>
+        <span data-meta="Division: 1 • Clubs: 12">
+        Scotland - Scottish Premiership
+    </span>
+
       </a>
 
       <a href="/leagues/serbia"
@@ -367,7 +463,10 @@
 
         <img src="/Images/leagues/Serbia - Super Liga Srbije/superligaserbije.png">
 
-        <span>Serbia - Super Liga Srbije</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+        Serbia - Super Liga Srbije
+    </span>
+
       </a>
 
       <a href="/leagues/sweden"
@@ -380,7 +479,10 @@
 
         <img src="/Images/leagues/Sweden - Allsvenskan/allsvenskan.png">
 
-        <span>Sweden - Allsvenskan</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+        Sweden - Allsvenskan
+    </span>
+
       </a>
 
       <a href="/leagues/switzerland"
@@ -393,7 +495,10 @@
 
         <img src="/Images/leagues/Switzerland - Super League/superleague.png">
 
-        <span>Switzerland - Super League</span>
+        <span data-meta="Division: 1 • Clubs: 12">
+        Switzerland - Super League
+    </span>
+
       </a>
 
       <a href="/leagues/turkiye"
@@ -406,7 +511,10 @@
 
         <img src="/Images/leagues/Türkiye - Süper Lig/superlig.png">
 
-        <span>Türkiye - Süper Lig</span>
+        <span data-meta="Division: 1 • Clubs: 20">
+        Türkiye - Süper Lig
+    </span>
+
       </a>
 
       <a href="/leagues/ukraine"
@@ -419,12 +527,17 @@
 
         <img src="/Images/leagues/Ukraine - Premier Liga/premierliga.png">
 
-        <span>Ukraine - Premier Liga</span>
+        <span data-meta="Division: 1 • Clubs: 16">
+        Ukraine - Premier Liga
+    </span>
+
       </a>
+
 
     </div>
 
   </section>
+
 </main>
 
 <footer>
