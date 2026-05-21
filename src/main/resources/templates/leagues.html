@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="#{nav.leagues}">Leagues</title>
+  <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/leagues.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="/"><img src="/Images/TabIcon.png" class="nav-logo" alt="logo"></a>
+  </div>
+
+  <div class="nav-search">
+    <div class="search-box">
+      <input type="text" th:placeholder="#{search.placeholder}">
+      <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+  </div>
+
+  <ul class="nav-links">
+    <li><a href="/" th:text="#{nav.home}">Home</a></li>
+    <li><a href="" th:text="#{nav.matches}">Matches</a></li>
+    <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+
+    <li class="dropdown">
+      <a href="#">
+        <span th:text="#{nav.players}">Players</span>
+        <i class="fa-solid fa-angle-down"></i>
+      </a>
+      <div class="dropdown-content">
+        <a href="/players/real">
+          <i class="fa-solid fa-user"></i> Real Players
+        </a>
+        <a href="/players/generated">
+          <i class="fa-solid fa-shuffle"></i> Generated Players
+        </a>
+      </div>
+    </li>
+
+    <li><a href="" th:text="#{nav.stats}">Stats</a></li>
+
+    <li class="dropdown">
+      <a href="#">
+        <span th:text="#{nav.language}">Language</span>
+        <i class="fa-solid fa-angle-down"></i>
+      </a>
+      <div class="dropdown-content">
+        <a href="?lang=en"><span class="fi fi-gb"></span> English <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=it"><span class="fi fi-it"></span> Italiano <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=es"><span class="fi fi-es"></span> Español <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=de"><span class="fi fi-de"></span> Deutsch <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=fr"><span class="fi fi-fr"></span> Français <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=pl"><span class="fi fi-pl"></span> Polski <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=pt"><span class="fi fi-pt"></span> Português <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i></a>
+      </div>
+    </li>
+
+    <li class="dropdown">
+      <a href="#"><i class="fa-regular fa-circle-user"></i></a>
+      <div class="dropdown-content">
+        <a href="#"><i class="fa-solid fa-right-to-bracket"></i> <span th:text="#{auth.login}">Log In</span></a>
+        <a href="#"><i class="fa-solid fa-user-plus"></i> <span th:text="#{auth.register}">Create profile</span></a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<main class="leagues-page">
+  <h1 class="leagues-title" th:text="#{nav.leagues}">Football Leagues</h1>
+
+  <section class="leagues-panel">
+    <div class="league-filters">
+      <button class="league-filter active" data-filter="all">All leagues</button>
+      <button class="league-filter" data-filter="top">Top 5 leagues</button>
+    </div>
+
+    <div class="leagues-grid">
+
+      <!-- TOP 5 -->
+
+      <a href="/leagues/england"
+         class="league-card top-card"
+         data-category="top">
+
+        <div class="top-badge">TOP 5</div>
+
+        <img class="league-flag"
+             src="/Images/flags/en.png"
+             alt="England flag">
+
+        <img src="/Images/leagues/England - Premier League/premierleague.png">
+
+        <span>England - Premier League</span>
+      </a>
+
+      <a href="/leagues/spain"
+         class="league-card top-card"
+         data-category="top">
+
+        <div class="top-badge">TOP 5</div>
+
+        <img class="league-flag"
+             src="/Images/flags/es.png"
+             alt="Spain flag">
+
+        <img src="/Images/leagues/Spain - LaLiga/laliga.png">
+
+        <span>Spain - LaLiga</span>
+      </a>
+
+      <a href="/leagues/germany"
+         class="league-card top-card"
+         data-category="top">
+
+        <div class="top-badge">TOP 5</div>
+
+        <img class="league-flag"
+             src="/Images/flags/de.png"
+             alt="Germany flag">
+
+        <img src="/Images/leagues/Germany - Bundesliga/bundesliga.png">
+
+        <span>Germany - Bundesliga</span>
+      </a>
+
+      <a href="/leagues/italy"
+         class="league-card top-card"
+         data-category="top">
+
+        <div class="top-badge">TOP 5</div>
+
+        <img class="league-flag"
+             src="/Images/flags/it.png"
+             alt="Italy flag">
+
+        <img src="/Images/leagues/Italy - Serie A/seriea.png">
+
+        <span>Italy - Serie A</span>
+      </a>
+
+      <a href="/leagues/france"
+         class="league-card top-card"
+         data-category="top">
+
+        <div class="top-badge">TOP 5</div>
+
+        <img class="league-flag"
+             src="/Images/flags/fr.png"
+             alt="France flag">
+
+        <img src="/Images/leagues/France - Ligue 1/ligue1.png">
+
+        <span>France - Ligue 1</span>
+      </a>
+
+      <a href="/leagues/austria"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/at.png"
+             alt="Austria flag">
+
+        <img src="/Images/leagues/Austria - Bundesliga/austriabundesliga.png">
+
+        <span>Austria - Bundesliga</span>
+      </a>
+
+      <a href="/leagues/belgium"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/be.png"
+             alt="Belgium flag">
+
+        <img src="/Images/leagues/Belgium - Jupiler Pro League/proleague.png">
+
+        <span>Belgium - Jupiler Pro League</span>
+      </a>
+
+      <a href="/leagues/bulgaria"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/bg.png"
+             alt="Bulgaria flag">
+
+        <img src="/Images/leagues/Bulgaria - efbet Liga/efbetliga.png">
+
+        <span>Bulgaria - efbet Liga</span>
+      </a>
+
+      <a href="/leagues/croatia"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/hr.png"
+             alt="Croatia flag">
+
+        <img src="/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png">
+
+        <span>Croatia - SuperSport HNL</span>
+      </a>
+
+      <a href="/leagues/czech"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/cz.png"
+             alt="Czech Republic flag">
+
+        <img src="/Images/leagues/Czech Republic - Chance Liga/chanceliga.png">
+
+        <span>Czech Republic - Chance Liga</span>
+      </a>
+
+      <a href="/leagues/denmark"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/dk.png"
+             alt="Denmark flag">
+
+        <img src="/Images/leagues/Denmark - Superliga/superliga.png">
+
+        <span>Denmark - Superliga</span>
+      </a>
+
+      <a href="/leagues/greece"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/gr.png"
+             alt="Greece flag">
+
+        <img src="/Images/leagues/Greece - Super League 1/superleague1.png">
+
+        <span>Greece - Super League 1</span>
+      </a>
+
+      <a href="/leagues/israel"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/il.png"
+             alt="Israel flag">
+
+        <img src="/Images/leagues/Israel - Ligat ha'Al/ligathaai.png">
+
+        <span>Israel - Ligat ha'Al</span>
+      </a>
+
+      <a href="/leagues/netherlands"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/nl.png"
+             alt="Netherlands flag">
+
+        <img src="/Images/leagues/Netherlands - Eredivisie/eredivise.png">
+
+        <span>Netherlands - Eredivisie</span>
+      </a>
+
+      <a href="/leagues/norway"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/no.png"
+             alt="Norway flag">
+
+        <img src="/Images/leagues/Norway - Eliteserien/eliteserien.png">
+
+        <span>Norway - Eliteserien</span>
+      </a>
+
+      <a href="/leagues/poland"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/pl.png"
+             alt="Poland flag">
+
+        <img src="/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png">
+
+        <span>Poland - PKO BP Ekstraklasa</span>
+      </a>
+
+      <a href="/leagues/portugal"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/pt.png"
+             alt="Portugal flag">
+
+        <img src="/Images/leagues/Portugal - Liga Portugal/ligaportugal.png">
+
+        <span>Portugal - Liga Portugal</span>
+      </a>
+
+      <a href="/leagues/romania"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/ro.png"
+             alt="Romania flag">
+
+        <img src="/Images/leagues/Romania - SuperLiga/romaniasuperliga.png">
+
+        <span>Romania - SuperLiga</span>
+      </a>
+
+      <a href="/leagues/russia"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/ru.png"
+             alt="Russia flag">
+
+        <img src="/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg">
+
+        <span>Russia - Premier Liga</span>
+      </a>
+
+      <a href="/leagues/scotland"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/gb-sct.png"
+             alt="Scotland flag">
+
+        <img src="/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png">
+
+        <span>Scotland - Scottish Premiership</span>
+      </a>
+
+      <a href="/leagues/serbia"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/rs.png"
+             alt="Serbia flag">
+
+        <img src="/Images/leagues/Serbia - Super Liga Srbije/superligaserbije.png">
+
+        <span>Serbia - Super Liga Srbije</span>
+      </a>
+
+      <a href="/leagues/sweden"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/se.png"
+             alt="Sweden flag">
+
+        <img src="/Images/leagues/Sweden - Allsvenskan/allsvenskan.png">
+
+        <span>Sweden - Allsvenskan</span>
+      </a>
+
+      <a href="/leagues/switzerland"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/ch.png"
+             alt="Switzerland flag">
+
+        <img src="/Images/leagues/Switzerland - Super League/superleague.png">
+
+        <span>Switzerland - Super League</span>
+      </a>
+
+      <a href="/leagues/turkiye"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/tr.png"
+             alt="Türkiye flag">
+
+        <img src="/Images/leagues/Türkiye - Süper Lig/superlig.png">
+
+        <span>Türkiye - Süper Lig</span>
+      </a>
+
+      <a href="/leagues/ukraine"
+         class="league-card"
+         data-category="other">
+
+        <img class="league-flag"
+             src="/Images/flags/ua.png"
+             alt="Ukraine flag">
+
+        <img src="/Images/leagues/Ukraine - Premier Liga/premierliga.png">
+
+        <span>Ukraine - Premier Liga</span>
+      </a>
+
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3 class="footer-brand">Football<span>Stats</span></h3>
+      <ul>
+        <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h3 th:text="#{footer.social}">Social</h3>
+      <div class="social-icons">
+        <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+        <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+        <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+      </div>
+    </div>
+
+    <div class="footer-section">
+      <h3 th:text="#{footer.apps}">Apps</h3>
+      <ul class="app-links">
+        <li><a href="https://play.google.com/" target="_blank" class="google-play"><i class="fa-brands fa-google-play"></i> Google Play</a></li>
+        <li><a href="https://apps.apple.com/" target="_blank" class="app-store"><i class="fa-brands fa-apple"></i> App Store</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="/js/leagues.js"></script>
+</body>
+</html>
+

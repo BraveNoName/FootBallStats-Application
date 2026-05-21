@@ -62,3 +62,14 @@
             }
         });
     });
+
+    // Check if numbers of generating player was input
+    function validateGenerateForm() {
+        const input = document.querySelector(".generate-input");
+        if (!input.value || Number(input.value) < 1) {
+            alert(input.dataset.alert);
+            return false;
+        }
+        return true;
+    }
+

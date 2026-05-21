@@ -26,7 +26,7 @@
   <ul class="nav-links">
     <li><a href="/" th:text="#{nav.home}">Home</a></li>
     <li><a href="" th:text="#{nav.matches}">Matches</a></li>
-    <li><a href="" th:text="#{nav.teams}">Teams</a></li>
+    <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
     <li class="dropdown">
       <a href="#">
         <span th:text="#{nav.players}">Players</span>
@@ -110,26 +110,28 @@
   </ul>
 </nav>
 
-
 <main class="players-page">
   <h1 th:text="#{players.title}">Players Database</h1>
   <div class="generate-actions" th:if="${currentPage == 'generated'}">
 
     <form action="/players/generated/regenerate"
           method="get"
-          class="generate-form">
+          class="generate-form"
+          onsubmit="return validateGenerateForm()"
+    >
 
       <input
               type="number"
               name="count"
               min="1"
-              pl`aceholder="Enter number: "
+              th:placeholder="#{players.enterNumber}"
+              th:data-alert="#{players.enterNumberAlert}"
               class="generate-input"
       >
 
       <button type="submit" class="generate-btn">
         <i class="fa-solid fa-rotate"></i>
-        Generate players
+        <span th:text="#{players.generate}">Generate players</span>
       </button>
 
     </form>
@@ -146,7 +148,7 @@
           <i class="fa-solid fa-sort"></i>
         </th>
 
-        <th>Player</th>
+        <th th:text="#{players.player}">Player</th>
 
         <th class="sortable" data-type="date">
           <span th:text="#{players.birthDate}">Birth Date</span>
