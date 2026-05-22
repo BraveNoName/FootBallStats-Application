@@ -42,12 +42,53 @@
     <li class="dropdown">
       <a href="#"><span th:text="#{nav.language}">Language</span> <i class="fa-solid fa-angle-down"></i></a>
       <div class="dropdown-content">
-        <a href="?lang=en"><span class="fi fi-gb"></span> English</a>
-        <a href="?lang=pl"><span class="fi fi-pl"></span> Polski</a>
-        <a href="?lang=de"><span class="fi fi-de"></span> Deutsch</a>
-        <a href="?lang=fr"><span class="fi fi-fr"></span> Français</a>
-        <a href="?lang=es"><span class="fi fi-es"></span> Español</a>
-        <a href="?lang=it"><span class="fi fi-it"></span> Italiano</a>
+        <a href="?lang=en">
+          <span class="fi fi-gb"></span> English
+          <i th:if="${#locale.language == 'en'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=it">
+          <span class="fi fi-it"></span> Italiano
+          <i th:if="${#locale.language == 'it'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=es">
+          <span class="fi fi-es"></span> Español
+          <i th:if="${#locale.language == 'es'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=de">
+          <span class="fi fi-de"></span> Deutsch
+          <i th:if="${#locale.language == 'de'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=fr">
+          <span class="fi fi-fr"></span> Français
+          <i th:if="${#locale.language == 'fr'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=pl">
+          <span class="fi fi-pl"></span> Polski
+          <i th:if="${#locale.language == 'pl'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=tr">
+          <span class="fi fi-tr"></span> Türkçe
+          <i th:if="${#locale.language == 'tr'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
+
+        <a href="?lang=pt">
+          <span class="fi fi-pt"></span> Português
+          <i th:if="${#locale.language == 'pt'}"
+             class="fa-solid fa-check check-mark"></i>
+        </a>
       </div>
     </li>
 

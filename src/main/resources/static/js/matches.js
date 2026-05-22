@@ -1,23 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    const selectedLeagueInput = document.getElementById("selectedLeague");
-    const leagueChoices = document.querySelectorAll(".league-choice");
-
-    if (selectedLeagueInput) {
-        const currentLeague = selectedLeagueInput.value;
-
-        leagueChoices.forEach(function (choice) {
-            if (choice.dataset.league === currentLeague) {
-                choice.classList.add("active");
-            }
-
-            choice.addEventListener("click", function () {
-                const league = choice.dataset.league;
-                window.location.href = "/matches?league=" + league;
-            });
-        });
-    }
-
     const roundButtons = document.querySelectorAll(".round-btn");
     const roundViews = document.querySelectorAll(".round-view");
 
@@ -60,6 +42,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (totalSlides) {
             totalSlides.textContent = cards.length;
         }
+
+        updateStatBars();
     }
 
     roundButtons.forEach(function (button) {
@@ -145,7 +129,91 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    const showFixturesBtn = document.getElementById("showFixturesBtn");
+    const showTableBtn = document.getElementById("showTableBtn");
+    const fixturesView = document.getElementById("fixturesView");
+    const tableView = document.getElementById("tableView");
+
+    if (showFixturesBtn && showTableBtn && fixturesView && tableView) {
+        showFixturesBtn.addEventListener("click", function () {
+            fixturesView.classList.remove("hidden");
+            tableView.classList.remove("active");
+
+            showFixturesBtn.classList.add("active");
+            showTableBtn.classList.remove("active");
+        });
+
+        showTableBtn.addEventListener("click", function () {
+            fixturesView.classList.add("hidden");
+            tableView.classList.add("active");
+
+            showTableBtn.classList.add("active");
+            showFixturesBtn.classList.remove("active");
+        });
+    }
+
+    const generateForm = document.getElementById("generateForm");
+    const leagueSelect = document.getElementById("leagueSelect");
+    const leagueError = document.getElementById("leagueError");
+
+    if (generateForm) {
+        generateForm.addEventListener("submit", function (e) {
+            if (!leagueSelect.value) {
+                e.preventDefault();
+
+                leagueError.classList.add("show");
+                leagueSelect.style.border = "1px solid rgba(248,113,113,0.8)";
+            } else {
+                leagueError.classList.remove("show");
+                leagueSelect.style.border = "1px solid rgba(255,255,255,0.14)";
+            }
+        });
+    }
+
+    const sortableHeaders =
+        document.querySelectorAll(".sortable-header th[data-sort]");
+
+    sortableHeaders.forEach(function (header, columnIndex) {
+        let asc = false;
+
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll(".table-row"));
+
+            sortableHeaders.forEach(function (h) {
+                h.classList.remove("sort-asc", "sort-desc");
+            });
+
+            header.classList.add(asc ? "sort-asc" : "sort-desc");
+
+            rows.sort(function (a, b) {
+                const aCell = a.children[columnIndex];
+                const bCell = b.children[columnIndex];
+
+                const aValue = aCell.dataset.value || aCell.innerText.trim();
+                const bValue = bCell.dataset.value || bCell.innerText.trim();
+
+                const aNumber = parseFloat(aValue);
+                const bNumber = parseFloat(bValue);
+
+                if (!isNaN(aNumber) && !isNaN(bNumber)) {
+                    return asc ? aNumber - bNumber : bNumber - aNumber;
+                }
+
+                return asc
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            });
+
+            asc = !asc;
+
+            rows.forEach(function (row) {
+                tbody.appendChild(row);
+            });
+        });
+    });
+
     updateStatBars();
 });
-
 

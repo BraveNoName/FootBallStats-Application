@@ -1,22 +1,22 @@
 package com.footballstats.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LeagueTableRow {
 
     private String team;
     private String logo;
-
     private int played;
     private int wins;
     private int draws;
     private int losses;
-
     private int goalsFor;
     private int goalsAgainst;
     private int goalDifference;
-
     private int points;
-
     private String zone;
+    private List<String> form = new ArrayList<>();
 
     public LeagueTableRow(String team, String logo) {
         this.team = team;
@@ -30,6 +30,7 @@ public class LeagueTableRow {
         this.goalsAgainst += goalsAgainst;
         this.goalDifference = this.goalsFor - this.goalsAgainst;
         this.points += 3;
+        form.add("W");
     }
 
     public void addDraw(int goalsFor, int goalsAgainst) {
@@ -39,6 +40,7 @@ public class LeagueTableRow {
         this.goalsAgainst += goalsAgainst;
         this.goalDifference = this.goalsFor - this.goalsAgainst;
         this.points += 1;
+        form.add("R");
     }
 
     public void addLoss(int goalsFor, int goalsAgainst) {
@@ -47,6 +49,12 @@ public class LeagueTableRow {
         this.goalsFor += goalsFor;
         this.goalsAgainst += goalsAgainst;
         this.goalDifference = this.goalsFor - this.goalsAgainst;
+        form.add("P");
+    }
+
+    public List<String> getForm() {
+        int fromIndex = Math.max(form.size() - 5, 0);
+        return form.subList(fromIndex, form.size());
     }
 
     public String getTeam() {
@@ -96,4 +104,6 @@ public class LeagueTableRow {
     public void setZone(String zone) {
         this.zone = zone;
     }
+
+
 }

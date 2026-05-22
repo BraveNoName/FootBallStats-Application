@@ -94,9 +94,10 @@ public class MatchGeneratorService {
 
         match.setLeague(league);
         match.setRoundNumber(round);
+
         LocalDateTime seasonStart = LocalDateTime.of(2026, 8, 15, 18, 0);
 
-        int dayOffset = random.nextInt(2); // 0 albo 1 dzień
+        int dayOffset = random.nextInt(2);
         int hour = List.of(15, 17, 18, 20).get(random.nextInt(4));
         int minute = random.nextBoolean() ? 0 : 30;
 
@@ -114,23 +115,49 @@ public class MatchGeneratorService {
         match.setHomeTeamLogo(home.logo());
         match.setAwayTeamLogo(away.logo());
 
-        int homeGoals = random.nextInt(5);
-        int awayGoals = random.nextInt(5);
+        /* GOALS */
+
+        int homeGoals = generateGoals();
+        int awayGoals = generateGoals();
+
+        /* lekka przewaga gospodarzy */
+
+        if (random.nextInt(100) < 12) {
+            homeGoals++;
+        }
+
+        /* ograniczenie absurdów typu 9:8 */
+
+        if (homeGoals >= 7 && awayGoals >= 5) {
+            awayGoals = random.nextInt(3);
+        }
+
+        if (awayGoals >= 7 && homeGoals >= 5) {
+            homeGoals = random.nextInt(3);
+        }
 
         match.setHomeGoals(homeGoals);
         match.setAwayGoals(awayGoals);
 
+        /* HALF TIME */
+
         match.setHalfTimeHomeGoals(random.nextInt(homeGoals + 1));
         match.setHalfTimeAwayGoals(random.nextInt(awayGoals + 1));
 
+        /* POSSESSION */
+
         match.setPossessionHome(40 + random.nextInt(30));
         match.setPossessionAway(100 - match.getPossessionHome());
+
+        /* SHOTS */
 
         match.setShotsHome(5 + random.nextInt(16));
         match.setShotsAway(5 + random.nextInt(16));
 
         match.setShotsOnTargetHome(random.nextInt(match.getShotsHome() + 1));
         match.setShotsOnTargetAway(random.nextInt(match.getShotsAway() + 1));
+
+        /* OTHER STATS */
 
         match.setCornersHome(random.nextInt(11));
         match.setCornersAway(random.nextInt(11));
@@ -161,6 +188,23 @@ public class MatchGeneratorService {
         match.setReferee("Random Referee");
 
         return match;
+    }
+
+    private int generateGoals() {
+
+        int roll = random.nextInt(1000);
+
+        if (roll < 90) return 0;
+        if (roll < 320) return 1;
+        if (roll < 570) return 2;
+        if (roll < 760) return 3;
+        if (roll < 880) return 4;
+        if (roll < 945) return 5;
+        if (roll < 980) return 6;
+        if (roll < 993) return 7;
+        if (roll < 998) return 8;
+
+        return 9 + random.nextInt(3);
     }
 
     private List<TeamInfo> loadTeamsFromLeagueFolder(String league) {

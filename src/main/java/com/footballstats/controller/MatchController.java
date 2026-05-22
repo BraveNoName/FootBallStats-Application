@@ -40,7 +40,7 @@ public class MatchController {
             matches = matchRepository
                     .findByLeagueOrderByRoundNumberAscMatchDateAsc(league);
 
-            leagueTable = leagueTableService.calculateTable(matches);
+            leagueTable = leagueTableService.calculateTable(matches, league);
         }
 
         model.addAttribute("matches", matches);

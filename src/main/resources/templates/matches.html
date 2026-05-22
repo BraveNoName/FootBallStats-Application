@@ -63,14 +63,53 @@
             </a>
 
             <div class="dropdown-content">
-                <a href="?lang=en"><span class="fi fi-gb"></span> English</a>
-                <a href="?lang=it"><span class="fi fi-it"></span> Italiano</a>
-                <a href="?lang=es"><span class="fi fi-es"></span> Español</a>
-                <a href="?lang=de"><span class="fi fi-de"></span> Deutsch</a>
-                <a href="?lang=fr"><span class="fi fi-fr"></span> Français</a>
-                <a href="?lang=pl"><span class="fi fi-pl"></span> Polski</a>
-                <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe</a>
-                <a href="?lang=pt"><span class="fi fi-pt"></span> Português</a>
+                <a href="?lang=en">
+                    <span class="fi fi-gb"></span> English
+                    <i th:if="${#locale.language == 'en'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=it">
+                    <span class="fi fi-it"></span> Italiano
+                    <i th:if="${#locale.language == 'it'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=es">
+                    <span class="fi fi-es"></span> Español
+                    <i th:if="${#locale.language == 'es'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=de">
+                    <span class="fi fi-de"></span> Deutsch
+                    <i th:if="${#locale.language == 'de'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=fr">
+                    <span class="fi fi-fr"></span> Français
+                    <i th:if="${#locale.language == 'fr'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pl">
+                    <span class="fi fi-pl"></span> Polski
+                    <i th:if="${#locale.language == 'pl'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=tr">
+                    <span class="fi fi-tr"></span> Türkçe
+                    <i th:if="${#locale.language == 'tr'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pt">
+                    <span class="fi fi-pt"></span> Português
+                    <i th:if="${#locale.language == 'pt'}"
+                       class="fa-solid fa-check check-mark"></i>
+                </a>
             </div>
         </li>
 
@@ -93,12 +132,18 @@
 
     <section class="matches-panel">
 
-        <form action="/matches/generate" method="post" class="generate-form">
+        <form action="/matches/generate"
+              method="post"
+              class="generate-form"
+              id="generateForm">
 
-            <select name="league"
+            <select id="leagueSelect"
+                    name="league"
                     onchange="window.location.href='/matches?league=' + this.value">
 
-                <option value="" disabled th:selected="${league == null}">
+                <option value=""
+                        disabled
+                        th:selected="${league == null}">
                     Select league
                 </option>
 
@@ -115,208 +160,375 @@
                 Generate season
             </button>
 
+            <p id="leagueError" class="league-error">
+                Please select a league first.
+            </p>
+
         </form>
 
-        <section class="empty-matches" th:if="${#lists.isEmpty(matches)}">
+
+        <section class="empty-matches"
+                 th:if="${#lists.isEmpty(matches)}">
             <p>No matches generated yet.</p>
         </section>
 
-        <section class="season-panel" th:if="${!#lists.isEmpty(matches)}">
+        <section class="season-panel"
+                 th:if="${!#lists.isEmpty(matches)}">
 
-            <div class="round-selector">
-                <button class="round-btn"
-                        th:each="roundNumber, stat : ${#sets.toSet(matches.![roundNumber])}"
-                        th:text="${roundNumber}"
-                        th:attr="data-round=${roundNumber}"
-                        th:classappend="${stat.index == 0} ? ' active' : ''">
+            <div class="view-switch">
+                <button type="button"
+                        id="showFixturesBtn"
+                        class="view-btn active">
+                    Matches
+                </button>
+
+                <button type="button"
+                        id="showTableBtn"
+                        class="view-btn table-btn">
+                    Table
                 </button>
             </div>
 
-            <div class="round-view"
-                 th:each="roundNumber, roundStat : ${#sets.toSet(matches.![roundNumber])}"
-                 th:attr="data-round=${roundNumber}"
-                 th:classappend="${roundStat.index == 0} ? ' active' : ''">
+            <div id="fixturesView">
 
-                <div class="round-title">
-                    <div>
-                        <span class="round-label">Current round</span>
-                        <h2 th:text="'Round ' + ${roundNumber}">Round 1</h2>
-                    </div>
-
-                    <div class="round-meta">
-                        <span class="match-counter">
-                            <span class="current-slide">1</span>/<span class="total-slides">1</span>
-                        </span>
-
-                        <span th:text="${#lists.size(matches.?[roundNumber == __${roundNumber}__]) + ' matches'}">
-                            0 matches
-                        </span>
-                    </div>
+                <div class="round-selector">
+                    <button class="round-btn"
+                            th:each="roundNumber, stat : ${#sets.toSet(matches.![roundNumber])}"
+                            th:text="${roundNumber}"
+                            th:attr="data-round=${roundNumber}"
+                            th:classappend="${stat.index == 0} ? ' active' : ''">
+                    </button>
                 </div>
 
-                <div class="single-match-slider">
+                <div class="round-view"
+                     th:each="roundNumber, roundStat : ${#sets.toSet(matches.![roundNumber])}"
+                     th:attr="data-round=${roundNumber}"
+                     th:classappend="${roundStat.index == 0} ? ' active' : ''">
 
-                    <button class="slider-btn prev-btn" type="button">❮</button>
-
-                    <div class="match-card"
-                         th:each="match, stat : ${matches.?[roundNumber == __${roundNumber}__]}"
-                         th:classappend="${stat.index == 0} ? ' active' : ''">
-
-                        <div class="match-league">
-                            <span th:text="'Round ' + ${match.roundNumber}">Round</span>
-                            <span th:text="${match.status}">FINISHED</span>
+                    <div class="round-title">
+                        <div>
+                            <span class="round-label">Current round</span>
+                            <h2 th:text="'Round ' + ${roundNumber}">Round 1</h2>
                         </div>
 
-                        <div class="match-content">
+                        <div class="round-meta">
+                            <span class="match-counter">
+                                <span class="current-slide">1</span>/<span class="total-slides">1</span>
+                            </span>
 
-                            <div class="team">
-                                <img class="team-logo" th:src="${match.homeTeamLogo}" alt="Home logo">
-                                <span th:text="${match.homeTeam}">Home Team</span>
-                            </div>
-
-                            <div class="match-center">
-                                <div class="match-date"
-                                     th:text="${#temporals.format(match.matchDate, 'dd.MM.yyyy HH:mm')}">
-                                    21.05.2026 20:30
-                                </div>
-
-                                <div class="match-score"
-                                     th:text="${match.homeGoals + ' - ' + match.awayGoals}">
-                                    0 - 0
-                                </div>
-
-                                <div class="match-status"
-                                     th:text="'HT: ' + ${match.halfTimeHomeGoals} + ' - ' + ${match.halfTimeAwayGoals}">
-                                    HT: 0 - 0
-                                </div>
-                            </div>
-
-                            <div class="team">
-                                <img class="team-logo" th:src="${match.awayTeamLogo}" alt="Away logo">
-                                <span th:text="${match.awayTeam}">Away Team</span>
-                            </div>
-
+                            <span th:text="${#lists.size(matches.?[roundNumber == __${roundNumber}__]) + ' matches'}">
+                                0 matches
+                            </span>
                         </div>
-
-                        <div class="match-details">
-                            <p>
-                                <strong>Stadium:</strong>
-                                <span th:text="${match.stadium}">Stadium</span>
-                            </p>
-
-                            <p>
-                                <strong>Referee:</strong>
-                                <span th:text="${match.referee}">Referee</span>
-                            </p>
-                        </div>
-
-                        <div class="stats-grid">
-
-                            <div class="stat-row" th:attr="data-home=${match.possessionHome}, data-away=${match.possessionAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.possessionHome + '%'}">50%</span>
-                                    <strong>Possession</strong>
-                                    <span th:text="${match.possessionAway + '%'}">50%</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.shotsHome}, data-away=${match.shotsAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.shotsHome}">0</span>
-                                    <strong>Shots</strong>
-                                    <span th:text="${match.shotsAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.shotsOnTargetHome}, data-away=${match.shotsOnTargetAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.shotsOnTargetHome}">0</span>
-                                    <strong>Shots on target</strong>
-                                    <span th:text="${match.shotsOnTargetAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.cornersHome}, data-away=${match.cornersAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.cornersHome}">0</span>
-                                    <strong>Corners</strong>
-                                    <span th:text="${match.cornersAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.foulsHome}, data-away=${match.foulsAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.foulsHome}">0</span>
-                                    <strong>Fouls</strong>
-                                    <span th:text="${match.foulsAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.yellowCardsHome}, data-away=${match.yellowCardsAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.yellowCardsHome}">0</span>
-                                    <strong>Yellow cards</strong>
-                                    <span th:text="${match.yellowCardsAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.redCardsHome}, data-away=${match.redCardsAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.redCardsHome}">0</span>
-                                    <strong>Red cards</strong>
-                                    <span th:text="${match.redCardsAway}">0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                            <div class="stat-row" th:attr="data-home=${match.xgHome}, data-away=${match.xgAway}">
-                                <div class="stat-values">
-                                    <span th:text="${match.xgHome}">0.0</span>
-                                    <strong>xG</strong>
-                                    <span th:text="${match.xgAway}">0.0</span>
-                                </div>
-                                <div class="stat-meter">
-                                    <div class="stat-fill home-fill"></div>
-                                    <div class="stat-fill away-fill"></div>
-                                </div>
-                            </div>
-
-                        </div>
-
                     </div>
 
-                    <button class="slider-btn next-btn" type="button">❯</button>
+                    <div class="single-match-slider">
+
+                        <button class="slider-btn prev-btn" type="button">❮</button>
+
+                        <div class="match-card"
+                             th:each="match, stat : ${matches.?[roundNumber == __${roundNumber}__]}"
+                             th:classappend="${stat.index == 0} ? ' active' : ''">
+
+                            <div class="match-league">
+                                <span th:text="'Round ' + ${match.roundNumber}">Round</span>
+                                <span th:text="${match.status}">FINISHED</span>
+                            </div>
+
+                            <div class="match-content">
+
+                                <div class="team">
+                                    <img class="team-logo"
+                                         th:src="${match.homeTeamLogo}"
+                                         alt="Home logo">
+
+                                    <span th:text="${match.homeTeam}">
+                                        Home Team
+                                    </span>
+                                </div>
+
+                                <div class="match-center">
+                                    <div class="match-date"
+                                         th:text="${#temporals.format(match.matchDate, 'dd.MM.yyyy HH:mm')}">
+                                        21.05.2026 20:30
+                                    </div>
+
+                                    <div class="match-score"
+                                         th:text="${match.homeGoals + ' - ' + match.awayGoals}">
+                                        0 - 0
+                                    </div>
+
+                                    <div class="match-status"
+                                         th:text="'HT: ' + ${match.halfTimeHomeGoals} + ' - ' + ${match.halfTimeAwayGoals}">
+                                        HT
+                                    </div>
+                                </div>
+
+                                <div class="team">
+                                    <img class="team-logo"
+                                         th:src="${match.awayTeamLogo}"
+                                         alt="Away logo">
+
+                                    <span th:text="${match.awayTeam}">
+                                        Away Team
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="match-details">
+                                <p>
+                                    <strong>Stadium:</strong>
+                                    <span th:text="${match.stadium}">Stadium</span>
+                                </p>
+
+                                <p>
+                                    <strong>Referee:</strong>
+                                    <span th:text="${match.referee}">Referee</span>
+                                </p>
+                            </div>
+
+                            <div class="stats-grid">
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.possessionHome}, data-away=${match.possessionAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.possessionHome + '%'}">50%</span>
+                                        <strong>Possession</strong>
+                                        <span th:text="${match.possessionAway + '%'}">50%</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.shotsHome}, data-away=${match.shotsAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.shotsHome}">0</span>
+                                        <strong>Shots</strong>
+                                        <span th:text="${match.shotsAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.shotsOnTargetHome}, data-away=${match.shotsOnTargetAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.shotsOnTargetHome}">0</span>
+                                        <strong>Shots on target</strong>
+                                        <span th:text="${match.shotsOnTargetAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.cornersHome}, data-away=${match.cornersAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.cornersHome}">0</span>
+                                        <strong>Corners</strong>
+                                        <span th:text="${match.cornersAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.foulsHome}, data-away=${match.foulsAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.foulsHome}">0</span>
+                                        <strong>Fouls</strong>
+                                        <span th:text="${match.foulsAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.yellowCardsHome}, data-away=${match.yellowCardsAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.yellowCardsHome}">0</span>
+                                        <strong>Yellow cards</strong>
+                                        <span th:text="${match.yellowCardsAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.redCardsHome}, data-away=${match.redCardsAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.redCardsHome}">0</span>
+                                        <strong>Red cards</strong>
+                                        <span th:text="${match.redCardsAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
+                                     th:attr="data-home=${match.xgHome}, data-away=${match.xgAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.xgHome}">0.0</span>
+                                        <strong>xG</strong>
+                                        <span th:text="${match.xgAway}">0.0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <button class="slider-btn next-btn" type="button">❯</button>
+
+                    </div>
 
                 </div>
 
             </div>
+
+            <section id="tableView"
+                     class="league-table-section"
+                     th:if="${!#lists.isEmpty(leagueTable)}">
+
+                <div class="table-header">
+                    <h2>League Table</h2>
+                    <span th:text="${league}">league</span>
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table class="league-table">
+
+                        <thead>
+                        <tr class="sortable-header">
+                            <th data-sort="position" title="Position">#</th>
+                            <th data-sort="club" title="Club name">Club</th>
+                            <th data-sort="played" title="Matches played">MP</th>
+                            <th data-sort="wins" title="Wins">W</th>
+                            <th data-sort="draws" title="Draws">D</th>
+                            <th data-sort="losses" title="Losses">L</th>
+                            <th data-sort="gf" title="Goals for">GF</th>
+                            <th data-sort="ga" title="Goals against">GA</th>
+                            <th data-sort="gd" title="Goal difference">GD</th>
+                            <th data-sort="points" title="Points">PTS</th>
+                            <th title="Last 5 matches">FORM</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr class="table-row"
+                            th:each="row, stat : ${leagueTable}"
+                            th:classappend="' zone-' + ${row.zone}">
+
+                            <td class="table-position"
+                                th:attr="data-value=${stat.index + 1}"
+                                th:text="${stat.index + 1}">
+                                1
+                            </td>
+
+                            <td class="club-cell"
+                                th:attr="data-value=${row.team}">
+
+                                <img th:src="${row.logo}" alt="logo">
+
+                                <span th:text="${row.team}">
+                                    Team
+                                </span>
+                            </td>
+
+                            <td th:attr="data-value=${row.played}" th:text="${row.played}">0</td>
+                            <td th:attr="data-value=${row.wins}" th:text="${row.wins}">0</td>
+                            <td th:attr="data-value=${row.draws}" th:text="${row.draws}">0</td>
+                            <td th:attr="data-value=${row.losses}" th:text="${row.losses}">0</td>
+                            <td th:attr="data-value=${row.goalsFor}" th:text="${row.goalsFor}">0</td>
+                            <td th:attr="data-value=${row.goalsAgainst}" th:text="${row.goalsAgainst}">0</td>
+                            <td th:attr="data-value=${row.goalDifference}" th:text="${row.goalDifference}">0</td>
+
+                            <td class="points"
+                                th:attr="data-value=${row.points}"
+                                th:text="${row.points}">
+                                0
+                            </td>
+
+                            <td class="form-cell">
+                                <span th:each="result : ${row.form}"
+                                      th:text="${result}"
+                                      th:class="'form-badge form-' + ${result}">
+                                </span>
+                            </td>
+
+                        </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="table-legend">
+
+                    <div th:if="${leagueTable.?[zone == 'CHAMPIONS_LEAGUE'].size() > 0}">
+                        <span class="legend-color cl"></span>
+                        Champions League
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'CHAMPIONS_LEAGUE_QUALIFIERS'].size() > 0}">
+                        <span class="legend-color clq"></span>
+                        Champions League qualifiers
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'EUROPA_LEAGUE'].size() > 0}">
+                        <span class="legend-color el"></span>
+                        Europa League
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'EUROPA_LEAGUE_QUALIFIERS'].size() > 0}">
+                        <span class="legend-color elq"></span>
+                        Europa League qualifiers
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'CONFERENCE_LEAGUE'].size() > 0}">
+                        <span class="legend-color col"></span>
+                        Conference League
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'CONFERENCE_LEAGUE_QUALIFIERS'].size() > 0}">
+                        <span class="legend-color colq"></span>
+                        Conference League qualifiers
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'RELEGATION_PLAYOFF'].size() > 0}">
+                        <span class="legend-color playoff"></span>
+                        Relegation playoff
+                    </div>
+
+                    <div th:if="${leagueTable.?[zone == 'RELEGATION'].size() > 0}">
+                        <span class="legend-color rel"></span>
+                        Relegation
+                    </div>
+
+                </div>
+
+            </section>
 
         </section>
 
