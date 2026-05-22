@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.hidden) {
             interval = setInterval(() => {
                 document.title = document.title === originalTitle ? hiddenTitle : originalTitle;
-            }, 2000);
+            }, 1000);
         } else {
             clearInterval(interval);
             document.title = originalTitle;
