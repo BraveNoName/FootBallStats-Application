@@ -217,7 +217,7 @@
         </div>
         <div class="clubs-grid">
 
-            <a th:href="@{'/clubs/' + ${club.slug()}}"
+            <a th:href="@{'/clubs/' + ${leagueSlug} + '/' + ${club.slug()}}"
                class="club-card"
                th:each="club : ${clubs}">
 
@@ -281,6 +281,8 @@
         <p>&copy; 2026 FootballStats System. All rights reserved.</p>
     </div>
 </footer>
+
+<script th:src="@{/js/tab_title.js}"></script>
 
 </body>
 </html>

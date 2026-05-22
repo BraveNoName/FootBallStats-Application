@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title th:text="#{players.title}">Players</title>
@@ -32,23 +33,9 @@
         <span th:text="#{nav.players}">Players</span>
         <i class="fa-solid fa-angle-down"></i>
       </a>
-
       <div class="dropdown-content">
-        <a href="/players/real">
-          <i class="fa-solid fa-user"></i>
-          Real Players
-
-          <i th:if="${currentPage == 'real'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="/players/generated">
-          <i class="fa-solid fa-shuffle"></i>
-          Generated Players
-
-          <i th:if="${currentPage == 'generated'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
+        <a href="/players/real"><i class="fa-solid fa-user"></i> Real Players <i th:if="${currentPage == 'real'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="/players/generated"><i class="fa-solid fa-shuffle"></i> Generated Players <i th:if="${currentPage == 'generated'}" class="fa-solid fa-check check-mark"></i></a>
       </div>
     </li>
     <li><a href="" th:text="#{nav.stats}">Stats</a></li>
@@ -57,47 +44,15 @@
         <span th:text="#{nav.language}">Language</span>
         <i class="fa-solid fa-angle-down"></i>
       </a>
-
       <div class="dropdown-content">
-        <a href="?lang=en">
-          <span class="fi fi-gb"></span> English
-          <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=it">
-          <span class="fi fi-it"></span> Italiano
-          <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=es">
-          <span class="fi fi-es"></span> Español
-          <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=de">
-          <span class="fi fi-de"></span> Deutsch
-          <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=fr">
-          <span class="fi fi-fr"></span> Français
-          <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=pl">
-          <span class="fi fi-pl"></span> Polski
-          <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=tr">
-          <span class="fi fi-tr"></span> Türkçe
-          <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=pt">
-          <span class="fi fi-pt"></span> Português
-          <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i>
-        </a>
+        <a href="?lang=en"><span class="fi fi-gb"></span> English <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=it"><span class="fi fi-it"></span> Italiano <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=es"><span class="fi fi-es"></span> Español <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=de"><span class="fi fi-de"></span> Deutsch <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=fr"><span class="fi fi-fr"></span> Français <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=pl"><span class="fi fi-pl"></span> Polski <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i></a>
+        <a href="?lang=pt"><span class="fi fi-pt"></span> Português <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i></a>
       </div>
     </li>
     <li class="dropdown">
@@ -112,83 +67,34 @@
 
 <main class="players-page">
   <h1 th:text="#{players.title}">Players Database</h1>
+
   <div class="generate-actions" th:if="${currentPage == 'generated'}">
-
-    <form action="/players/generated/regenerate"
-          method="get"
-          class="generate-form"
-          onsubmit="return validateGenerateForm()"
-    >
-
-      <input
-              type="number"
-              name="count"
-              min="1"
-              th:placeholder="#{players.enterNumber}"
-              th:data-alert="#{players.enterNumberAlert}"
-              class="generate-input"
-      >
-
+    <form action="/players/generated/regenerate" method="get" class="generate-form" onsubmit="return validateGenerateForm()">
+      <input type="number" name="count" min="1" th:placeholder="#{players.enterNumber}" th:data-alert="#{players.enterNumberAlert}" class="generate-input">
       <button type="submit" class="generate-btn">
         <i class="fa-solid fa-rotate"></i>
         <span th:text="#{players.generate}">Generate players</span>
       </button>
-
     </form>
-
   </div>
+
   <div class="players-table-wrapper">
     <table>
       <thead>
       <tr>
         <th th:text="#{players.club}">Club</th>
-
-        <th class="sortable" data-type="number">
-          <span th:text="#{players.number}">Number</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
+        <th class="sortable" data-type="number"><span th:text="#{players.number}">Number</span> <i class="fa-solid fa-sort"></i></th>
         <th th:text="#{players.player}">Player</th>
-
-        <th class="sortable" data-type="date">
-          <span th:text="#{players.birthDate}">Birth Date</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
-        <th class="sortable" data-type="number">
-          <span th:text="#{players.age}">Age</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
-        <th class="sortable" data-type="money">
-          <span th:text="#{players.marketValue}">Market Value</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
+        <th class="sortable" data-type="date"><span th:text="#{players.birthDate}">Birth Date</span> <i class="fa-solid fa-sort"></i></th>
+        <th class="sortable" data-type="number"><span th:text="#{players.age}">Age</span> <i class="fa-solid fa-sort"></i></th>
+        <th class="sortable" data-type="money"><span th:text="#{players.marketValue}">Market Value</span> <i class="fa-solid fa-sort"></i></th>
         <th th:text="#{players.nationality}">Nationality</th>
         <th th:text="#{players.position}">Position</th>
         <th th:text="#{players.foot}">Foot</th>
-
-        <th class="sortable" data-type="number">
-          <span th:text="#{players.height}">Height</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
-        <th class="sortable" data-type="date">
-          <span th:text="#{players.joined}">Joined</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
-        <th class="sortable" data-type="date">
-          <span th:text="#{players.contractUntil}">Contract Until</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
-        <th class="sortable" data-type="date">
-          <span th:text="#{players.extension}">Last Extension</span>
-          <i class="fa-solid fa-sort"></i>
-        </th>
-
+        <th class="sortable" data-type="number"><span th:text="#{players.height}">Height</span> <i class="fa-solid fa-sort"></i></th>
+        <th class="sortable" data-type="date"><span th:text="#{players.joined}">Joined</span> <i class="fa-solid fa-sort"></i></th>
+        <th class="sortable" data-type="date"><span th:text="#{players.contractUntil}">Contract Until</span> <i class="fa-solid fa-sort"></i></th>
+        <th class="sortable" data-type="date"><span th:text="#{players.extension}">Last Extension</span> <i class="fa-solid fa-sort"></i></th>
         <th th:text="#{players.status}">Status</th>
       </tr>
       </thead>
@@ -227,6 +133,7 @@
     </table>
   </div>
 </main>
+
 <footer>
   <div class="footer-container">
     <div class="footer-section">
@@ -261,5 +168,7 @@
 </footer>
 
 <script src="/js/sort_P_T.js"></script>
+<script th:src="@{/js/tab_title.js}"></script>
+
 </body>
 </html>

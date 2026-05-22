@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,29 +25,251 @@ public class LeagueClubController {
         this.apiFootballService = apiFootballService;
     }
 
-    @GetMapping("/leagues/england")
-    public String premierLeague(Model model) {
-        String leagueFolder = "England - Premier League";
+    private final Map<String, LeagueView> leagues = new LinkedHashMap<>() {{
+        put("austria", new LeagueView(
+                "austria",
+                "Austrian Bundesliga",
+                "Austria - Bundesliga",
+                "/Images/leagues/Austria - Bundesliga/austriabundesliga.png",
+                218
+        ));
 
-        model.addAttribute("leagueName", "England - Premier League");
-        model.addAttribute("leagueLogo", "/Images/leagues/England - Premier League/premierleague.png");
-        model.addAttribute("clubs", loadClubsFromFolder(leagueFolder));
+        put("belgium", new LeagueView(
+                "belgium",
+                "Jupiler Pro League",
+                "Belgium - Jupiler Pro League",
+                "/Images/leagues/Belgium - Jupiler Pro League/proleague.png",
+                144
+        ));
+
+        put("bulgaria", new LeagueView(
+                "bulgaria",
+                "Efbet Liga",
+                "Bulgaria - efbet Liga",
+                "/Images/leagues/Bulgaria - efbet Liga/efbetliga.png",
+                172
+        ));
+
+        put("croatia", new LeagueView(
+                "croatia",
+                "SuperSport HNL",
+                "Croatia - SuperSport HNL",
+                "/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png",
+                210
+        ));
+
+        put("czech", new LeagueView(
+                "czecha",
+                "Chance Liga",
+                "Czech Republic - Chance Liga",
+                "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png",
+                345
+        ));
+
+        put("denmark", new LeagueView(
+                "denmark",
+                "Superliga",
+                "Denmark - Superliga",
+                "/Images/leagues/Denmark - Superliga/superliga.png",
+                119
+        ));
+
+        put("england", new LeagueView(
+                "england",
+                "Premier League",
+                "England - Premier League",
+                "/Images/leagues/England - Premier League/premierleague.png",
+                39
+        ));
+
+        put("france", new LeagueView(
+                "france",
+                "Ligue 1",
+                "France - Ligue 1",
+                "/Images/leagues/France - Ligue 1/ligue1.png",
+                61
+        ));
+
+        put("germany", new LeagueView(
+                "germany",
+                "Bundesliga",
+                "Germany - Bundesliga",
+                "/Images/leagues/Germany - Bundesliga/bundesliga.png",
+                78
+        ));
+
+        put("greece", new LeagueView(
+                "greece",
+                "Super League 1",
+                "Greece - Super League 1",
+                "/Images/leagues/Greece - Super League 1/superleague1.png",
+                197
+        ));
+
+        put("italy", new LeagueView(
+                "italy",
+                "Serie A",
+                "Italy - Serie A",
+                "/Images/leagues/Italy - Serie A/seriea.png",
+                135
+        ));
+
+        put("israel", new LeagueView(
+                "israel",
+                "Ligat ha'Al",
+                "Israel - Ligat ha'Al",
+                "/Images/leagues/Israel - Ligat ha'Al/ligathaai.png",
+                325
+        ));
+
+        put("netherlands", new LeagueView(
+                "netherlands",
+                "Eredivisie",
+                "Netherlands - Eredivisie",
+                "/Images/leagues/Netherlands - Eredivisie/eredivisie.png",
+                88
+        ));
+
+        put("norway", new LeagueView(
+                "norway",
+                "Eliteserien",
+                "Norway - Eliteserien",
+                "/Images/leagues/Norway - Eliteserien/eliteserien.png",
+                103
+        ));
+
+        put("poland", new LeagueView(
+                "poland",
+                "PKO BP Ekstraklasa",
+                "Poland - PKO BP Ekstraklasa",
+                "/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png",
+                106
+        ));
+
+        put("portugal", new LeagueView(
+                "portugal",
+                "Liga Portugal",
+                "Portugal - Liga Portugal",
+                "/Images/leagues/Portugal - Liga Portugal/ligaportugal.png",
+                94
+        ));
+
+        put("romania", new LeagueView(
+                "romania",
+                "SuperLiga",
+                "Romania - SuperLiga",
+                "/Images/leagues/Romania - SuperLiga/romaniasuperliga.png",
+                283
+        ));
+
+        put("russia", new LeagueView(
+                "russia",
+                "Premier Liga",
+                "Russia - Premier Liga",
+                "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg",
+                235
+        ));
+
+        put("scotland", new LeagueView(
+                "scotland",
+                "Scottish Premiership",
+                "Scotland - Scottish Premiership",
+                "/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png",
+                179
+        ));
+
+        put("serbia", new LeagueView(
+                "serbia",
+                "Super liga Srbije",
+                "Serbia - Super liga Srbije",
+                "/Images/leagues/Serbia - Super liga Srbije/superligaserbije.png",
+                286
+        ));
+
+        put("spain", new LeagueView(
+                "spain",
+                "LaLiga",
+                "Spain - LaLiga",
+                "/Images/leagues/Spain - LaLiga/laliga.png",
+                140
+        ));
+
+        put("sweden", new LeagueView(
+                "sweden",
+                "Allsvenskan",
+                "Sweden - Allsvenskan",
+                "/Images/leagues/Sweden - Allsvenskan/allsvenskan.png",
+                113
+        ));
+
+        put("switzerland", new LeagueView(
+                "switzerland",
+                "Super League",
+                "Switzerland - Super League",
+                "/Images/leagues/Switzerland - Super League/superleague.png",
+                207
+        ));
+
+        put("turkiye", new LeagueView(
+                "turkiye",
+                "Süper Lig",
+                "Türkiye - Süper Lig",
+                "/Images/leagues/Türkiye - Süper Lig/superlig.png",
+                203
+        ));
+
+        put("ukraine", new LeagueView(
+                "ukraine",
+                "Premier Liga",
+                "Ukraine - Premier Liga",
+                "/Images/leagues/Ukraine - Premier Liga/premierliga.png",
+                333
+        ));
+    }};
+
+    @GetMapping("/leagues/{leagueSlug}")
+    public String leagueClubs(
+            @PathVariable String leagueSlug,
+            Model model
+    ) {
+        LeagueView league = leagues.get(leagueSlug);
+
+        if (league == null) {
+            throw new RuntimeException("League not found: " + leagueSlug);
+        }
+
+        model.addAttribute("leagueSlug", league.slug());
+        model.addAttribute("leagueName", league.name());
+        model.addAttribute("leagueLogo", league.logo());
+        model.addAttribute("clubs", loadClubsFromFolder(league.folder()));
 
         return "league-clubs";
     }
 
-    @GetMapping("/clubs/{clubSlug}")
-    public String clubDetails(@PathVariable String clubSlug, Model model) {
-        String leagueFolder = "England - Premier League";
+    @GetMapping("/clubs/{leagueSlug}/{clubSlug}")
+    public String clubDetails(
+            @PathVariable String leagueSlug,
+            @PathVariable String clubSlug,
+            Model model
+    ) {
+        LeagueView league = leagues.get(leagueSlug);
 
-        ClubView club = loadClubsFromFolder(leagueFolder)
+        if (league == null) {
+            throw new RuntimeException("League not found: " + leagueSlug);
+        }
+
+        ClubView club = loadClubsFromFolder(league.folder())
                 .stream()
                 .filter(c -> c.slug().equals(clubSlug))
                 .findFirst()
                 .orElseThrow();
 
         Map<String, Object> teamData =
-                apiFootballService.getTeamFromPremierLeague(club.name());
+                apiFootballService.getTeamFromLeague(club.name(), league.apiLeagueId());
+
+        if (teamData == null) {
+            throw new RuntimeException("Team not found in API-Football: " + club.name());
+        }
 
         Map<String, Object> team =
                 (Map<String, Object>) teamData.get("team");
@@ -63,43 +286,17 @@ public class LeagueClubController {
         List<PlayerRow> players =
                 buildPlayers(squadData, playersData);
 
-
         model.addAttribute("club", club);
-        model.addAttribute("leagueName", "Premier League");
+        model.addAttribute("leagueSlug", league.slug());
+        model.addAttribute("leagueName", league.name());
         model.addAttribute("teamData", teamData);
         model.addAttribute("players", players);
 
         return "club-details";
     }
 
-    private List<PlayerRow> buildPlayersFromSquadOnly(Map<String, Object> squadData) {
-
-        List<Map<String, Object>> squadResponse =
-                (List<Map<String, Object>>) squadData.get("response");
-
-        if (squadResponse == null || squadResponse.isEmpty()) {
-            return List.of();
-        }
-
-        List<Map<String, Object>> squadPlayers =
-                (List<Map<String, Object>>) squadResponse.get(0).get("players");
-
-        return squadPlayers.stream()
-                .map(player -> new PlayerRow(
-                        player.get("number") != null ? (Integer) player.get("number") : null,
-                        player.get("name") != null ? player.get("name").toString() : "-",
-                        player.get("position") != null ? player.get("position").toString() : "-",
-                        player.get("age") != null ? (Integer) player.get("age") : null,
-                        "-",
-                        "un",
-                        player.get("photo") != null ? player.get("photo").toString() : ""
-                ))
-                .sorted(Comparator.comparing(
-                        player -> player.number() == null ? 999 : player.number()
-                ))
-                .toList();
-    }
     private List<ClubView> loadClubsFromFolder(String leagueFolder) {
+
         try {
             Path folderPath = Paths.get(
                     "src/main/resources/static/Images/leagues/" + leagueFolder
@@ -117,7 +314,15 @@ public class LeagueClubController {
                     .filter(path -> {
                         String file = path.getFileName().toString().toLowerCase();
 
-                        return !file.contains("premierleague");
+                        return !file.contains("league")
+                                && !file.contains("liga")
+                                && !file.contains("bundesliga")
+                                && !file.contains("seriea")
+                                && !file.contains("ligue1")
+                                && !file.contains("eredivisie")
+                                && !file.contains("primeiraliga")
+                                && !file.contains("superlig")
+                                && !file.contains("premier");
                     })
                     .map(path -> {
                         String fileName = path.getFileName().toString();
@@ -235,6 +440,7 @@ public class LeagueClubController {
     }
 
     private String getCountryCodeForNationality(String nationality) {
+
         if (nationality == null || nationality.isBlank() || nationality.equals("-")) {
             return "un";
         }
@@ -257,6 +463,7 @@ public class LeagueClubController {
     }
 
     private String findIsoCountryCode(String countryName) {
+
         for (String iso : Locale.getISOCountries()) {
             Locale locale = new Locale("", iso);
 
@@ -266,6 +473,15 @@ public class LeagueClubController {
         }
 
         return "un";
+    }
+
+    public record LeagueView(
+            String slug,
+            String name,
+            String folder,
+            String logo,
+            Integer apiLeagueId
+    ) {
     }
 
     public record ClubView(
