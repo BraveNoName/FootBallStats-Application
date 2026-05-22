@@ -1,0 +1,178 @@
+<!doctype html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>FootballStats - Matches</title>
+
+    <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/matches.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/">
+            <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
+        </a>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="/" th:text="#{nav.home}">Home</a></li>
+        <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
+        <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+        <li><a href="/players/real" th:text="#{nav.players}">Players</a></li>
+        <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
+    </ul>
+</nav>
+
+<main class="matches-page">
+
+    <div class="matches-header">
+        <h1>⚽ Matches</h1>
+        <p th:text="'League: ' + ${league}">League</p>
+
+        <form action="/matches/generate" method="post" class="generate-form">
+
+            <select name="league" onchange="window.location.href='/matches?league=' + this.value">
+
+                <option th:each="leagueItem : ${leagues}"
+                        th:value="${leagueItem}"
+                        th:text="${leagueItem}"
+                        th:selected="${leagueItem == league}">
+                </option>
+
+            </select>
+
+            <button type="submit">
+                Generate season
+            </button>
+
+        </form>
+    </div>
+
+    <div class="matches-container">
+
+        <div class="match-card" th:each="match : ${matches}">
+
+            <div class="match-league">
+                <span th:text="'Round ' + ${match.roundNumber}">Round</span>
+                <span th:text="${match.status}">FINISHED</span>
+            </div>
+
+            <div class="match-content">
+
+                <div class="team">
+                    <span th:text="${match.homeTeam}">Home Team</span>
+                </div>
+
+                <div class="match-center">
+                    <div class="match-score"
+                         th:text="${match.homeGoals + ' - ' + match.awayGoals}">
+                        0 - 0
+                    </div>
+
+                    <div class="match-status"
+                         th:text="'HT: ' + ${match.halfTimeHomeGoals} + ' - ' + ${match.halfTimeAwayGoals}">
+                        HT
+                    </div>
+
+                    <div class="match-date" th:text="${#temporals.format(match.matchDate, 'dd.MM.yyyy HH:mm')}">
+                        Date
+                    </div>
+                </div>
+
+                <div class="team">
+                    <span th:text="${match.awayTeam}">Away Team</span>
+                </div>
+
+            </div>
+
+            <div class="match-details">
+                <p>
+                    <strong>Stadium:</strong>
+                    <span th:text="${match.stadium}">Stadium</span>
+                </p>
+
+                <p>
+                    <strong>Referee:</strong>
+                    <span th:text="${match.referee}">Referee</span>
+                </p>
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="stat-row">
+                    <span th:text="${match.possessionHome + '%'}">50%</span>
+                    <strong>Possession</strong>
+                    <span th:text="${match.possessionAway + '%'}">50%</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.shotsHome}">0</span>
+                    <strong>Shots</strong>
+                    <span th:text="${match.shotsAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.shotsOnTargetHome}">0</span>
+                    <strong>Shots on target</strong>
+                    <span th:text="${match.shotsOnTargetAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.cornersHome}">0</span>
+                    <strong>Corners</strong>
+                    <span th:text="${match.cornersAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.foulsHome}">0</span>
+                    <strong>Fouls</strong>
+                    <span th:text="${match.foulsAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.yellowCardsHome}">0</span>
+                    <strong>Yellow cards</strong>
+                    <span th:text="${match.yellowCardsAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.redCardsHome}">0</span>
+                    <strong>Red cards</strong>
+                    <span th:text="${match.redCardsAway}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span th:text="${match.xgHome}">0.0</span>
+                    <strong>xG</strong>
+                    <span th:text="${match.xgAway}">0.0</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="empty-matches" th:if="${#lists.isEmpty(matches)}">
+            <p>No matches generated yet.</p>
+        </div>
+
+    </div>
+
+</main>
+
+<footer>
+    <div class="footer-bottom">
+        <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+    </div>
+</footer>
+
+<script th:src="@{/js/global.js}"></script>
+
+</body>
+</html>

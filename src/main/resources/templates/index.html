@@ -1,38 +1,32 @@
 <!doctype html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{welcome.title}">FootballStats System</title>
-
     <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
     <link rel="stylesheet" href="/css/style.css">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
-
 <div class="welcome-page" id="welcomePage">
     <img class="introimg" src="/Images/LogoFootballStats.png" alt="FootballStats logo">
     <div class="title" id="title"></div>
 </div>
-
 <nav class="navbar">
     <div class="nav-left">
         <a href="/">
             <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
         </a>
     </div>
-
     <div class="nav-search">
         <div class="search-box">
             <input type="text" th:placeholder="#{search.placeholder}">
             <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
     </div>
-
     <ul class="nav-links">
         <li><a href="/" th:text="#{nav.home}">Home</a></li>
         <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
@@ -42,65 +36,33 @@
                 <span th:text="#{nav.players}">Players</span>
                 <i class="fa-solid fa-angle-down"></i>
             </a>
-
             <div class="dropdown-content">
                 <a href="/players/real">
                     <i class="fa-solid fa-user"></i>
                     Real Players
-
-                    <i th:if="${currentPage == 'real'}"
-                       class="fa-solid fa-check check-mark"></i>
+                    <i th:if="${currentPage == 'real'}" class="fa-solid fa-check check-mark"></i>
                 </a>
-
                 <a href="/players/generated">
                     <i class="fa-solid fa-shuffle"></i>
                     Generated Players
-
-                    <i th:if="${currentPage == 'generated'}"
-                       class="fa-solid fa-check check-mark"></i>
+                    <i th:if="${currentPage == 'generated'}" class="fa-solid fa-check check-mark"></i>
                 </a>
             </div>
         </li>
         <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
-
         <li class="dropdown">
             <a href="#"><span th:text="#{nav.language}">Language</span> <i class="fa-solid fa-angle-down"></i></a>
             <div class="dropdown-content">
-                <a href="?lang=en">
-                    <span class="fi fi-gb"></span> English
-                    <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=it">
-                    <span class="fi fi-it"></span> Italiano
-                    <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=es">
-                    <span class="fi fi-es"></span> Español
-                    <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=de">
-                    <span class="fi fi-de"></span> Deutsch
-                    <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=fr">
-                    <span class="fi fi-fr"></span> Français
-                    <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=pl">
-                    <span class="fi fi-pl"></span> Polski
-                    <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=tr">
-                    <span class="fi fi-tr"></span> Türkçe
-                    <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-                <a href="?lang=pt">
-                    <span class="fi fi-pt"></span> Português
-                    <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i>
-                </a>
+                <a href="?lang=en"><span class="fi fi-gb"></span> English <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=it"><span class="fi fi-it"></span> Italiano <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=es"><span class="fi fi-es"></span> Español <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=de"><span class="fi fi-de"></span> Deutsch <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=fr"><span class="fi fi-fr"></span> Français <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=pl"><span class="fi fi-pl"></span> Polski <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i></a>
+                <a href="?lang=pt"><span class="fi fi-pt"></span> Português <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i></a>
             </div>
         </li>
-
         <li class="dropdown">
             <a href="#" id="loginLink"><i class="fa-regular fa-circle-user"></i></a>
             <div class="dropdown-content">
@@ -110,9 +72,7 @@
         </li>
     </ul>
 </nav>
-
 <div class="welcome-text" id="welcomeText"></div>
-
 <footer>
     <div class="footer-container">
         <div class="footer-section">
@@ -155,7 +115,6 @@
         <p>&copy; 2026 FootballStats System. All rights reserved.</p>
     </div>
 </footer>
-
 <script th:inline="javascript">
     /*<![CDATA[*/
         const titleText = [[#{welcome.title}]];
@@ -165,5 +124,4 @@
 <script src="/js/script.js"></script>
 <script th:src="@{/js/tab_title.js}"></script>
 </body>
-
 </html>
