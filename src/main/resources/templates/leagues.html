@@ -18,8 +18,20 @@
   </div>
   <div class="nav-search">
     <div class="search-box">
-      <input type="text" th:placeholder="#{search.placeholder}">
-      <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+
+      <input id="globalSearchInput"
+             type="text"
+             th:placeholder="#{search.placeholder}"
+             autocomplete="off">
+
+      <button type="submit">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+
+      <div id="searchSuggestions"
+           class="search-suggestions">
+      </div>
+
     </div>
   </div>
   <ul class="nav-links">
@@ -251,5 +263,6 @@
 </footer>
 <script src="/js/leagues.js"></script>
 <script th:src="@{/js/tab_title.js}"></script>
+<script src="/js/search_nav_bar.js"></script>
 </body>
 </html>
