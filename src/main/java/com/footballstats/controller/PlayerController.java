@@ -30,7 +30,7 @@ public class PlayerController {
     public String generatedPlayers(Model model) {
 
         if (generatedPlayers == null) {
-            generatedPlayers = playerGenerator.generatePlayers(250);
+            generatedPlayers = playerGenerator.generatePlayers(10);
         }
 
         model.addAttribute("players", generatedPlayers);
@@ -41,7 +41,7 @@ public class PlayerController {
 
     @GetMapping("/players/generated/regenerate")
     public String regenerateGeneratedPlayers(
-            @RequestParam(defaultValue = "250") int count
+            @RequestParam(defaultValue = "10") int count
     ) {
 
         generatedPlayers = playerGenerator.generatePlayers(count);

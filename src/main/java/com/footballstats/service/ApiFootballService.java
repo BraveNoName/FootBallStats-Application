@@ -16,7 +16,7 @@ public class ApiFootballService {
     public ApiFootballService(
             WebClient.Builder webClientBuilder,
             @Value("${api.football.base-url}") String baseUrl,
-            @Value("${api.football.key}") String apiKey
+            @Value("${api.football.key:disabled}") String apiKey
     ) {
         this.webClient = webClientBuilder
                 .baseUrl(baseUrl)
@@ -30,11 +30,14 @@ public class ApiFootballService {
                 .uri(uriBuilder -> uriBuilder
                         .path("/teams")
                         .queryParam("league", leagueId)
-                        .queryParam("season", 2024)
-                        .build())
+                        .queryParam("season", 2024)                        .build())
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
+
+        System.out.println("Szukam teamu: " + teamName);
+        System.out.println("League ID: " + leagueId);
+        System.out.println("API RESULT: " + result);
 
         List<Map<String, Object>> response =
                 (List<Map<String, Object>>) result.get("response");
@@ -84,8 +87,7 @@ public class ApiFootballService {
                     .uri(uriBuilder -> uriBuilder
                             .path("/players")
                             .queryParam("team", teamId)
-                            .queryParam("season", 2024)
-                            .queryParam("page", page)
+                            .queryParam("season", 2024)                            .queryParam("page", page)
                             .build())
                     .retrieve()
                     .bodyToMono(Map.class)
@@ -113,7 +115,7 @@ public class ApiFootballService {
     }
 
     private String normalize(String name) {
-        return name.toLowerCase()
+        String normalized = name.toLowerCase()
                 .replace("afc", "")
                 .replace("fc", "")
                 .replace("cf", "")
@@ -124,5 +126,25 @@ public class ApiFootballService {
                 .replace("-", "")
                 .replace(" ", "")
                 .trim();
+
+        return switch (normalized) {
+            case "athleticbilbao" -> "athleticclub";
+            default -> normalized;
+        };
+    }
+
+
+    public List<Map<String, Object>> getTeamsByLeague(Integer leagueId) {
+        Map<String, Object> result = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/teams")
+                        .queryParam("league", leagueId)
+                        .queryParam("season", 2024)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        return (List<Map<String, Object>>) result.get("response");
     }
 }

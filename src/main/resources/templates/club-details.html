@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${teamData['team']['name']}">Club</title>
+  <title th:text="${club.name()}">Club</title>
   <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/club-details.css">
@@ -13,7 +13,6 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-left">
     <a href="/"><img src="/Images/TabIcon.png" class="nav-logo" alt="logo"></a>
@@ -21,7 +20,6 @@
 
   <div class="nav-search">
     <div class="search-box">
-
       <input id="globalSearchInput"
              type="text"
              th:placeholder="#{search.placeholder}"
@@ -31,10 +29,7 @@
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
 
-      <div id="searchSuggestions"
-           class="search-suggestions">
-      </div>
-
+      <div id="searchSuggestions" class="search-suggestions"></div>
     </div>
   </div>
 
@@ -42,6 +37,7 @@
     <li><a href="/" th:text="#{nav.home}">Home</a></li>
     <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
     <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+
     <li class="dropdown">
       <a href="#"><span th:text="#{nav.players}">Players</span> <i class="fa-solid fa-angle-down"></i></a>
       <div class="dropdown-content">
@@ -49,58 +45,20 @@
         <a href="/players/generated"><i class="fa-solid fa-shuffle"></i> Generated Players</a>
       </div>
     </li>
+
     <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
 
     <li class="dropdown">
       <a href="#"><span th:text="#{nav.language}">Language</span> <i class="fa-solid fa-angle-down"></i></a>
       <div class="dropdown-content">
-        <a href="?lang=en">
-          <span class="fi fi-gb"></span> English
-          <i th:if="${#locale.language == 'en'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=it">
-          <span class="fi fi-it"></span> Italiano
-          <i th:if="${#locale.language == 'it'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=es">
-          <span class="fi fi-es"></span> Español
-          <i th:if="${#locale.language == 'es'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=de">
-          <span class="fi fi-de"></span> Deutsch
-          <i th:if="${#locale.language == 'de'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=fr">
-          <span class="fi fi-fr"></span> Français
-          <i th:if="${#locale.language == 'fr'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=pl">
-          <span class="fi fi-pl"></span> Polski
-          <i th:if="${#locale.language == 'pl'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=tr">
-          <span class="fi fi-tr"></span> Türkçe
-          <i th:if="${#locale.language == 'tr'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
-
-        <a href="?lang=pt">
-          <span class="fi fi-pt"></span> Português
-          <i th:if="${#locale.language == 'pt'}"
-             class="fa-solid fa-check check-mark"></i>
-        </a>
+        <a href="?lang=en"><span class="fi fi-gb"></span> English</a>
+        <a href="?lang=it"><span class="fi fi-it"></span> Italiano</a>
+        <a href="?lang=es"><span class="fi fi-es"></span> Español</a>
+        <a href="?lang=de"><span class="fi fi-de"></span> Deutsch</a>
+        <a href="?lang=fr"><span class="fi fi-fr"></span> Français</a>
+        <a href="?lang=pl"><span class="fi fi-pl"></span> Polski</a>
+        <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe</a>
+        <a href="?lang=pt"><span class="fi fi-pt"></span> Português</a>
       </div>
     </li>
 
@@ -114,32 +72,56 @@
   </ul>
 </nav>
 
-<!-- MAIN -->
 <main class="club-page">
   <section class="club-hero">
     <div class="club-main-info">
-      <img th:src="${teamData['team']['logo']}" th:alt="${teamData['team']['name']}">
+      <img th:src="${teamData != null ? teamData['team']['logo'] : club.logo()}" th:alt="${club.name()}">
+
       <div>
-        <a href="/leagues/england" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Premier League</a>
-        <h1 th:text="${teamData['team']['name']}">Club</h1>
-        <p th:text="${leagueName}">Premier League</p>
+        <a th:href="@{'/leagues/' + ${leagueSlug}}" class="back-link">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back to <span th:text="${leagueName}">League</span>
+        </a>
+
+        <h1 th:text="${club.name()}">Club</h1>
+        <p th:text="${leagueName}">League</p>
       </div>
     </div>
 
-    <div class="club-stats-card">
+    <div class="club-stats-card" th:if="${teamData != null}">
       <h3>Club Stats</h3>
-      <div class="club-stat"><span>Country</span><strong th:text="${teamData['team']['country']}">England</strong></div>
-      <div class="club-stat"><span>Founded</span><strong th:text="${teamData['team']['founded']}">1899</strong></div>
-      <div class="club-stat"><span>Venue capacity</span><strong th:text="${teamData['venue']['capacity']}">12000</strong></div>
-      <div class="club-stat"><span>City</span><strong th:text="${teamData['venue']['city']}">Bournemouth</strong></div>
-      <div class="club-stat"><span>Stadium</span><strong th:text="${teamData['venue']['name']}">Vitality Stadium</strong></div>
+      <div class="club-stat">
+        <span>Country</span>
+        <strong th:text="${teamData['team']['country']}">Country</strong>
+      </div>
+      <div class="club-stat">
+        <span>Founded</span>
+        <strong th:text="${teamData['team']['founded']}">1899</strong>
+      </div>
+      <div class="club-stat">
+        <span>Venue capacity</span>
+        <strong th:text="${teamData['venue']['capacity']}">12000</strong>
+      </div>
+      <div class="club-stat">
+        <span>City</span>
+        <strong th:text="${teamData['venue']['city']}">City</strong>
+      </div>
+      <div class="club-stat">
+        <span>Stadium</span>
+        <strong th:text="${teamData['venue']['name']}">Stadium</strong>
+      </div>
     </div>
   </section>
 
   <section class="squad-section">
     <h2>Squad</h2>
-    <div class="squad-table-wrapper">
-      <table class="squad-table">
+
+    <p th:if="${players == null || players.isEmpty()}">
+      No squad data available for this club.
+    </p>
+
+    <div class="squad-table-wrapper" th:if="${players != null && !players.isEmpty()}">
+      <table id="squadTable" class="squad-table">
         <thead>
         <tr>
           <th>Number</th>
@@ -148,9 +130,13 @@
           <th>Nationality</th>
         </tr>
         </thead>
+
         <tbody>
         <tr th:each="player : ${players}">
-          <td><span class="player-number" th:text="${player.number() != null ? player.number() : '-'}">9</span></td>
+          <td>
+            <span class="player-number" th:text="${player.number() != null ? player.number() : '-'}">9</span>
+          </td>
+
           <td class="player-cell">
             <img th:src="${player.photo()}" th:alt="${player.name()}">
             <div>
@@ -158,8 +144,12 @@
               <span th:text="${player.position()}">Position</span>
             </div>
           </td>
+
           <td th:text="${player.age() != null ? player.age() : '-'}">25</td>
-          <td><span th:class="'fi fi-' + ${player.countryCode()}" th:title="${player.nationality()}"></span></td>
+
+          <td>
+            <span th:class="'fi fi-' + ${player.countryCode()}" th:title="${player.nationality()}"></span>
+          </td>
         </tr>
         </tbody>
       </table>
@@ -167,7 +157,6 @@
   </section>
 </main>
 
-<!-- FOOTER -->
 <footer>
   <div class="footer-container">
     <div class="footer-section">
@@ -178,6 +167,7 @@
         <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
       </ul>
     </div>
+
     <div class="footer-section">
       <h3 th:text="#{footer.social}">Social</h3>
       <div class="social-icons">
@@ -190,6 +180,7 @@
         <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
       </div>
     </div>
+
     <div class="footer-section">
       <h3 th:text="#{footer.apps}">Apps</h3>
       <ul class="app-links">
@@ -198,12 +189,13 @@
       </ul>
     </div>
   </div>
+
   <div class="footer-bottom">
     <p>&copy; 2026 FootballStats System. All rights reserved.</p>
   </div>
 </footer>
 
-<script src="/js/club-details.js"></script>
+<script src="/js/club_details.js"></script>
 <script th:src="@{/js/tab_title.js}"></script>
 <script src="/js/search_nav_bar.js"></script>
 </body>
