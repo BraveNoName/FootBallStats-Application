@@ -26,3 +26,352 @@ The connection was not closed by the application and is garbage collected [90018
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2026-05-24 13:29:49.014702+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Kolumna "GRAY" nie istnieje
+Column "GRAY" not found; SQL statement:
+INSERT INTO REAL_PLAYER (
+API_PLAYER_ID, AGE, CLUB_SLUG, COUNTRY_CODE, LEAGUE_SLUG,
+NAME, NATIONALITY, NUMBER, PHOTO, POSITION, TEAM_ID, TEAM_NAME,
+APPEARANCES, ASSISTS, CAPTAIN,
+DRIBBLES_ATTEMPTS, DRIBBLES_PAST, DRIBBLES_SUCCESS,
+DUELS_TOTAL, DUELS_WON,
+FOULS_COMMITTED, FOULS_DRAWN,
+GOALS, GOALS_CONCEDED,
+LINEUPS, MINUTES,
+PASSES_ACCURACY, PASSES_KEY, PASSES_TOTAL,
+PENALTY_COMMITTED, PENALTY_MISSED, PENALTY_SAVED,
+PENALTY_SCORED, PENALTY_WON,
+RATING,
+RED_CARDS, SAVES,
+SHOTS_ON, SHOTS_TOTAL,
+TACKLES_BLOCKS, TACKLES_INTERCEPTIONS, TACKLES_TOTAL,
+YELLOW_CARDS, YELLOW_RED_CARDS
+)
+VALUES
+(998001,25,'leeds-united','fr','england','Illan Meslier','France',1,'/Images/no-player.png','Goalkeeper',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,0,0),
+(998002,34,'leeds-united','gb-wls','england','Karl Darlow','Wales',28,'/Images/no-player.png','Goalkeeper',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,0,0),
+(998003,24,'leeds-united','no','england','Kristoffer Klaesson','Norway',13,'/Images/no-player.png','Goalkeeper',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,0,0),
+
+(998004,25,'leeds-united','nl','england','Pascal Struijk','Netherlands',5,'/Images/no-player.png','Defender',63,'Leeds United',0,0,TRUE,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998005,27,'leeds-united','gb-wls','england','Joe Rodon','Wales',6,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998006,23,'leeds-united','gb-eng','england','Charlie Cresswell','England',15,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998007,31,'leeds-united','gb-eng','england','Sam Byram','England',25,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998008,28,'leeds-united','do','england','Junior Firpo','Dominican Republic',3,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998009,23,'leeds-united','gb-eng','england','Jayden Bogle','England',2,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998010,19,'leeds-united','gb-eng','england','Archie Gray','England',GRAY,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998011,22,'leeds-united','gb-eng','england','Cody Drameh','England',37,'/Images/no-player.png','Defender',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+
+(998012,24,'leeds-united','jp','england','Ao Tanaka','Japan',22,'/Images/no-player.png','Midfielder',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998013,25,'leeds-united','gb-wls','england','Ethan Ampadu','Wales',4,'/Images/no-player.png','Midfielder',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998014,25,'leeds-united','fi','england','Glen Kamara','Finland',8,'/Images/no-player.png','Midfielder',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998015,24,'leeds-united','bg','england','Ilia Gruev','Bulgaria',44,'/Images/no-player.png','Midfielder',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998016,22,'leeds-united','gb-eng','england','Darko Gyabi','England',18,'/Images/no-player.png','Midfielder',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+
+(998017,23,'leeds-united','nl','england','Crysencio Summerville','Netherlands',10,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998018,27,'leeds-united','gb-wls','england','Daniel James','Wales',20,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998019,21,'leeds-united','it','england','Wilfried Gnonto','Italy',29,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998020,31,'leeds-united','gb-eng','england','Patrick Bamford','England',9,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998021,23,'leeds-united','es','england','Mateo Joseph','Spain',19,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(998022,23,'leeds-united','gb-eng','england','Joe Gelhardt','England',30,'/Images/no-player.png','Attacker',63,'Leeds United',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0) [42122-240]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.expression.ExpressionColumn.getColumnException(ExpressionColumn.java:244)
+	at org.h2.expression.ExpressionColumn.optimizeOther(ExpressionColumn.java:226)
+	at org.h2.expression.ExpressionColumn.optimize(ExpressionColumn.java:213)
+	at org.h2.command.dml.Insert.doPrepare(Insert.java:299)
+	at org.h2.command.dml.DataChangeStatement.prepare(DataChangeStatement.java:40)
+	at org.h2.command.Parser.prepareCommand(Parser.java:492)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:647)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:563)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1160)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1344)
+	at org.h2.server.web.WebApp.query(WebApp.java:1142)
+	at org.h2.server.web.WebApp.query(WebApp.java:1118)
+	at org.h2.server.web.WebApp.process(WebApp.java:244)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:176)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+2026-05-24 13:42:05.259593+02:00 jdbc[23]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Błąd składniowy w wyrażeniu SQL "[*]Naruszenie ograniczenia Klucza Głównego lub Indeksu Unikalnego: ""PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)""\000d\000aUnique index or primary key violation: ""PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)"""
+Syntax error in SQL statement "[*]Naruszenie ograniczenia Klucza Głównego lub Indeksu Unikalnego: ""PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)""\000d\000aUnique index or primary key violation: ""PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)"""; SQL statement:
+Naruszenie ograniczenia Klucza Głównego lub Indeksu Unikalnego: "PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)"
+Unique index or primary key violation: "PUBLIC.CONSTRAINT_3 PRIMARY KEY ON PUBLIC.REAL_PLAYER(API_PLAYER_ID) ( /* key:999001 */ 999001, 28, 'crystal-palace', 'gb-eng', 'england', 'Dean Henderson', 'England', 1, '/Images/no-player.png', 'Goalkeeper', 52, 'Crystal Palace', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0)" [42000-240]
+2026-05-24 13:42:05.262593+02:00 jdbc[23]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Błąd składniowy w wyrażeniu SQL "[*]SQL statement:\000d\000aINSERT INTO REAL_PLAYER (\000d\000aAPI_PLAYER_ID, AGE, CLUB_SLUG, COUNTRY_CODE, LEAGUE_SLUG,\000d\000aNAME, NATIONALITY, NUMBER, PHOTO, POSITION, TEAM_ID, TEAM_NAME,\000d\000aAPPEARANCES, ASSISTS, CAPTAIN,\000d\000aDRIBBLES_ATTEMPTS, DRIBBLES_PAST, DRIBBLES_SUCCESS,\000d\000aDUELS_TOTAL, DUELS_WON,\000d\000aFOULS_COMMITTED, FOULS_DRAWN,\000d\000aGOALS, GOALS_CONCEDED,\000d\000aLINEUPS, MINUTES,\000d\000aPASSES_ACCURACY, PASSES_KEY, PASSES_TOTAL,\000d\000aPENALTY_COMMITTED, PENALTY_MISSED, PENALTY_SAVED,\000d\000aPENALTY_SCORED, PENALTY_WON,\000d\000aRATING,\000d\000aRED_CARDS, SAVES,\000d\000aSHOTS_ON, SHOTS_TOTAL,\000d\000aTACKLES_BLOCKS, TACKLES_INTERCEPTIONS, TACKLES_TOTAL,\000d\000aYELLOW_CARDS, YELLOW_RED_CARDS\000d\000a)\000d\000aVALUES\000d\000a(999001,34,'fulham-fc','de','england','Bernd Leno','Germany',1,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',37,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,3330,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999002,35,'fulham-fc','fr','england','Benjamin Lecomte','France',23,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a\000d\000a(999003,26,'fulham-fc','ng','england','Calvin Bassey','Nigeria',3,'/Images/no-player.png','Defender',36,'Fulham FC',29,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,2444,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999004,29,'fulham-fc','dk','england','Joachim Andersen','Denmark',5,'/Images/no-player.png','Defender',36,'Fulham FC',33,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,2878,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,7,1),\000d\000a(999005,29,'fulham-fc','ma','england','Issa Diop','Morocco',31,'/Images/no-player.png','Defender',36,'Fulham FC',12,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,732,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a(999006,26,'fulham-fc','es','england','Jorge Cuenca','Spain',15,'/Images/no-player.png','Defender',36,'Fulham FC',14,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,937,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999007,28,'fulham-fc','us','england','Antonee Robinson','United States',33,'/Images/no-player.png','Defender',36,'Fulham FC',21,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1407,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a(999008,26,'fulham-fc','gb-eng','england','Ryan Sessegnon','England',30,'/Images/no-player.png','Defender',36,'Fulham FC',27,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1828,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999009,30,'fulham-fc','nl','england','Kenny Tete','Netherlands',2,'/Images/no-player.png','Defender',36,'Fulham FC',22,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1797,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a\000d\000a(999010,29,'fulham-fc','pt','england','Joao Palhinha','Portugal',26,'/Images/no-player.png','Midfielder',36,'Fulham FC',30,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2400,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,8,0),\000d\000a(999011,24,'fulham-fc','br','england','Andreas Pereira','Brazil',18,'/Images/no-player.png','Midfielder',36,'Fulham FC',32,5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,6,NULL,NULL,2560,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,6,0),\000d\000a(999012,28,'fulham-fc','ca','england','Ismaila Sarr','Senegal',11,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,NULL,NULL,2210,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a(999013,31,'fulham-fc','gb-eng','england','Harrison Reed','England',6,'/Images/no-player.png','Midfielder',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,95,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999014,35,'fulham-fc','gb-sct','england','Tom Cairney','Scotland',10,'/Images/no-player.png','Midfielder',36,'Fulham FC',23,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,750,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999015,25,'fulham-fc','gb-eng','england','Emile Smith Rowe','England',32,'/Images/no-player.png','Midfielder',36,'Fulham FC',36,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1872,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),\000d\000a(999016,19,'fulham-fc','gb-eng','england','Josh King','England',24,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1302,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a\000d\000a(999017,23,'fulham-fc','br','england','Kevin','Brazil',22,'/Images/no-player.png','Attacker',36,'Fulham FC',25,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,993,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),\000d\000a(999018,30,'fulham-fc','ng','england','Alex Iwobi','Nigeria',17,'/Images/no-player.png','Attacker',36,'Fulham FC',28,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2346,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999019,22,'fulham-fc','no','england','Oscar Bobb','Norway',14,'/Images/no-player.png','Attacker',36,'Fulham FC',13,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,506,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999020,29,'fulham-fc','gb-wls','england','Harry Wilson','Wales',8,'/Images/no-player.png','Attacker',36,'Fulham FC',35,6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,2679,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,7,0),\000d\000a(999021,27,'fulham-fc','ng','england','Samuel Chukwueze','Nigeria',19,'/Images/no-player.png','Attacker',36,'Fulham FC',23,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1086,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999022,25,'fulham-fc','br','england','Rodrigo Muniz','Brazil',9,'/Images/no-player.png','Attacker',36,'Fulham FC',20,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,936,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a(999023,35,'fulham-fc','mx','england','Raul Jimenez','Mexico',7,'/Images/no-player.png','Attacker',36,'Fulham FC',35,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,9,NULL,NULL,2189,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999024,18,'fulham-fc','se','england','Jonah Kusi-Asare','Sweden',18,'/Images/no-player.png','Attacker',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,55,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0) [23505-240] 23505/23505 (Help)"; oczekiwano "SAVEPOINT, SCRIPT, SHUTDOWN"
+Syntax error in SQL statement "[*]SQL statement:\000d\000aINSERT INTO REAL_PLAYER (\000d\000aAPI_PLAYER_ID, AGE, CLUB_SLUG, COUNTRY_CODE, LEAGUE_SLUG,\000d\000aNAME, NATIONALITY, NUMBER, PHOTO, POSITION, TEAM_ID, TEAM_NAME,\000d\000aAPPEARANCES, ASSISTS, CAPTAIN,\000d\000aDRIBBLES_ATTEMPTS, DRIBBLES_PAST, DRIBBLES_SUCCESS,\000d\000aDUELS_TOTAL, DUELS_WON,\000d\000aFOULS_COMMITTED, FOULS_DRAWN,\000d\000aGOALS, GOALS_CONCEDED,\000d\000aLINEUPS, MINUTES,\000d\000aPASSES_ACCURACY, PASSES_KEY, PASSES_TOTAL,\000d\000aPENALTY_COMMITTED, PENALTY_MISSED, PENALTY_SAVED,\000d\000aPENALTY_SCORED, PENALTY_WON,\000d\000aRATING,\000d\000aRED_CARDS, SAVES,\000d\000aSHOTS_ON, SHOTS_TOTAL,\000d\000aTACKLES_BLOCKS, TACKLES_INTERCEPTIONS, TACKLES_TOTAL,\000d\000aYELLOW_CARDS, YELLOW_RED_CARDS\000d\000a)\000d\000aVALUES\000d\000a(999001,34,'fulham-fc','de','england','Bernd Leno','Germany',1,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',37,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,3330,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999002,35,'fulham-fc','fr','england','Benjamin Lecomte','France',23,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a\000d\000a(999003,26,'fulham-fc','ng','england','Calvin Bassey','Nigeria',3,'/Images/no-player.png','Defender',36,'Fulham FC',29,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,2444,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999004,29,'fulham-fc','dk','england','Joachim Andersen','Denmark',5,'/Images/no-player.png','Defender',36,'Fulham FC',33,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,2878,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,7,1),\000d\000a(999005,29,'fulham-fc','ma','england','Issa Diop','Morocco',31,'/Images/no-player.png','Defender',36,'Fulham FC',12,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,732,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a(999006,26,'fulham-fc','es','england','Jorge Cuenca','Spain',15,'/Images/no-player.png','Defender',36,'Fulham FC',14,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,937,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999007,28,'fulham-fc','us','england','Antonee Robinson','United States',33,'/Images/no-player.png','Defender',36,'Fulham FC',21,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1407,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a(999008,26,'fulham-fc','gb-eng','england','Ryan Sessegnon','England',30,'/Images/no-player.png','Defender',36,'Fulham FC',27,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1828,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999009,30,'fulham-fc','nl','england','Kenny Tete','Netherlands',2,'/Images/no-player.png','Defender',36,'Fulham FC',22,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1797,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a\000d\000a(999010,29,'fulham-fc','pt','england','Joao Palhinha','Portugal',26,'/Images/no-player.png','Midfielder',36,'Fulham FC',30,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2400,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,8,0),\000d\000a(999011,24,'fulham-fc','br','england','Andreas Pereira','Brazil',18,'/Images/no-player.png','Midfielder',36,'Fulham FC',32,5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,6,NULL,NULL,2560,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,6,0),\000d\000a(999012,28,'fulham-fc','ca','england','Ismaila Sarr','Senegal',11,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,NULL,NULL,2210,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a(999013,31,'fulham-fc','gb-eng','england','Harrison Reed','England',6,'/Images/no-player.png','Midfielder',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,95,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999014,35,'fulham-fc','gb-sct','england','Tom Cairney','Scotland',10,'/Images/no-player.png','Midfielder',36,'Fulham FC',23,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,750,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999015,25,'fulham-fc','gb-eng','england','Emile Smith Rowe','England',32,'/Images/no-player.png','Midfielder',36,'Fulham FC',36,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1872,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),\000d\000a(999016,19,'fulham-fc','gb-eng','england','Josh King','England',24,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1302,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),\000d\000a\000d\000a(999017,23,'fulham-fc','br','england','Kevin','Brazil',22,'/Images/no-player.png','Attacker',36,'Fulham FC',25,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,993,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),\000d\000a(999018,30,'fulham-fc','ng','england','Alex Iwobi','Nigeria',17,'/Images/no-player.png','Attacker',36,'Fulham FC',28,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2346,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),\000d\000a(999019,22,'fulham-fc','no','england','Oscar Bobb','Norway',14,'/Images/no-player.png','Attacker',36,'Fulham FC',13,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,506,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999020,29,'fulham-fc','gb-wls','england','Harry Wilson','Wales',8,'/Images/no-player.png','Attacker',36,'Fulham FC',35,6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,2679,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,7,0),\000d\000a(999021,27,'fulham-fc','ng','england','Samuel Chukwueze','Nigeria',19,'/Images/no-player.png','Attacker',36,'Fulham FC',23,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1086,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),\000d\000a(999022,25,'fulham-fc','br','england','Rodrigo Muniz','Brazil',9,'/Images/no-player.png','Attacker',36,'Fulham FC',20,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,936,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),\000d\000a(999023,35,'fulham-fc','mx','england','Raul Jimenez','Mexico',7,'/Images/no-player.png','Attacker',36,'Fulham FC',35,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,9,NULL,NULL,2189,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),\000d\000a(999024,18,'fulham-fc','se','england','Jonah Kusi-Asare','Sweden',18,'/Images/no-player.png','Attacker',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,55,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0) [23505-240] 23505/23505 (Help)"; expected "SAVEPOINT, SCRIPT, SHUTDOWN"; SQL statement:
+SQL statement:
+INSERT INTO REAL_PLAYER (
+API_PLAYER_ID, AGE, CLUB_SLUG, COUNTRY_CODE, LEAGUE_SLUG,
+NAME, NATIONALITY, NUMBER, PHOTO, POSITION, TEAM_ID, TEAM_NAME,
+APPEARANCES, ASSISTS, CAPTAIN,
+DRIBBLES_ATTEMPTS, DRIBBLES_PAST, DRIBBLES_SUCCESS,
+DUELS_TOTAL, DUELS_WON,
+FOULS_COMMITTED, FOULS_DRAWN,
+GOALS, GOALS_CONCEDED,
+LINEUPS, MINUTES,
+PASSES_ACCURACY, PASSES_KEY, PASSES_TOTAL,
+PENALTY_COMMITTED, PENALTY_MISSED, PENALTY_SAVED,
+PENALTY_SCORED, PENALTY_WON,
+RATING,
+RED_CARDS, SAVES,
+SHOTS_ON, SHOTS_TOTAL,
+TACKLES_BLOCKS, TACKLES_INTERCEPTIONS, TACKLES_TOTAL,
+YELLOW_CARDS, YELLOW_RED_CARDS
+)
+VALUES
+(999001,34,'fulham-fc','de','england','Bernd Leno','Germany',1,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',37,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,3330,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),
+(999002,35,'fulham-fc','fr','england','Benjamin Lecomte','France',23,'/Images/no-player.png','Goalkeeper',36,'Fulham FC',0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+
+(999003,26,'fulham-fc','ng','england','Calvin Bassey','Nigeria',3,'/Images/no-player.png','Defender',36,'Fulham FC',29,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,2444,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),
+(999004,29,'fulham-fc','dk','england','Joachim Andersen','Denmark',5,'/Images/no-player.png','Defender',36,'Fulham FC',33,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,2878,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,7,1),
+(999005,29,'fulham-fc','ma','england','Issa Diop','Morocco',31,'/Images/no-player.png','Defender',36,'Fulham FC',12,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,732,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),
+(999006,26,'fulham-fc','es','england','Jorge Cuenca','Spain',15,'/Images/no-player.png','Defender',36,'Fulham FC',14,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,937,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),
+(999007,28,'fulham-fc','us','england','Antonee Robinson','United States',33,'/Images/no-player.png','Defender',36,'Fulham FC',21,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1407,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),
+(999008,26,'fulham-fc','gb-eng','england','Ryan Sessegnon','England',30,'/Images/no-player.png','Defender',36,'Fulham FC',27,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1828,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(999009,30,'fulham-fc','nl','england','Kenny Tete','Netherlands',2,'/Images/no-player.png','Defender',36,'Fulham FC',22,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1797,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),
+
+(999010,29,'fulham-fc','pt','england','Joao Palhinha','Portugal',26,'/Images/no-player.png','Midfielder',36,'Fulham FC',30,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2400,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,8,0),
+(999011,24,'fulham-fc','br','england','Andreas Pereira','Brazil',18,'/Images/no-player.png','Midfielder',36,'Fulham FC',32,5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,6,NULL,NULL,2560,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,6,0),
+(999012,28,'fulham-fc','ca','england','Ismaila Sarr','Senegal',11,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,NULL,NULL,2210,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),
+(999013,31,'fulham-fc','gb-eng','england','Harrison Reed','England',6,'/Images/no-player.png','Midfielder',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,95,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(999014,35,'fulham-fc','gb-sct','england','Tom Cairney','Scotland',10,'/Images/no-player.png','Midfielder',36,'Fulham FC',23,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,750,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),
+(999015,25,'fulham-fc','gb-eng','england','Emile Smith Rowe','England',32,'/Images/no-player.png','Midfielder',36,'Fulham FC',36,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1872,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),
+(999016,19,'fulham-fc','gb-eng','england','Josh King','England',24,'/Images/no-player.png','Midfielder',36,'Fulham FC',31,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,1302,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,4,0),
+
+(999017,23,'fulham-fc','br','england','Kevin','Brazil',22,'/Images/no-player.png','Attacker',36,'Fulham FC',25,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,993,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0),
+(999018,30,'fulham-fc','ng','england','Alex Iwobi','Nigeria',17,'/Images/no-player.png','Attacker',36,'Fulham FC',28,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,2346,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,3,0),
+(999019,22,'fulham-fc','no','england','Oscar Bobb','Norway',14,'/Images/no-player.png','Attacker',36,'Fulham FC',13,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,506,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(999020,29,'fulham-fc','gb-wls','england','Harry Wilson','Wales',8,'/Images/no-player.png','Attacker',36,'Fulham FC',35,6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,2679,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,7,0),
+(999021,27,'fulham-fc','ng','england','Samuel Chukwueze','Nigeria',19,'/Images/no-player.png','Attacker',36,'Fulham FC',23,4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,1086,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,0,0),
+(999022,25,'fulham-fc','br','england','Rodrigo Muniz','Brazil',9,'/Images/no-player.png','Attacker',36,'Fulham FC',20,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,936,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,2,0),
+(999023,35,'fulham-fc','mx','england','Raul Jimenez','Mexico',7,'/Images/no-player.png','Attacker',36,'Fulham FC',35,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,9,NULL,NULL,2189,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,5,0),
+(999024,18,'fulham-fc','se','england','Jonah Kusi-Asare','Sweden',18,'/Images/no-player.png','Attacker',36,'Fulham FC',7,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,55,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,1,0) [23505-240] 23505/23505 (Help) [42001-240]
+2026-05-25 11:19:35.237708+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "CLUBS" nie istnieje
+Table "CLUBS" not found; SQL statement:
+SELECT api_team_id, club_slug, league_slug
+FROM clubs
+WHERE league_slug IN ('germany', 'france', 'italy') [42102-240]
+2026-05-25 11:36:53.596595+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Kolumna "manchester-city" nie istnieje
+Column "manchester-city" not found; SQL statement:
+SELECT * FROM REAL_PLAYER Where CLUB_SLUG="manchester-city" [42122-240]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.expression.ExpressionColumn.getColumnException(ExpressionColumn.java:244)
+	at org.h2.expression.ExpressionColumn.optimizeOther(ExpressionColumn.java:226)
+	at org.h2.expression.ExpressionColumn.optimize(ExpressionColumn.java:213)
+	at org.h2.expression.condition.Comparison.optimize(Comparison.java:149)
+	at org.h2.expression.Expression.optimizeCondition(Expression.java:149)
+	at org.h2.command.query.Select.prepareExpressions(Select.java:1215)
+	at org.h2.command.query.Query.prepare(Query.java:235)
+	at org.h2.command.Parser.prepareCommand(Parser.java:492)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:647)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:563)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1160)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1344)
+	at org.h2.server.web.WebApp.query(WebApp.java:1142)
+	at org.h2.server.web.WebApp.query(WebApp.java:1118)
+	at org.h2.server.web.WebApp.process(WebApp.java:244)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:176)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+2026-05-25 11:38:32.832510+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "PLAYERS" nie istnieje
+Table "PLAYERS" not found; SQL statement:
+UPDATE players
+SET 
+    nationality = CASE name
+        WHEN 'A. Witsel' THEN 'BELGIUM'
+        WHEN 'T. Lemar' THEN 'FRANCE'
+        WHEN 'T. Partey' THEN 'GHANA'
+        WHEN 'S. Amrabat' THEN 'MOROCCO'
+        WHEN 'C. Ngonge' THEN 'BELGIUM'
+        WHEN 'M. ter Stegen' THEN 'GERMANY'
+        WHEN 'C. Lenglet' THEN 'FRANCE'
+        WHEN 'P. Gazzaniga' THEN 'ARGENTINA'
+        WHEN 'Angeliño' THEN 'SPAIN'
+        WHEN 'C. Gakpo' THEN 'NETHERLANDS'
+        WHEN 'D. Malen' THEN 'NETHERLANDS'
+        WHEN 'T. Alexander-Arnold' THEN 'ENGLAND'
+        WHEN 'Marcão' THEN 'BRAZIL'
+        WHEN 'D. Blind' THEN 'NETHERLANDS'
+        WHEN 'D. van de Beek' THEN 'NETHERLANDS'
+        WHEN 'O. Vlachodimos' THEN 'GREECE'
+        WHEN 'L. Boyé' THEN 'ARGENTINA'
+        WHEN 'Aymeric Laporte' THEN 'SPAIN'
+        WHEN 'Brahim Díaz' THEN 'MOROCCO'
+        WHEN 'Álvaro Fidalgo' THEN 'SPAIN'
+        WHEN 'M. Díaz' THEN 'DOMINICAN REPUBLIC'
+        WHEN 'L. Pellegrini' THEN 'ITALY'
+        WHEN 'M. Rashford' THEN 'ENGLAND'
+        WHEN 'A. Sánchez' THEN 'CHILE'
+        WHEN 'Gonçalo Guedes' THEN 'PORTUGAL'
+        WHEN 'Carlos Soler' THEN 'SPAIN'
+        WHEN 'S. Kolašinac' THEN 'BOSNIA AND HERZEGOVINA'
+        WHEN 'Denis Suárez' THEN 'SPAIN'
+        WHEN 'Pau López' THEN 'SPAIN'
+        WHEN 'Marc Bartra' THEN 'SPAIN'
+        WHEN 'Junior Firpo' THEN 'DOMINICAN REPUBLIC'
+        WHEN 'K. Tsimikas' THEN 'GREECE'
+        WHEN 'G. Donnarumma' THEN 'ITALY'
+        WHEN 'E. Ndicka' THEN 'IVORY COAST'
+        WHEN 'Luiz Felipe' THEN 'ITALY'
+        WHEN 'D. Ćaleta-Car' THEN 'CROATIA'
+        WHEN 'Bryan Gil' THEN 'SPAIN'
+        WHEN 'César Azpilicueta' THEN 'SPAIN'
+        WHEN 'C. Stuani' THEN 'URUGUAY'
+        WHEN 'Hermoso' THEN 'SPAIN'
+        WHEN 'M. Dmitrović' THEN 'SERBIA'
+        WHEN 'A. Isak' THEN 'SWEDEN'
+        WHEN 'C. Bakambu' THEN 'DR CONGO'
+        WHEN 'J. Álvarez' THEN 'ARGENTINA'
+        WHEN 'T. Almada' THEN 'ARGENTINA'
+        WHEN 'L. Vázquez' THEN 'ARGENTINA'
+        WHEN 'A. Sørloth' THEN 'NORWAY'
+        WHEN 'G. Suazo' THEN 'CHILE'
+        WHEN 'Jonny' THEN 'SPAIN'
+        WHEN 'A. Lookman' THEN 'NIGERIA'
+        WHEN 'Kiko Femenía' THEN 'SPAIN'
+        WHEN 'Diego Rico' THEN 'SPAIN'
+        WHEN 'F. Forster' THEN 'ENGLAND'
+        WHEN 'V. Gyökeres' THEN 'SWEDEN'
+        WHEN 'M. Bettinelli' THEN 'ENGLAND'
+        WHEN 'A. Semenyo' THEN 'GHANA'
+    END,
+
+    country_code = CASE name
+        WHEN 'A. Witsel' THEN 'be'
+        WHEN 'T. Lemar' THEN 'fr'
+        WHEN 'T. Partey' THEN 'gh'
+        WHEN 'S. Amrabat' THEN 'ma'
+        WHEN 'C. Ngonge' THEN 'be'
+        WHEN 'M. ter Stegen' THEN 'de'
+        WHEN 'C. Lenglet' THEN 'fr'
+        WHEN 'P. Gazzaniga' THEN 'ar'
+        WHEN 'Angeliño' THEN 'es'
+        WHEN 'C. Gakpo' THEN 'nl'
+        WHEN 'D. Malen' THEN 'nl'
+        WHEN 'T. Alexander-Arnold' THEN 'gb'
+        WHEN 'Marcão' THEN 'br'
+        WHEN 'D. Blind' THEN 'nl'
+        WHEN 'D. van de Beek' THEN 'nl'
+        WHEN 'O. Vlachodimos' THEN 'gr'
+        WHEN 'L. Boyé' THEN 'ar'
+        WHEN 'Aymeric Laporte' THEN 'es'
+        WHEN 'Brahim Díaz' THEN 'ma'
+        WHEN 'Álvaro Fidalgo' THEN 'es'
+        WHEN 'M. Díaz' THEN 'do'
+        WHEN 'L. Pellegrini' THEN 'it'
+        WHEN 'M. Rashford' THEN 'gb'
+        WHEN 'A. Sánchez' THEN 'cl'
+        WHEN 'Gonçalo Guedes' THEN 'pt'
+        WHEN 'Carlos Soler' THEN 'es'
+        WHEN 'S. Kolašinac' THEN 'ba'
+        WHEN 'Denis Suárez' THEN 'es'
+        WHEN 'Pau López' THEN 'es'
+        WHEN 'Marc Bartra' THEN 'es'
+        WHEN 'Junior Firpo' THEN 'do'
+        WHEN 'K. Tsimikas' THEN 'gr'
+        WHEN 'G. Donnarumma' THEN 'it'
+        WHEN 'E. Ndicka' THEN 'ci'
+        WHEN 'Luiz Felipe' THEN 'it'
+        WHEN 'D. Ćaleta-Car' THEN 'hr'
+        WHEN 'Bryan Gil' THEN 'es'
+        WHEN 'César Azpilicueta' THEN 'es'
+        WHEN 'C. Stuani' THEN 'uy'
+        WHEN 'Hermoso' THEN 'es'
+        WHEN 'M. Dmitrović' THEN 'rs'
+        WHEN 'A. Isak' THEN 'se'
+        WHEN 'C. Bakambu' THEN 'cd'
+        WHEN 'J. Álvarez' THEN 'ar'
+        WHEN 'T. Almada' THEN 'ar'
+        WHEN 'L. Vázquez' THEN 'ar'
+        WHEN 'A. Sørloth' THEN 'no'
+        WHEN 'G. Suazo' THEN 'cl'
+        WHEN 'Jonny' THEN 'es'
+        WHEN 'A. Lookman' THEN 'ng'
+        WHEN 'Kiko Femenía' THEN 'es'
+        WHEN 'Diego Rico' THEN 'es'
+        WHEN 'F. Forster' THEN 'gb'
+        WHEN 'V. Gyökeres' THEN 'se'
+        WHEN 'M. Bettinelli' THEN 'gb'
+        WHEN 'A. Semenyo' THEN 'gh'
+    END
+
+WHERE nationality = '-' [42102-240]
+2026-05-25 11:48:41.993835+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "PLAYERS" nie istnieje
+Table "PLAYERS" not found; SQL statement:
+SELECT *
+FROM players
+WHERE club_slug = 'un'
+  AND nationality = '-' [42102-240]
