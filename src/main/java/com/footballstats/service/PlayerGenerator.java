@@ -3,6 +3,7 @@ package com.footballstats.service;
 import com.footballstats.model.GeneratedPlayer;
 import com.footballstats.model.RealTeam;
 import net.datafaker.Faker;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -19,36 +20,49 @@ public class PlayerGenerator {
         Collections.shuffle(positions);
 
         List<GeneratedPlayer> squad = new ArrayList<>();
+
         for (int i = 0; i < squadSize; i++) {
             squad.add(generatePlayerForTeam(team, positions.get(i), i + 1));
         }
+
         return squad;
     }
 
     private GeneratedPlayer generatePlayerForTeam(RealTeam team, String position, int shirtNumber) {
         int age = randomAge();
+
         String rawCountryCode = randomCountryCodeForLeague(team.getLeagueSlug());
         CountryData country = normalizeCountry(nationalityFromCode(rawCountryCode));
 
         GeneratedPlayer player = new GeneratedPlayer();
+
         player.setFirstName(faker.name().firstName());
         player.setLastName(faker.name().lastName());
+
         player.setBirthDate(LocalDate.now().minusYears(age).minusDays(random.nextInt(365)));
         player.setAge(age);
+
         player.setHeight(randomHeightByPosition(position));
         player.setNationality(country.name());
         player.setCountryCode(country.code());
+
         player.setPosition(position);
         player.setPreferredFoot(feet.get(random.nextInt(feet.size())));
         player.setShirtNumber(shirtNumber);
+
         player.setCurrentClub(team.getApiTeamName());
         player.setClubSlug(team.getClubSlug());
         player.setLeagueSlug(team.getLeagueSlug());
         player.setTeamId(team.getApiTeamId());
+
         player.setJoinedClubDate(LocalDate.now().minusYears(random.nextInt(1, 7)));
         player.setContractUntil(LocalDate.now().plusYears(random.nextInt(1, 6)));
         player.setLastContractExtension(LocalDate.now().minusMonths(random.nextInt(1, 24)));
-        player.setMarketValue(randomMarketValue(age, position));
+
+        player.setMarketValue(
+                randomMarketValue(age, position, team.getLeagueSlug())
+        );
+
         player.setActive(true);
         player.setImageUrl("https://via.placeholder.com/80");
 
@@ -57,6 +71,7 @@ public class PlayerGenerator {
 
     private List<String> buildPositionList(int squadSize) {
         List<String> result = new ArrayList<>();
+
         int goalkeepers = squadSize >= 25 ? 3 : 2;
         int defenders = Math.max(6, squadSize / 3);
         int midfielders = Math.max(6, squadSize / 3);
@@ -72,9 +87,11 @@ public class PlayerGenerator {
 
     private int randomAge() {
         int chance = random.nextInt(100);
+
         if (chance < 45) return random.nextInt(18, 24);
         if (chance < 80) return random.nextInt(24, 29);
         if (chance < 95) return random.nextInt(29, 34);
+
         return random.nextInt(34, 38);
     }
 
@@ -88,27 +105,96 @@ public class PlayerGenerator {
         };
     }
 
-    private BigDecimal randomMarketValue(int age, String position) {
-        int minSteps, maxSteps;
-        if (age <= 21) { minSteps = 1; maxSteps = 48; }
-        else if (age <= 28) { minSteps = 4; maxSteps = 180; }
-        else if (age <= 33) { minSteps = 2; maxSteps = 80; }
-        else { minSteps = 1; maxSteps = 20; }
+    private BigDecimal randomMarketValue(int age, String position, String leagueSlug) {
+        long value;
 
-        int steps = random.nextInt(minSteps, maxSteps + 1);
-        long value = steps * 250_000L;
+        int chance = random.nextInt(1000);
+
+        if (chance < 8) {
+            value = random.nextLong(100_000_000L, 220_000_001L);
+        }
+        else if (chance < 35) {
+            value = random.nextLong(60_000_000L, 100_000_001L);
+        }
+        else if (chance < 120) {
+            value = random.nextLong(25_000_000L, 60_000_001L);
+        }
+        else {
+            int minSteps;
+            int maxSteps;
+
+            if (age <= 21) {
+                minSteps = 1;
+                maxSteps = 48;
+            }
+            else if (age <= 28) {
+                minSteps = 4;
+                maxSteps = 180;
+            }
+            else if (age <= 33) {
+                minSteps = 2;
+                maxSteps = 80;
+            }
+            else {
+                minSteps = 1;
+                maxSteps = 20;
+            }
+
+            int steps = random.nextInt(minSteps, maxSteps + 1);
+            value = steps * 250_000L;
+        }
+
+        value = Math.round(value * leagueValueMultiplier(leagueSlug));
 
         if ("Goalkeeper".equals(position)) {
-            value = Math.round(value * 0.75 / 250_000.0) * 250_000L;
+            value = Math.round(value * 0.75);
         }
+
+        value = Math.round(value / 250_000.0) * 250_000L;
+
         return BigDecimal.valueOf(value);
+    }
+
+    private double leagueValueMultiplier(String leagueSlug) {
+        return switch (leagueSlug) {
+            case "england" -> 1.45;
+            case "italy" -> 1.35;
+            case "spain" -> 1.32;
+            case "germany" -> 1.26;
+            case "france" -> 1.16;
+
+            case "netherlands" -> 1.00;
+            case "portugal" -> 0.96;
+            case "belgium" -> 0.86;
+            case "turkiye" -> 0.80;
+
+            case "czech" -> 0.74;
+            case "greece" -> 0.72;
+            case "norway" -> 0.69;
+            case "austria" -> 0.67;
+            case "scotland" -> 0.65;
+            case "denmark" -> 0.63;
+            case "switzerland" -> 0.61;
+
+            case "poland" -> 0.58;
+            case "israel" -> 0.55;
+            case "sweden" -> 0.52;
+            case "croatia" -> 0.50;
+            case "serbia" -> 0.48;
+            case "ukraine" -> 0.46;
+            case "romania" -> 0.44;
+            case "bulgaria" -> 0.40;
+            case "russia" -> 0.35;
+
+            default -> 0.55;
+        };
     }
 
     private String randomCountryCodeForLeague(String leagueSlug) {
         List<String> globalPool = List.of(
-                "br","ar","fr","es","de","it","pt","nl","be","hr","rs","dk","se","no","pl","cz",
-                "sk","ua","tr","us","mx","co","uy","cl","ng","gh","sn","ci","ma","dz","cm","jp",
-                "kr","ch","at","ie","gb-eng","gb-sct","gb-wls"
+                "br", "ar", "fr", "es", "de", "it", "pt", "nl", "be", "hr", "rs", "dk", "se", "no", "pl", "cz",
+                "sk", "ua", "tr", "us", "mx", "co", "uy", "cl", "ng", "gh", "sn", "ci", "ma", "dz", "cm", "jp",
+                "kr", "ch", "at", "ie", "gb-eng", "gb-sct", "gb-wls"
         );
 
         List<String> leagueFlavor = switch (leagueSlug) {
@@ -127,29 +213,60 @@ public class PlayerGenerator {
         };
 
         int chance = random.nextInt(100);
+
         if (chance < 35) {
             return leagueFlavor.get(random.nextInt(leagueFlavor.size()));
         }
+
         return globalPool.get(random.nextInt(globalPool.size()));
     }
 
     private String nationalityFromCode(String code) {
         return switch (code) {
-            case "gb-eng" -> "England"; case "gb-sct" -> "Scotland"; case "gb-wls" -> "Wales";
-            case "ie" -> "Ireland"; case "es" -> "Spain"; case "fr" -> "France";
-            case "de" -> "Germany"; case "it" -> "Italy"; case "pt" -> "Portugal";
-            case "nl" -> "Netherlands"; case "br" -> "Brazil"; case "ar" -> "Argentina";
-            case "pl" -> "Poland"; case "be" -> "Belgium"; case "hr" -> "Croatia";
-            case "rs" -> "Serbia"; case "dk" -> "Denmark"; case "se" -> "Sweden";
-            case "no" -> "Norway"; case "ng" -> "Nigeria"; case "gh" -> "Ghana";
-            case "ma" -> "Morocco"; case "ua" -> "Ukraine"; case "cz" -> "Czech Republic";
-            case "sk" -> "Slovakia"; case "at" -> "Austria"; case "ch" -> "Switzerland";
-            case "ci" -> "Ivory Coast"; case "sn" -> "Senegal"; case "ao" -> "Angola";
-            case "cv" -> "Cape Verde"; case "sr" -> "Suriname"; case "tr" -> "Turkey";
-            case "us" -> "USA"; case "mx" -> "Mexico"; case "co" -> "Colombia";
-            case "uy" -> "Uruguay"; case "cl" -> "Chile"; case "dz" -> "Algeria";
-            case "cm" -> "Cameroon"; case "jp" -> "Japan"; case "kr" -> "South Korea";
-            case "al" -> "Albania"; case "cd" -> "DR Congo";
+            case "gb-eng" -> "England";
+            case "gb-sct" -> "Scotland";
+            case "gb-wls" -> "Wales";
+            case "ie" -> "Ireland";
+            case "es" -> "Spain";
+            case "fr" -> "France";
+            case "de" -> "Germany";
+            case "it" -> "Italy";
+            case "pt" -> "Portugal";
+            case "nl" -> "Netherlands";
+            case "br" -> "Brazil";
+            case "ar" -> "Argentina";
+            case "pl" -> "Poland";
+            case "be" -> "Belgium";
+            case "hr" -> "Croatia";
+            case "rs" -> "Serbia";
+            case "dk" -> "Denmark";
+            case "se" -> "Sweden";
+            case "no" -> "Norway";
+            case "ng" -> "Nigeria";
+            case "gh" -> "Ghana";
+            case "ma" -> "Morocco";
+            case "ua" -> "Ukraine";
+            case "cz" -> "Czech Republic";
+            case "sk" -> "Slovakia";
+            case "at" -> "Austria";
+            case "ch" -> "Switzerland";
+            case "ci" -> "Ivory Coast";
+            case "sn" -> "Senegal";
+            case "ao" -> "Angola";
+            case "cv" -> "Cape Verde";
+            case "sr" -> "Suriname";
+            case "tr" -> "Turkey";
+            case "us" -> "USA";
+            case "mx" -> "Mexico";
+            case "co" -> "Colombia";
+            case "uy" -> "Uruguay";
+            case "cl" -> "Chile";
+            case "dz" -> "Algeria";
+            case "cm" -> "Cameroon";
+            case "jp" -> "Japan";
+            case "kr" -> "South Korea";
+            case "al" -> "Albania";
+            case "cd" -> "DR Congo";
             default -> "Unknown";
         };
     }
@@ -203,12 +320,15 @@ public class PlayerGenerator {
     private String findIsoCountryCode(String countryName) {
         for (String iso : Locale.getISOCountries()) {
             Locale locale = new Locale("", iso);
+
             if (locale.getDisplayCountry(Locale.ENGLISH).equalsIgnoreCase(countryName)) {
                 return iso.toLowerCase();
             }
         }
+
         return "un";
     }
 
-    private record CountryData(String name, String code) {}
+    private record CountryData(String name, String code) {
+    }
 }
