@@ -70,13 +70,12 @@ public class LeagueClubController {
         if (league == null) {
             throw new RuntimeException("League not found: " + leagueSlug);
         }
-
         model.addAttribute("leagueSlug", league.slug());
         model.addAttribute("leagueName", league.name());
         model.addAttribute("leagueLogo", league.logo());
         model.addAttribute("clubs", loadClubsFromFolder(league.folder()));
 
-        return "league-clubs";
+        return "league_clubs";
     }
 
     @GetMapping("/clubs/{leagueSlug}/{clubSlug}")
@@ -138,7 +137,7 @@ public class LeagueClubController {
         model.addAttribute("teamData", teamData);
         model.addAttribute("players", players);
 
-        return "club-details";
+        return "club_details";
     }
 
     private void savePlayersToDatabase(List<PlayerRow> players,
@@ -150,13 +149,11 @@ public class LeagueClubController {
         List<RealPlayer> realPlayers = players.stream()
                 .map(player -> {
                     RealPlayer realPlayer = new RealPlayer();
-
                     realPlayer.setApiPlayerId(player.id());
                     realPlayer.setTeamId(teamId);
                     realPlayer.setTeamName(teamName);
                     realPlayer.setLeagueSlug(leagueSlug);
                     realPlayer.setClubSlug(clubSlug);
-
                     realPlayer.setNumber(player.number());
                     realPlayer.setName(player.name());
                     realPlayer.setPosition(player.position());
@@ -164,43 +161,33 @@ public class LeagueClubController {
                     realPlayer.setNationality(player.nationality());
                     realPlayer.setCountryCode(player.countryCode());
                     realPlayer.setPhoto(player.photo());
-
                     realPlayer.setAppearances(player.appearances());
                     realPlayer.setLineups(player.lineups());
                     realPlayer.setMinutes(player.minutes());
                     realPlayer.setRating(player.rating());
                     realPlayer.setCaptain(player.captain());
-
                     realPlayer.setGoals(player.goals());
                     realPlayer.setAssists(player.assists());
                     realPlayer.setGoalsConceded(player.goalsConceded());
                     realPlayer.setSaves(player.saves());
-
                     realPlayer.setShotsTotal(player.shotsTotal());
                     realPlayer.setShotsOn(player.shotsOn());
-
                     realPlayer.setPassesTotal(player.passesTotal());
                     realPlayer.setPassesKey(player.passesKey());
                     realPlayer.setPassesAccuracy(player.passesAccuracy());
-
                     realPlayer.setTacklesTotal(player.tacklesTotal());
                     realPlayer.setTacklesBlocks(player.tacklesBlocks());
                     realPlayer.setTacklesInterceptions(player.tacklesInterceptions());
-
                     realPlayer.setDuelsTotal(player.duelsTotal());
                     realPlayer.setDuelsWon(player.duelsWon());
-
                     realPlayer.setDribblesAttempts(player.dribblesAttempts());
                     realPlayer.setDribblesSuccess(player.dribblesSuccess());
                     realPlayer.setDribblesPast(player.dribblesPast());
-
                     realPlayer.setFoulsDrawn(player.foulsDrawn());
                     realPlayer.setFoulsCommitted(player.foulsCommitted());
-
                     realPlayer.setYellowCards(player.yellowCards());
                     realPlayer.setYellowRedCards(player.yellowRedCards());
                     realPlayer.setRedCards(player.redCards());
-
                     realPlayer.setPenaltyWon(player.penaltyWon());
                     realPlayer.setPenaltyCommitted(player.penaltyCommitted());
                     realPlayer.setPenaltyScored(player.penaltyScored());
@@ -495,43 +482,33 @@ public class LeagueClubController {
                             nationality,
                             getCountryCodeForNationality(nationality),
                             photo,
-
                             appearances,
                             lineups,
                             minutes,
                             rating,
                             captain,
-
                             goals,
                             assists,
                             goalsConceded,
                             saves,
-
                             shotsTotal,
                             shotsOn,
-
                             passesTotal,
                             passesKey,
                             passesAccuracy,
-
                             tacklesTotal,
                             tacklesBlocks,
                             tacklesInterceptions,
-
                             duelsTotal,
                             duelsWon,
-
                             dribblesAttempts,
                             dribblesSuccess,
                             dribblesPast,
-
                             foulsDrawn,
                             foulsCommitted,
-
                             yellowCards,
                             yellowRedCards,
                             redCards,
-
                             penaltyWon,
                             penaltyCommitted,
                             penaltyScored,

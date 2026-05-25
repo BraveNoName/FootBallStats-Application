@@ -66,6 +66,7 @@ body {
     border-radius: 999px;
     padding: 12px 18px;
     color: #cbd5e1;
+    margin-left: 25px;
 }
 
 .league-search input {
@@ -92,6 +93,7 @@ body {
 .league-filters {
     display: flex;
     gap: 14px;
+    margin-right: 30px;
 }
 
 .league-filter {

@@ -353,17 +353,11 @@
 
 .regenerate-overlay {
     display: none;
-
     position: fixed;
-
     inset: 0;
-
     z-index: 999999;
-
     background: rgba(15, 23, 42, 0.45);
-
     backdrop-filter: blur(4px);
-
     justify-content: center;
     align-items: center;
 }
@@ -374,27 +368,19 @@
 
 .regenerate-box {
     width: 320px;
-
     background: #ffffff;
-
     border-radius: 22px;
-
     overflow: hidden;
-
     box-shadow:
         0 25px 60px rgba(15, 23, 42, 0.28);
 }
 
 .regenerate-box h3 {
     margin: 0;
-
     padding: 16px 20px;
-
     font-size: 18px;
     font-weight: 800;
-
     color: white;
-
     background:
         linear-gradient(135deg,
         #16a34a 0%,
@@ -403,12 +389,9 @@
 
 .regenerate-box p {
     margin: 0;
-
     padding: 18px 20px;
-
     font-size: 13px;
     line-height: 1.5;
-
     color: #475569;
 }
 
@@ -425,16 +408,11 @@
 
 .regenerate-actions button {
     border: none;
-
     border-radius: 12px;
-
     padding: 9px 14px;
-
     font-size: 12px;
     font-weight: 700;
-
     cursor: pointer;
-
     transition: 0.18s ease;
 }
 
@@ -443,25 +421,21 @@
         linear-gradient(135deg,
         #dc2626 0%,
         #b91c1c 100%);
-
     color: white;
 }
 
 #confirmRegenerateBtn:hover {
     transform: translateY(-2px);
-
     filter: brightness(1.05);
 }
 
 #closeRegenerateBtn {
     background: #e2e8f0;
-
     color: #0f172a;
 }
 
 #closeRegenerateBtn:hover {
     background: #cbd5e1;
-
     transform: translateY(-2px);
 }
 

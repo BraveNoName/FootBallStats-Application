@@ -416,13 +416,18 @@
   <div class="footer-bottom"><p>&copy; 2026 FootballStats System. All rights reserved.</p></div>
 </footer>
 
-<script src="/js/sort_P_T.js"></script>
+<script src="/js/sort_player_table.js"></script>
 <script th:if="${currentPage == 'real'}" th:inline="javascript">
   window.playersSearchData = /*[[${allPlayersSearch}]]*/ [];
 </script>
 <script th:src="@{/js/tab_title.js}"></script>
 <script src="/js/search_nav_bar.js"></script>
 <script src="/js/generated_players.js"></script>
+
+<button type="button" id="scrollTopBtn" class="scroll-top-btn" title="Back to top">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
+<script src="/js/scroll_top_btn.js"></script>
 
 </body>
 </html>

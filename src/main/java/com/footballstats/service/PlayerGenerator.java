@@ -109,36 +109,30 @@ public class PlayerGenerator {
         long value;
 
         int chance = random.nextInt(1000);
+        int leagueTier = leagueTier(leagueSlug);
 
-        if (chance < 8) {
+        if (leagueTier == 1 && chance < 35) {
             value = random.nextLong(100_000_000L, 220_000_001L);
         }
-        else if (chance < 35) {
+        else if (leagueTier == 1 && chance < 120) {
             value = random.nextLong(60_000_000L, 100_000_001L);
         }
-        else if (chance < 120) {
-            value = random.nextLong(25_000_000L, 60_000_001L);
+        else if (leagueTier == 2 && chance < 12) {
+            value = random.nextLong(80_000_000L, 150_000_001L);
+        }
+        else if (leagueTier == 2 && chance < 55) {
+            value = random.nextLong(35_000_000L, 80_000_001L);
+        }
+        else if (leagueTier == 3 && chance < 18) {
+            value = random.nextLong(20_000_000L, 60_000_001L);
         }
         else {
-            int minSteps;
-            int maxSteps;
+            int minSteps, maxSteps;
 
-            if (age <= 21) {
-                minSteps = 1;
-                maxSteps = 48;
-            }
-            else if (age <= 28) {
-                minSteps = 4;
-                maxSteps = 180;
-            }
-            else if (age <= 33) {
-                minSteps = 2;
-                maxSteps = 80;
-            }
-            else {
-                minSteps = 1;
-                maxSteps = 20;
-            }
+            if (age <= 21) { minSteps = 1; maxSteps = 48; }
+            else if (age <= 28) { minSteps = 4; maxSteps = 180; }
+            else if (age <= 33) { minSteps = 2; maxSteps = 80; }
+            else { minSteps = 1; maxSteps = 20; }
 
             int steps = random.nextInt(minSteps, maxSteps + 1);
             value = steps * 250_000L;
@@ -153,6 +147,16 @@ public class PlayerGenerator {
         value = Math.round(value / 250_000.0) * 250_000L;
 
         return BigDecimal.valueOf(value);
+    }
+
+    private int leagueTier(String leagueSlug) {
+        return switch (leagueSlug) {
+            case "england", "spain", "italy", "germany", "france" -> 1;
+            case "netherlands", "portugal", "belgium", "turkiye" -> 2;
+            case "czech", "greece", "norway", "austria", "scotland",
+                 "denmark", "switzerland" -> 3;
+            default -> 4;
+        };
     }
 
     private double leagueValueMultiplier(String leagueSlug) {
