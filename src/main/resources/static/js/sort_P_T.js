@@ -73,3 +73,114 @@
         return true;
     }
 
+
+const leagueSelect = document.querySelector('select[name="league"]');
+const clubSelect = document.querySelector('select[name="club"]');
+
+if (leagueSelect && clubSelect) {
+
+    const originalOptions = Array.from(clubSelect.querySelectorAll("option"));
+
+    function filterClubs() {
+
+        const selectedLeague = leagueSelect.value;
+
+        clubSelect.innerHTML = "";
+
+        originalOptions.forEach(option => {
+
+            const optionLeague = option.getAttribute("data-league");
+
+            if (
+                option.value === "" ||
+                selectedLeague === "" ||
+                optionLeague === selectedLeague
+            ) {
+                clubSelect.appendChild(option.cloneNode(true));
+            }
+        });
+    }
+
+    leagueSelect.addEventListener("change", filterClubs);
+}
+
+const playerSearchInput = document.getElementById("playerSearchInput");
+const playerSuggestions = document.getElementById("playerSuggestions");
+
+if (playerSearchInput && playerSuggestions) {
+
+    playerSearchInput.addEventListener("input", () => {
+
+        const query = playerSearchInput.value.trim().toLowerCase();
+
+        playerSuggestions.innerHTML = "";
+
+        if (query.length < 1 || !window.playersSearchData) {
+            playerSuggestions.classList.remove("show");
+            return;
+        }
+
+        const filtered = window.playersSearchData
+            .filter(player => {
+                const fullName =
+                    player.fullName ||
+                    player.name ||
+                    `${player.firstName || ""} ${player.lastName || ""}`.trim();
+
+                return fullName.toLowerCase().includes(query);
+            })
+            .slice(0, 8);
+
+        filtered.forEach(player => {
+
+            const fullName =
+                player.fullName ||
+                player.name ||
+                `${player.firstName || ""} ${player.lastName || ""}`.trim();
+
+            const club =
+                player.currentClub ||
+                player.teamName ||
+                player.clubSlug ||
+                "";
+
+            const image =
+                player.imageUrl ||
+                player.photo ||
+                "/Images/default-player.png";
+
+            const item = document.createElement("div");
+            item.className = "search-suggestion";
+
+            item.innerHTML = `
+                <div class="search-item-left">
+                    <img src="${image}"
+                         class="search-logo"
+                         onerror="this.src='/Images/default-player.png'">
+
+                    <div class="search-info">
+                        <strong>${fullName}</strong>
+                        <span>${club}</span>
+                    </div>
+                </div>
+            `;
+
+            item.addEventListener("click", () => {
+                playerSearchInput.value = fullName;
+                playerSuggestions.classList.remove("show");
+            });
+
+            playerSuggestions.appendChild(item);
+        });
+
+        playerSuggestions.classList.toggle("show", filtered.length > 0);
+    });
+
+    document.addEventListener("click", e => {
+        if (!e.target.closest(".player-search-wrapper")) {
+            playerSuggestions.classList.remove("show");
+        }
+    });
+}
+
+console.log("playersSearchData:", window.playersSearchData);

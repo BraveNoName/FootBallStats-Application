@@ -78,72 +78,309 @@
 </nav>
 
 <main class="players-page">
-  <h1 th:text="#{players.title}">Players Database</h1>
 
-  <div class="generate-actions" th:if="${currentPage == 'generated'}">
-    <form action="/players/generated/regenerate" method="get" class="generate-form" onsubmit="return validateGenerateForm()">
-      <input type="number" name="count" min="1" th:placeholder="#{players.enterNumber}" th:data-alert="#{players.enterNumberAlert}" class="generate-input">
-      <button type="submit" class="generate-btn">
-        <i class="fa-solid fa-rotate"></i>
-        <span th:text="#{players.generate}">Generate players</span>
-      </button>
-    </form>
-  </div>
+  <h1 th:text="${currentPage == 'generated'} ? 'Generated players database' : #{players.title}">
+    Players database
+  </h1>
+
+  <form class="players-filter-panel"
+        method="get"
+        th:action="${currentPage == 'real'} ? @{/players/real} : @{/players/generated}">
+
+    <div class="player-search-wrapper"
+         th:classappend="${currentPage == 'generated'} ? ' hidden-player-search' : ''">
+
+      <input type="text"
+             id="playerSearchInput"
+             name="q"
+             placeholder="Search player..."
+             autocomplete="off"
+             th:value="${q}">
+
+      <div id="playerSuggestions"
+           class="search-suggestions">
+      </div>
+
+    </div>
+
+    <select name="league">
+
+      <option value="">All leagues</option>
+
+      <option th:each="item : ${leagues}"
+              th:value="${item}"
+              th:text="${#strings.capitalize(item.replace('-', ' '))}"
+              th:selected="${item == league}">
+      </option>
+
+    </select>
+
+    <select name="club">
+
+      <option value="">All clubs</option>
+
+      <option th:each="item : ${clubs}"
+              th:value="${item}"
+              th:text="${#strings.capitalizeWords(item.replace('-', ' '))}"
+              th:selected="${item == club}"
+              th:attr="data-league=${clubLeagueMap.get(item)}">
+      </option>
+
+    </select>
+
+    <select name="position">
+
+      <option value="">All positions</option>
+
+      <option th:each="item : ${positions}"
+              th:value="${item}"
+              th:text="${item}"
+              th:selected="${item == position}">
+      </option>
+
+    </select>
+
+    <select name="nationality">
+
+      <option value="">All nationalities</option>
+
+      <option th:each="item : ${nationalities}"
+              th:value="${item}"
+              th:text="${item}"
+              th:selected="${item == nationality}">
+      </option>
+
+    </select>
+
+    <select name="sort">
+
+      <option value="nameAsc"
+              th:selected="${sort == 'nameAsc'}">
+        Name A-Z
+      </option>
+
+      <option value="nameDesc"
+              th:selected="${sort == 'nameDesc'}">
+        Name Z-A
+      </option>
+
+      <option value="ageAsc"
+              th:selected="${sort == 'ageAsc'}">
+        Age ascending
+      </option>
+
+      <option value="ageDesc"
+              th:selected="${sort == 'ageDesc'}">
+        Age descending
+      </option>
+
+      <option value="valueAsc"
+              th:selected="${sort == 'valueAsc'}">
+        Value ascending
+      </option>
+
+      <option value="valueDesc"
+              th:selected="${sort == 'valueDesc'}">
+        Value descending
+      </option>
+
+      <option value="clubAsc"
+              th:selected="${sort == 'clubAsc'}">
+        Club A-Z
+      </option>
+
+      <option value="clubDesc"
+              th:selected="${sort == 'clubDesc'}">
+        Club Z-A
+      </option>
+
+    </select>
+
+    <button type="submit">
+      <i class="fa-solid fa-filter"></i>
+      Filter
+    </button>
+
+    <div id="regenerateOverlay"></div>
+
+    <a th:href="${currentPage == 'real'} ? @{/players/real} : @{/players/generated}"
+       class="clear-filter-btn">
+      Clear
+    </a>
+
+    <a th:if="${currentPage == 'generated'}"
+       href="#"
+       class="generate-btn"
+       id="generateSquadsBtn"
+       th:attr="data-generated=${hasGeneratedPlayers}">
+
+      <i class="fa-solid fa-rotate"></i>
+
+      <span th:text="${hasGeneratedPlayers} ? 'Regenerate squads' : 'Generate squads'">
+        Generate squads
+    </span>
+
+    </a>
+
+  </form>
 
   <div class="players-table-wrapper">
+
     <table>
+
       <thead>
+
       <tr>
+
+        <th>League</th>
+
         <th th:text="#{players.club}">Club</th>
-        <th class="sortable" data-type="number"><span th:text="#{players.number}">Number</span> <i class="fa-solid fa-sort"></i></th>
+
+        <th class="sortable" data-type="number">
+          <span th:text="#{players.number}">Number</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
         <th th:text="#{players.player}">Player</th>
-        <th class="sortable" data-type="date"><span th:text="#{players.birthDate}">Birth Date</span> <i class="fa-solid fa-sort"></i></th>
-        <th class="sortable" data-type="number"><span th:text="#{players.age}">Age</span> <i class="fa-solid fa-sort"></i></th>
-        <th class="sortable" data-type="money"><span th:text="#{players.marketValue}">Market Value</span> <i class="fa-solid fa-sort"></i></th>
+
+        <th class="sortable" data-type="date">
+          <span th:text="#{players.birthDate}">Birth Date</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
+        <th class="sortable" data-type="number">
+          <span th:text="#{players.age}">Age</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
+        <th class="sortable" data-type="money">
+          <span th:text="#{players.marketValue}">Market Value</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
         <th th:text="#{players.nationality}">Nationality</th>
+
         <th th:text="#{players.position}">Position</th>
+
         <th th:text="#{players.foot}">Foot</th>
-        <th class="sortable" data-type="number"><span th:text="#{players.height}">Height</span> <i class="fa-solid fa-sort"></i></th>
-        <th class="sortable" data-type="date"><span th:text="#{players.joined}">Joined</span> <i class="fa-solid fa-sort"></i></th>
-        <th class="sortable" data-type="date"><span th:text="#{players.contractUntil}">Contract Until</span> <i class="fa-solid fa-sort"></i></th>
-        <th class="sortable" data-type="date"><span th:text="#{players.extension}">Last Extension</span> <i class="fa-solid fa-sort"></i></th>
+
+        <th class="sortable" data-type="number">
+          <span th:text="#{players.height}">Height</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
+        <th class="sortable" data-type="date">
+          <span th:text="#{players.joined}">Joined</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
+        <th class="sortable" data-type="date">
+          <span th:text="#{players.contractUntil}">Contract Until</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
+        <th class="sortable" data-type="date">
+          <span th:text="#{players.extension}">Last Extension</span>
+          <i class="fa-solid fa-sort"></i>
+        </th>
+
         <th th:text="#{players.status}">Status</th>
+
       </tr>
+
       </thead>
+
       <tbody>
-      <tr th:each="player : ${players}">
-        <td th:text="${player.currentClub}"></td>
-        <td th:text="${player.shirtNumber}"></td>
-        <td class="player-cell">
-          <img th:src="${player.imageUrl}" alt="player image">
-          <div class="player-info">
-            <div class="player-name">
-              <span th:text="${player.firstName}"></span>
-              <span th:text="${player.lastName}"></span>
-            </div>
-            <div class="player-position" th:text="${player.position}"></div>
-          </div>
+
+      <tr th:if="${players.isEmpty()}">
+        <td colspan="15" style="padding: 28px; text-align: center; font-weight: 800; color: #64748b;">
+          Use filters to display players.
         </td>
-        <td th:text="${player.birthDate}"></td>
-        <td th:text="${player.age}"></td>
-        <td th:text="${player.formattedMarketValue}"></td>
-        <td>
-          <div class="nationality-cell">
-            <span th:class="'fi fi-' + ${player.countryCode}"></span>
-            <span th:text="${player.nationality}"></span>
-          </div>
-        </td>
-        <td th:text="${player.position}"></td>
-        <td th:text="${player.preferredFoot}"></td>
-        <td th:text="${player.height + ' cm'}"></td>
-        <td th:text="${player.joinedClubDate}"></td>
-        <td th:text="${player.contractUntil}"></td>
-        <td th:text="${player.lastContractExtension}"></td>
-        <td th:text="${player.active} ? #{players.active} : #{players.retired}"></td>
       </tr>
+
+      <tr th:each="player : ${players}">
+
+        <td>
+          <div class="logo-name-cell">
+            <img th:src="${player.leagueLogoUrl}" alt="league logo" loading="lazy">
+            <span th:text="${player.formattedLeagueSlug}"></span>
+          </div>
+        </td>
+
+        <td>
+          <div class="logo-name-cell">
+            <img th:src="${player.clubLogoUrl}" alt="club logo" loading="lazy">
+            <span th:text="${player.currentClub}"></span>
+          </div>
+        </td>
+
+        <td th:text="${player.shirtNumber}"></td>
+
+        <td class="player-cell">
+
+          <img th:src="${player.imageUrl}"
+               alt="player image"
+               loading="lazy"
+               onerror="this.onerror=null;this.src='/Images/default-player.png';">
+
+          <div class="player-info">
+
+            <div class="player-name">
+
+              <span th:text="${player.firstName}"></span>
+
+              <span th:text="${player.lastName}"></span>
+
+            </div>
+
+            <div class="player-position"
+                 th:text="${player.position}">
+            </div>
+
+          </div>
+
+        </td>
+
+        <td th:text="${player.birthDate}"></td>
+
+        <td th:text="${player.age}"></td>
+
+        <td th:text="${player.formattedMarketValue}"></td>
+
+        <td>
+
+          <div class="nationality-cell">
+
+            <span th:class="'fi fi-' + ${player.countryCode}"></span>
+
+            <span th:text="${player.formattedNationality}"></span>
+
+          </div>
+
+        </td>
+
+        <td th:text="${player.position}"></td>
+
+        <td th:text="${player.preferredFoot}"></td>
+
+        <td th:text="${player.height + ' cm'}"></td>
+
+        <td th:text="${player.joinedClubDate}"></td>
+
+        <td th:text="${player.contractUntil}"></td>
+
+        <td th:text="${player.lastContractExtension}"></td>
+
+        <td th:text="${player.active} ? #{players.active} : #{players.retired}"></td>
+
+      </tr>
+
       </tbody>
+
     </table>
+
   </div>
+
 </main>
 
 <footer>
@@ -180,8 +417,12 @@
 </footer>
 
 <script src="/js/sort_P_T.js"></script>
+<script th:if="${currentPage == 'real'}" th:inline="javascript">
+  window.playersSearchData = /*[[${allPlayersSearch}]]*/ [];
+</script>
 <script th:src="@{/js/tab_title.js}"></script>
 <script src="/js/search_nav_bar.js"></script>
+<script src="/js/generated_players.js"></script>
 
 </body>
 </html>

@@ -533,3 +533,20 @@ footer::before {
 @media (max-width: 900px) {
     .nav-search { display: none; }
 }
+
+.players-table-wrapper th:nth-child(3),
+.players-table-wrapper td:nth-child(3) {
+    width: 70px !important;
+    min-width: 62px !important;
+    max-width: 70px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+}
+
+.logo-name-cell span {
+    white-space: normal;
+    line-height: 1.15;
+    overflow-wrap: break-word;
+    word-break: keep-all;
+    hyphens: none;
+}
