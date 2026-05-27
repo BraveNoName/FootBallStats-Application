@@ -966,3 +966,184 @@
 .half-divider span {
     white-space: nowrap;
 }
+
+.match-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.show-lineups-btn {
+    border: none;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.lineups-board {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.lineup-column {
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px;
+    background: rgba(15,23,42,0.70);
+    padding: 14px;
+}
+
+.lineup-player {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.lineup-player-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lineup-number {
+    width: 24px;
+    min-width: 24px;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 900;
+    color: #f8fafc;
+}
+
+.lineup-flag {
+    font-size: 0.85rem;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.lineup-player img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.lineup-player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.lineup-player strong {
+    display: block;
+    color: #f8fafc;
+    font-size: 0.8rem;
+    line-height: 1.1;
+}
+
+.lineup-player span {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.67rem;
+    line-height: 1.1;
+}
+
+.empty-lineup {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.lineups-section-title {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lineup-player-events {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.lineup-event-icon {
+    width: 15px !important;
+    height: 15px !important;
+    border-radius: 3px !important;
+    object-fit: contain;
+    background: rgba(255,255,255,0.08);
+    padding: 1px;
+}
+
+.bench-title {
+    margin-top: 18px;
+}
+
+@media (max-width: 760px) {
+    .lineups-board {
+        grid-template-columns: 1fr;
+    }
+}
+
+.season-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.75);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.season-confirm-overlay.show {
+    display: flex;
+}
+
+.season-confirm-modal {
+    width: min(420px, calc(100% - 32px));
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 22px;
+    padding: 24px;
+    color: white;
+    text-align: center;
+}
+
+.season-confirm-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.season-confirm-actions button {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+#cancelSeasonGenerateBtn {
+    background: #334155;
+    color: white;
+}
+
+#confirmSeasonGenerateBtn {
+    background: #ef4444;
+    color: white;
+}

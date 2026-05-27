@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import jakarta.persistence.Column;
 
 @Entity
 public class GeneratedPlayer {
@@ -32,6 +33,12 @@ public class GeneratedPlayer {
     private BigDecimal marketValue;
     private boolean active;
     private String imageUrl;
+
+    @Column(nullable = true)
+    private Integer injuredMatches = 0;
+
+    @Column(nullable = true)
+    private Integer suspendedMatches = 0;
 
     public String getFormattedMarketValue() {
         if (marketValue == null) return "-";
@@ -109,4 +116,11 @@ public class GeneratedPlayer {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public int getInjuredMatches() { return injuredMatches == null ? 0 : injuredMatches;}
+    public void setInjuredMatches(int injuredMatches) { this.injuredMatches = injuredMatches;}
+
+    public Integer getSuspendedMatches() {return suspendedMatches == null ? 0 : suspendedMatches;}
+    public void setSuspendedMatches(Integer suspendedMatches) {this.suspendedMatches = suspendedMatches;}
+
 }

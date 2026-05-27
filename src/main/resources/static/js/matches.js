@@ -172,19 +172,49 @@ document.addEventListener("DOMContentLoaded", function () {
     const leagueSelect = document.getElementById("leagueSelect");
     const leagueError = document.getElementById("leagueError");
 
-    if (generateForm) {
-        generateForm.addEventListener("submit", function (e) {
-            if (!leagueSelect.value) {
-                e.preventDefault();
+   const seasonConfirmOverlay = document.getElementById("seasonConfirmOverlay");
+   const cancelSeasonGenerateBtn = document.getElementById("cancelSeasonGenerateBtn");
+   const confirmSeasonGenerateBtn = document.getElementById("confirmSeasonGenerateBtn");
 
-                leagueError.classList.add("show");
-                leagueSelect.style.border = "1px solid rgba(248,113,113,0.8)";
-            } else {
-                leagueError.classList.remove("show");
-                leagueSelect.style.border = "1px solid rgba(255,255,255,0.14)";
-            }
-        });
-    }
+   if (cancelSeasonGenerateBtn && seasonConfirmOverlay) {
+       cancelSeasonGenerateBtn.addEventListener("click", function () {
+           seasonConfirmOverlay.classList.remove("show");
+       });
+   }
+
+   if (confirmSeasonGenerateBtn && generateForm) {
+       confirmSeasonGenerateBtn.addEventListener("click", function () {
+           generateForm.dataset.confirmed = "true";
+           generateForm.submit();
+       });
+   }
+
+   if (generateForm) {
+       generateForm.addEventListener("submit", function (e) {
+           if (!leagueSelect.value) {
+               e.preventDefault();
+
+               leagueError.classList.add("show");
+               leagueSelect.style.border = "1px solid rgba(248,113,113,0.8)";
+               return;
+           }
+
+           leagueError.classList.remove("show");
+           leagueSelect.style.border = "1px solid rgba(255,255,255,0.14)";
+
+           if (generateForm.dataset.seasonGenerated === "true"
+               && generateForm.dataset.confirmed !== "true") {
+
+               e.preventDefault();
+
+               if (seasonConfirmOverlay) {
+                   seasonConfirmOverlay.classList.add("show");
+               }
+
+               return;
+           }
+       });
+   }
 
     const sortableHeaders =
         document.querySelectorAll(".sortable-header th[data-sort]");
@@ -236,10 +266,9 @@ document.addEventListener("DOMContentLoaded", function () {
 async function toggleMatchEvents(matchId) {
 
     const eventsContainer = document.getElementById(`events-${matchId}`);
+    const lineupsContainer = document.getElementById(`lineups-${matchId}`);
     const statsContainer = document.getElementById(`stats-${matchId}`);
-    const button = eventsContainer
-        ? eventsContainer.previousElementSibling
-        : null;
+    const button = document.querySelector(`[onclick="toggleMatchEvents(${matchId})"]`);
 
     if (!eventsContainer || !statsContainer || !button) {
         return;
@@ -254,6 +283,10 @@ async function toggleMatchEvents(matchId) {
         button.textContent = "Match events";
 
         return;
+    }
+
+    if (lineupsContainer) {
+        lineupsContainer.innerHTML = "";
     }
 
     statsContainer.style.display = "none";
@@ -330,6 +363,152 @@ async function toggleMatchEvents(matchId) {
     html += `</div>`;
 
     eventsContainer.innerHTML = html;
+}
+
+async function toggleMatchLineups(matchId) {
+
+    const lineupsContainer = document.getElementById(`lineups-${matchId}`);
+    const eventsContainer = document.getElementById(`events-${matchId}`);
+    const statsContainer = document.getElementById(`stats-${matchId}`);
+    const button = document.querySelector(`[onclick="toggleMatchLineups(${matchId})"]`);
+
+    if (!lineupsContainer || !statsContainer || !button) {
+        return;
+    }
+
+    if (lineupsContainer.innerHTML.trim() !== "") {
+        lineupsContainer.innerHTML = "";
+        statsContainer.style.display = "block";
+        button.textContent = "Lineups";
+        return;
+    }
+
+    if (eventsContainer) {
+        eventsContainer.innerHTML = "";
+    }
+
+    statsContainer.style.display = "none";
+    button.textContent = "Click to return to match statistics";
+
+    const response = await fetch(`/matches/${matchId}/lineups`);
+    const lineups = await response.json();
+
+    lineupsContainer.innerHTML = `
+
+        <div class="lineups-section-title">
+            Starting lineups
+        </div>
+
+        <div class="lineups-board">
+            ${renderTeamLineup("", lineups.homeLineup, "home")}
+            ${renderTeamLineup("", lineups.awayLineup, "away")}
+        </div>
+
+        <div class="lineups-section-title bench-title">
+            Bench
+        </div>
+
+        <div class="lineups-board">
+            ${renderTeamLineup("", lineups.homeBench, "home")}
+            ${renderTeamLineup("", lineups.awayBench, "away")}
+        </div>
+    `;
+}
+
+function renderTeamLineup(title, players, side) {
+    if (!players || players.length === 0) {
+        return `
+            <div class="lineup-column ${side}">
+                ${title ? `<h4>${title}</h4>` : ""}
+                <p class="empty-lineup">No generated players for this team.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="lineup-column ${side}">
+            <h4>${title}</h4>
+            ${players.map(renderLineupPlayer).join("")}
+        </div>
+    `;
+}
+
+function renderLineupPlayer(player) {
+
+    const number = player.shirtNumber ?? "-";
+    const position = player.position ?? "";
+
+    const image = player.imageUrl && player.imageUrl.trim() !== ""
+        ? player.imageUrl
+        : "/Images/player_placeholder.png";
+
+    const countryCode = player.countryCode
+        ? player.countryCode.toLowerCase()
+        : "";
+
+    const flag = countryCode
+        ? `<span class="fi fi-${countryCode} lineup-flag"></span>`
+        : "";
+
+    const eventIcons = player.events && player.events.length > 0
+        ? player.events.map(event => `
+            <img class="lineup-event-icon"
+                 src="${event.iconUrl}"
+                 title="${formatLineupEventTitle(event)}"
+                 alt="${event.eventType}">
+        `).join("")
+        : "";
+
+    return `
+        <div class="lineup-player">
+
+            <div class="lineup-player-left">
+
+                <div class="lineup-number">
+                    ${number}
+                </div>
+
+                ${flag}
+
+                <div class="lineup-player-info">
+
+                    <strong>
+                        ${player.name}
+                    </strong>
+
+                    <span>
+                        ${position}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="lineup-player-events">
+                ${eventIcons}
+            </div>
+
+        </div>
+    `;
+}
+
+function formatLineupEventTitle(event) {
+    const names = {
+        GOAL: "Goal",
+        PENALTY_GOAL: "Penalty scored",
+        PENALTY_MISSED: "Penalty missed",
+        OWN_GOAL: "Own goal",
+        YELLOW_CARD: "Yellow card",
+        RED_CARD: "Red card",
+        SECOND_YELLOW_RED_CARD: "Second yellow card",
+        INJURY: "Injury",
+        SUBSTITUTION: "Substitution"
+    };
+
+    const eventName = names[event.eventType] ?? event.eventType;
+    const minute = event.minute ? ` ${event.minute}'` : "";
+
+    return eventName + minute;
 }
 
 function renderEventContent(event) {

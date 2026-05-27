@@ -46,6 +46,8 @@ public class Match {
     private Integer passAccuracyAway;
     private Double xgHome;
     private Double xgAway;
+    private String homeFormation;
+    private String awayFormation;
 
     public Match() {
     }
@@ -159,4 +161,11 @@ public class Match {
 
     public Double getXgAway() { return xgAway; }
     public void setXgAway(Double xgAway) { this.xgAway = xgAway; }
+
+    public String getHomeFormation() {return homeFormation;}
+    public void setHomeFormation(String homeFormation) {this.homeFormation = homeFormation;}
+
+    public String getAwayFormation() {return awayFormation;}
+    public void setAwayFormation(String awayFormation) {this.awayFormation = awayFormation;}
+
 }

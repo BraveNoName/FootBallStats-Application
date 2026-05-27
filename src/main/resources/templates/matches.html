@@ -147,7 +147,8 @@
         <form action="/matches/generate"
               method="post"
               class="generate-form"
-              id="generateForm">
+              id="generateForm"
+              th:attr="data-season-generated=${seasonAlreadyGenerated}">
 
             <select id="leagueSelect"
                     name="league"
@@ -302,14 +303,28 @@
 
                             <div class="match-events-section">
 
-                                <button class="show-events-btn"
-                                        type="button"
-                                        th:attr="onclick='toggleMatchEvents(' + ${match.id} + ')'">
-                                    Match events
-                                </button>
+                                <div class="match-action-buttons">
+
+                                    <button class="show-events-btn"
+                                            type="button"
+                                            th:attr="onclick='toggleMatchEvents(' + ${match.id} + ')'">
+                                        Match events
+                                    </button>
+
+                                    <button class="show-lineups-btn"
+                                            type="button"
+                                            th:attr="onclick='toggleMatchLineups(' + ${match.id} + ')'">
+                                        Lineups
+                                    </button>
+
+                                </div>
 
                                 <div class="match-events-container"
                                      th:id="'events-' + ${match.id}">
+                                </div>
+
+                                <div class="match-lineups-container"
+                                     th:id="'lineups-' + ${match.id}">
                                 </div>
 
                             </div>
@@ -621,6 +636,27 @@
         <p>&copy; 2026 FootballStats System. All rights reserved.</p>
     </div>
 </footer>
+
+<div class="season-confirm-overlay" id="seasonConfirmOverlay">
+    <div class="season-confirm-modal">
+        <h3>Season already generated</h3>
+
+        <p>
+            Matches for this league have already been generated.
+            Generating a new season will delete the current season and all match events.
+        </p>
+
+        <div class="season-confirm-actions">
+            <button type="button" id="cancelSeasonGenerateBtn">
+                Cancel
+            </button>
+
+            <button type="button" id="confirmSeasonGenerateBtn">
+                Generate new season
+            </button>
+        </div>
+    </div>
+</div>
 
 <script src="/js/matches.js"></script>
 <script th:src="@{/js/tab_title.js}"></script>
