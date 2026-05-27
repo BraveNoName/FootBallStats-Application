@@ -383,6 +383,19 @@
                                 </div>
 
                                 <div class="stat-row"
+                                     th:attr="data-home=${match.offsidesHome}, data-away=${match.offsidesAway}">
+                                    <div class="stat-values">
+                                        <span th:text="${match.offsidesHome}">0</span>
+                                        <strong>Offsides</strong>
+                                        <span th:text="${match.offsidesAway}">0</span>
+                                    </div>
+                                    <div class="stat-meter">
+                                        <div class="stat-fill home-fill"></div>
+                                        <div class="stat-fill away-fill"></div>
+                                    </div>
+                                </div>
+
+                                <div class="stat-row"
                                      th:attr="data-home=${match.yellowCardsHome}, data-away=${match.yellowCardsAway}">
                                     <div class="stat-values">
                                         <span th:text="${match.yellowCardsHome}">0</span>

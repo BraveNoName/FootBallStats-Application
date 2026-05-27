@@ -117,12 +117,28 @@ document.addEventListener("DOMContentLoaded", function () {
             const homeFill = row.querySelector(".home-fill");
             const awayFill = row.querySelector(".away-fill");
 
-            if (!homeFill || !awayFill || total === 0) {
+            if (!homeFill || !awayFill) {
                 return;
             }
 
-            const homePercent = (home / total) * 100;
-            const awayPercent = 100 - homePercent;
+            if (total === 0) {
+                homeFill.style.width = "50%";
+                awayFill.style.width = "50%";
+                return;
+            }
+
+            let homePercent = (home / total) * 100;
+            let awayPercent = 100 - homePercent;
+
+            if (home > 0 && homePercent < 4) {
+                homePercent = 4;
+                awayPercent = 96;
+            }
+
+            if (away > 0 && awayPercent < 4) {
+                awayPercent = 4;
+                homePercent = 96;
+            }
 
             homeFill.style.width = homePercent + "%";
             awayFill.style.width = awayPercent + "%";

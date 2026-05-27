@@ -30,7 +30,6 @@ public class MatchGeneratorService {
 
     @Transactional
     public void generateLeagueSeason(String league) {
-
         matchRepository.deleteByLeague(league);
         matchEventRepository.deleteAll();
 
@@ -49,7 +48,6 @@ public class MatchGeneratorService {
     }
 
     private List<Match> generateRoundRobinMatches(String league, List<TeamInfo> teams) {
-
         List<TeamInfo> clubs = new ArrayList<>(teams);
 
         if (clubs.size() % 2 != 0) {
@@ -64,14 +62,11 @@ public class MatchGeneratorService {
         List<Match> matches = new ArrayList<>();
 
         for (int round = 1; round <= roundsPerLeg; round++) {
-
             for (int i = 0; i < matchesPerRound; i++) {
-
                 TeamInfo home = rotation.get(i);
                 TeamInfo away = rotation.get(numberOfTeams - 1 - i);
 
                 if (!home.name().equals("BYE") && !away.name().equals("BYE")) {
-
                     if (round % 2 == 0) {
                         matches.add(createMatch(league, round, away, home));
                     } else {
@@ -101,7 +96,6 @@ public class MatchGeneratorService {
     }
 
     private Match createMatch(String league, int round, TeamInfo home, TeamInfo away) {
-
         Match match = new Match();
 
         match.setLeague(league);
@@ -130,7 +124,7 @@ public class MatchGeneratorService {
         int homeGoals = generateGoals();
         int awayGoals = generateGoals();
 
-        if (random.nextInt(100) < 12) {
+        if (random.nextInt(100) < 8) {
             homeGoals++;
         }
 
@@ -148,8 +142,9 @@ public class MatchGeneratorService {
         match.setHalfTimeHomeGoals(random.nextInt(homeGoals + 1));
         match.setHalfTimeAwayGoals(random.nextInt(awayGoals + 1));
 
-        match.setPossessionHome(40 + random.nextInt(30));
-        match.setPossessionAway(100 - match.getPossessionHome());
+        int possessionHome = 20 + random.nextInt(61);
+        match.setPossessionHome(possessionHome);
+        match.setPossessionAway(100 - possessionHome);
 
         match.setShotsHome(5 + random.nextInt(16));
         match.setShotsAway(5 + random.nextInt(16));
@@ -163,14 +158,16 @@ public class MatchGeneratorService {
         match.setFoulsHome(5 + random.nextInt(16));
         match.setFoulsAway(5 + random.nextInt(16));
 
-        match.setOffsidesHome(random.nextInt(6));
-        match.setOffsidesAway(random.nextInt(6));
+        match.setOffsidesHome(generateOffsides());
+        match.setOffsidesAway(generateOffsides());
 
-        match.setYellowCardsHome(random.nextInt(5));
-        match.setYellowCardsAway(random.nextInt(5));
+        match.setYellowCardsHome(generateYellowCards());
+        match.setYellowCardsAway(generateYellowCards());
 
-        match.setRedCardsHome(random.nextInt(2));
-        match.setRedCardsAway(random.nextInt(2));
+        match.setRedCardsHome(generateRedCards());
+        match.setRedCardsAway(generateRedCards());
+
+        applyRedCardImpact(match);
 
         match.setPassesHome(300 + random.nextInt(450));
         match.setPassesAway(300 + random.nextInt(450));
@@ -189,24 +186,8 @@ public class MatchGeneratorService {
     }
 
     private void generateMatchEvents(Match match) {
-
-        generateEventsForTeam(
-                match,
-                match.getHomeTeam(),
-                match.getHomeGoals(),
-                match.getYellowCardsHome(),
-                match.getRedCardsHome(),
-                true
-        );
-
-        generateEventsForTeam(
-                match,
-                match.getAwayTeam(),
-                match.getAwayGoals(),
-                match.getYellowCardsAway(),
-                match.getRedCardsAway(),
-                false
-        );
+        generateEventsForTeam(match, match.getHomeGoals(), match.getYellowCardsHome(), match.getRedCardsHome(), true);
+        generateEventsForTeam(match, match.getAwayGoals(), match.getYellowCardsAway(), match.getRedCardsAway(), false);
 
         generateInjuryEvents(match);
 
@@ -218,14 +199,14 @@ public class MatchGeneratorService {
     }
 
     private void generateEventsForTeam(Match match,
-                                       String teamName,
                                        int goals,
                                        int yellowCards,
                                        int redCards,
                                        boolean homeTeam) {
 
-        for (int i = 0; i < goals; i++) {
+        String teamSide = homeTeam ? "HOME" : "AWAY";
 
+        for (int i = 0; i < goals; i++) {
             int roll = random.nextInt(100);
 
             String eventType;
@@ -251,7 +232,7 @@ public class MatchGeneratorService {
             event.setMatchId(match.getId());
             event.setEventMinute(1 + random.nextInt(90));
             event.setEventType(eventType);
-            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setTeamSide(teamSide);
             event.setIconUrl(iconUrl);
             event.setPlayerName(homeTeam ? "Home player" : "Away player");
 
@@ -268,35 +249,40 @@ public class MatchGeneratorService {
         for (int i = 0; i < yellowCards; i++) {
             saveEvent(
                     match,
-                    1 + random.nextInt(90),
+                    generateCardMinute(),
                     "YELLOW_CARD",
                     homeTeam ? "Home player" : "Away player",
                     "Yellow card",
-                    "/Images/match_events/yellow_card.png"
+                    "/Images/match_events/yellow_card.png",
+                    teamSide
             );
         }
 
         for (int i = 0; i < redCards; i++) {
+            boolean secondYellow = random.nextInt(100) < 45;
+
             saveEvent(
                     match,
-                    1 + random.nextInt(90),
-                    "RED_CARD",
+                    generateCardMinute(),
+                    secondYellow ? "SECOND_YELLOW_RED_CARD" : "RED_CARD",
                     homeTeam ? "Home player" : "Away player",
-                    "Red card",
-                    "/Images/match_events/red_card.png"
+                    secondYellow ? "Second yellow card" : "Red card",
+                    secondYellow
+                            ? "/Images/match_events/two_yellows_to_red_card.png"
+                            : "/Images/match_events/red_card.png",
+                    teamSide
             );
         }
     }
 
     private void generateInjuryEvents(Match match) {
-
         int injuries = random.nextInt(100) < 18 ? 1 : 0;
 
         for (int i = 0; i < injuries; i++) {
-
             boolean homeTeam = random.nextBoolean();
+            String teamSide = homeTeam ? "HOME" : "AWAY";
 
-            int injuryMinute = 10 + random.nextInt(65);
+            int injuryMinute = 1 + random.nextInt(90);
 
             String injuredPlayer = homeTeam ? "Home injured player" : "Away injured player";
 
@@ -305,7 +291,7 @@ public class MatchGeneratorService {
             event.setMatchId(match.getId());
             event.setEventMinute(injuryMinute);
             event.setEventType("INJURY");
-            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setTeamSide(teamSide);
             event.setIconUrl("/Images/match_events/injury.png");
             event.setPlayerName(injuredPlayer);
             event.setDescription("Injury: " + getRandomInjuryType());
@@ -324,15 +310,19 @@ public class MatchGeneratorService {
     }
 
     private void generateSubstitutionEvents(Match match, boolean homeTeam) {
+        String teamSide = homeTeam ? "HOME" : "AWAY";
 
         InjuredPlayerInfo injuredPlayerInfo = homeTeam
                 ? injuredHomePlayers.remove(match.getId())
                 : injuredAwayPlayers.remove(match.getId());
 
-        int substitutions = 3 + random.nextInt(3);
+        int substitutions = generateSubstitutionsCount();
+
+        if (injuredPlayerInfo != null && substitutions == 0) {
+            substitutions = 1;
+        }
 
         for (int i = 0; i < substitutions; i++) {
-
             boolean forcedInjurySubstitution = i == 0 && injuredPlayerInfo != null;
 
             MatchEvent event = new MatchEvent();
@@ -340,13 +330,13 @@ public class MatchGeneratorService {
             event.setMatchId(match.getId());
 
             if (forcedInjurySubstitution) {
-                event.setEventMinute(injuredPlayerInfo.injuryMinute() + 1);
+                event.setEventMinute(Math.min(injuredPlayerInfo.injuryMinute() + 1, 90));
             } else {
-                event.setEventMinute(46 + random.nextInt(45));
+                event.setEventMinute(generateSubstitutionMinute());
             }
 
             event.setEventType("SUBSTITUTION");
-            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setTeamSide(teamSide);
             event.setIconUrl("/Images/match_events/change.png");
 
             event.setPlayerName(homeTeam ? "Home player in" : "Away player in");
@@ -368,48 +358,89 @@ public class MatchGeneratorService {
     }
 
     private void generatePenaltyMissEvents(Match match) {
-
         int penaltiesMissed = random.nextInt(100) < 15 ? 1 : 0;
 
         for (int i = 0; i < penaltiesMissed; i++) {
-
             boolean homeTeam = random.nextBoolean();
 
-            MatchEvent event = new MatchEvent();
-
-            event.setMatchId(match.getId());
-            event.setEventMinute(1 + random.nextInt(90));
-            event.setEventType("PENALTY_MISSED");
-            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
-            event.setIconUrl("/Images/match_events/penalty_missed.png");
-            event.setPlayerName(homeTeam ? "Home player" : "Away player");
-            event.setDescription("Penalty missed");
-
-            matchEventRepository.save(event);
+            saveEvent(
+                    match,
+                    1 + random.nextInt(90),
+                    "PENALTY_MISSED",
+                    homeTeam ? "Home player" : "Away player",
+                    "Penalty missed",
+                    "/Images/match_events/penalty_missed.png",
+                    homeTeam ? "HOME" : "AWAY"
+            );
         }
     }
 
     private void generateVarEvents(Match match) {
-
         int varEvents = random.nextInt(100) < 20 ? 1 : 0;
 
         for (int i = 0; i < varEvents; i++) {
+            boolean homeTeam = random.nextBoolean();
+            String teamSide = homeTeam ? "HOME" : "AWAY";
 
-            MatchEvent event = new MatchEvent();
+            int minute = 1 + random.nextInt(89);
 
-            event.setMatchId(match.getId());
-            event.setEventMinute(1 + random.nextInt(90));
-            event.setEventType("VAR");
-            event.setTeamSide("CENTER");
-            event.setIconUrl("/Images/match_events/Var.png");
-            event.setDescription("VAR review");
+            String[] result = getRandomVarResult();
 
-            matchEventRepository.save(event);
+            saveEvent(
+                    match,
+                    minute,
+                    result[0],
+                    "",
+                    result[1],
+                    "/Images/match_events/Var.png",
+                    teamSide
+            );
+
+            if (result[0].equals("VAR_PENALTY_AWARDED")) {
+                boolean scored = random.nextInt(100) < 78;
+
+                saveEvent(
+                        match,
+                        minute + 1,
+                        scored ? "PENALTY_GOAL" : "PENALTY_MISSED",
+                        homeTeam ? "Home player" : "Away player",
+                        scored ? "Penalty scored after VAR" : "Penalty missed after VAR",
+                        scored
+                                ? "/Images/match_events/penalty.png"
+                                : "/Images/match_events/penalty_missed.png",
+                        teamSide
+                );
+            }
         }
     }
 
-    private String getRandomInjuryType() {
+    private String[] getRandomVarResult() {
+        int roll = random.nextInt(100);
 
+        if (roll < 20) {
+            return new String[]{"VAR_GOAL_DISALLOWED", "VAR: goal disallowed for offside"};
+        }
+
+        if (roll < 38) {
+            return new String[]{"VAR_GOAL_CONFIRMED", "VAR: goal confirmed"};
+        }
+
+        if (roll < 55) {
+            return new String[]{"VAR_PENALTY_AWARDED", "VAR: penalty awarded"};
+        }
+
+        if (roll < 72) {
+            return new String[]{"VAR_NO_PENALTY", "VAR: no penalty"};
+        }
+
+        if (roll < 86) {
+            return new String[]{"VAR_RED_CARD_CONFIRMED", "VAR: red card confirmed"};
+        }
+
+        return new String[]{"VAR_NO_RED_CARD", "VAR: no red card"};
+    }
+
+    private String getRandomInjuryType() {
         return List.of(
                 "Concussion",
                 "Nasal fracture",
@@ -463,7 +494,8 @@ public class MatchGeneratorService {
                            String eventType,
                            String playerName,
                            String description,
-                           String iconUrl) {
+                           String iconUrl,
+                           String teamSide) {
 
         MatchEvent event = new MatchEvent();
 
@@ -473,12 +505,31 @@ public class MatchGeneratorService {
         event.setPlayerName(playerName);
         event.setDescription(description);
         event.setIconUrl(iconUrl);
+        event.setTeamSide(teamSide);
 
         matchEventRepository.save(event);
     }
 
-    private int generateGoals() {
+    private void applyRedCardImpact(Match match) {
+        int homeRedCards = match.getRedCardsHome();
+        int awayRedCards = match.getRedCardsAway();
 
+        if (homeRedCards > awayRedCards) {
+            int difference = homeRedCards - awayRedCards;
+
+            match.setHomeGoals(Math.max(0, match.getHomeGoals() - difference));
+            match.setAwayGoals(match.getAwayGoals() + random.nextInt(difference + 2));
+        }
+
+        if (awayRedCards > homeRedCards) {
+            int difference = awayRedCards - homeRedCards;
+
+            match.setAwayGoals(Math.max(0, match.getAwayGoals() - difference));
+            match.setHomeGoals(match.getHomeGoals() + random.nextInt(difference + 2));
+        }
+    }
+
+    private int generateGoals() {
         int roll = random.nextInt(1000);
 
         if (roll < 90) return 0;
@@ -494,8 +545,80 @@ public class MatchGeneratorService {
         return 9 + random.nextInt(3);
     }
 
-    private List<TeamInfo> loadTeamsFromLeagueFolder(String league) {
+    private int generateYellowCards() {
+        int roll = random.nextInt(1000);
 
+        if (roll < 60) return 0;
+        if (roll < 190) return 1;
+        if (roll < 390) return 2;
+        if (roll < 620) return 3;
+        if (roll < 790) return 4;
+        if (roll < 900) return 5;
+        if (roll < 960) return 6;
+        if (roll < 985) return 7;
+        if (roll < 995) return 8;
+
+        return 9 + random.nextInt(3);
+    }
+
+    private int generateRedCards() {
+        int roll = random.nextInt(1000);
+
+        if (roll < 900) return 0;
+        if (roll < 985) return 1;
+
+        return 2;
+    }
+
+    private int generateCardMinute() {
+        int roll = random.nextInt(100);
+
+        if (roll < 8) return 1 + random.nextInt(30);
+        if (roll < 35) return 31 + random.nextInt(30);
+        if (roll < 75) return 61 + random.nextInt(20);
+
+        return 81 + random.nextInt(10);
+    }
+
+    private int generateSubstitutionsCount() {
+        int roll = random.nextInt(100);
+
+        if (roll < 3) return 0;
+        if (roll < 8) return 1;
+        if (roll < 18) return 2;
+        if (roll < 35) return 3;
+        if (roll < 65) return 4;
+
+        return 5;
+    }
+
+    private int generateSubstitutionMinute() {
+        int roll = random.nextInt(100);
+
+        if (roll < 5) return 1 + random.nextInt(45);
+        if (roll < 35) return 46 + random.nextInt(20);
+        if (roll < 75) return 66 + random.nextInt(15);
+
+        return 81 + random.nextInt(10);
+    }
+
+    private int generateOffsides() {
+        int roll = random.nextInt(1000);
+
+        if (roll < 80) return 0;
+        if (roll < 220) return 1;
+        if (roll < 420) return 2;
+        if (roll < 620) return 3;
+        if (roll < 780) return 4;
+        if (roll < 890) return 5;
+        if (roll < 950) return 6;
+        if (roll < 980) return 7;
+        if (roll < 992) return 8;
+
+        return 9 + random.nextInt(4);
+    }
+
+    private List<TeamInfo> loadTeamsFromLeagueFolder(String league) {
         String folderName = getLeagueFolderName(league);
 
         try {
@@ -509,7 +632,6 @@ public class MatchGeneratorService {
             List<TeamInfo> teams = new ArrayList<>();
 
             for (Resource resource : resources) {
-
                 String fileName = resource.getFilename();
 
                 if (fileName == null) {
@@ -537,7 +659,6 @@ public class MatchGeneratorService {
     }
 
     private String getLeagueFolderName(String league) {
-
         return switch (league) {
             case "austria" -> "Austria - Bundesliga";
             case "belgium" -> "Belgium - Jupiler Pro League";
