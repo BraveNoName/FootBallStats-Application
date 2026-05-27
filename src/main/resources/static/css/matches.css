@@ -814,3 +814,155 @@
     }
 }
 
+/* MATCH EVENTS */
+
+.match-events-section {
+    padding: 0 26px 18px;
+}
+
+.show-events-btn {
+    width: 100%;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.14);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: 0.2s ease;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+.show-events-btn:hover {
+    background: rgba(255,255,255,0.22);
+}
+
+/* EVENTS TIMELINE */
+
+.match-events-container {
+    margin-top: 2px;
+}
+
+.events-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 720px;
+    margin: 8px auto 0;
+}
+
+.timeline-row {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) 42px minmax(0, 220px);
+    justify-content: center;
+    gap: 2px;
+    align-items: center;
+}
+
+.timeline-minute {
+    text-align: center;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #22c55e;
+}
+
+.timeline-cell {
+    display: flex;
+}
+
+.home-cell {
+    justify-content: flex-end;
+}
+
+.away-cell {
+    justify-content: flex-start;
+}
+
+.timeline-event-content {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 9px;
+    padding: 6px 8px;
+    max-width: 190px;
+    min-width: 120px;
+}
+
+.event-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.event-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.event-text strong {
+    font-size: 0.76rem;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.event-text small {
+    font-size: 0.64rem;
+    color: #94a3b8;
+    line-height: 1.1;
+}
+
+@media (max-width: 700px) {
+
+    .timeline-row {
+        grid-template-columns: 1fr 36px 1fr;
+        gap: 4px;
+    }
+
+    .timeline-event-content {
+        min-width: auto;
+        max-width: 145px;
+        padding: 6px;
+    }
+
+    .event-text strong {
+        font-size: 0.68rem;
+    }
+
+    .event-text small {
+        font-size: 0.6rem;
+    }
+
+    .timeline-minute {
+        font-size: 0.68rem;
+    }
+}
+
+.half-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 4px;
+    color: #94a3b8;
+    font-size: 0.66rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.half-divider::before,
+.half-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.10);
+}
+
+.half-divider span {
+    white-space: nowrap;
+}

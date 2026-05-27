@@ -217,3 +217,153 @@ document.addEventListener("DOMContentLoaded", function () {
     updateStatBars();
 });
 
+async function toggleMatchEvents(matchId) {
+
+    const eventsContainer = document.getElementById(`events-${matchId}`);
+    const statsContainer = document.getElementById(`stats-${matchId}`);
+    const button = eventsContainer
+        ? eventsContainer.previousElementSibling
+        : null;
+
+    if (!eventsContainer || !statsContainer || !button) {
+        return;
+    }
+
+    if (eventsContainer.innerHTML.trim() !== "") {
+
+        eventsContainer.innerHTML = "";
+
+        statsContainer.style.display = "block";
+
+        button.textContent = "Match events";
+
+        return;
+    }
+
+    statsContainer.style.display = "none";
+
+    button.textContent =
+        "Click to return to match statistics";
+
+    const response = await fetch(`/matches/${matchId}/events`);
+    const events = await response.json();
+
+    events.sort((a, b) => {
+
+        if (a.eventMinute !== b.eventMinute) {
+            return a.eventMinute - b.eventMinute;
+        }
+
+        return a.id - b.id;
+    });
+
+    let secondHalfAdded = false;
+
+    let html = `
+        <div class="events-timeline">
+
+            <div class="half-divider">
+                <span>1st half</span>
+            </div>
+    `;
+
+    events.forEach(event => {
+
+        if (!event.teamSide) {
+            return;
+        }
+
+        if (!secondHalfAdded && event.eventMinute >= 46) {
+
+            html += `
+                <div class="half-divider">
+                    <span>2nd half</span>
+                </div>
+            `;
+
+            secondHalfAdded = true;
+        }
+
+        html += `
+            <div class="timeline-row">
+
+                <div class="timeline-cell home-cell">
+                    ${
+                        event.teamSide === "HOME"
+                            ? renderEventContent(event)
+                            : ""
+                    }
+                </div>
+
+                <div class="timeline-minute">
+                    ${event.eventMinute}'
+                </div>
+
+                <div class="timeline-cell away-cell">
+                    ${
+                        event.teamSide === "AWAY"
+                            ? renderEventContent(event)
+                            : ""
+                    }
+                </div>
+
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    eventsContainer.innerHTML = html;
+}
+
+function renderEventContent(event) {
+
+    return `
+        <div class="timeline-event-content">
+
+            <img class="event-icon"
+                 src="${event.iconUrl}"
+                 alt="${event.eventType}">
+
+            <div class="event-text">
+
+                <strong>
+                    ${event.playerName ?? ""}
+                </strong>
+
+                <small>
+                    ${buildEventDescription(event)}
+                </small>
+
+            </div>
+
+        </div>
+    `;
+}
+
+function formatRelatedEvent(event) {
+
+    if (event.eventType === "GOAL") {
+        return "Assist: " + event.relatedPlayerName;
+    }
+
+    if (event.eventType === "SUBSTITUTION") {
+        return "For: " + event.relatedPlayerName;
+    }
+
+    return event.relatedPlayerName;
+}
+
+function buildEventDescription(event) {
+
+    if (event.eventType === "GOAL" && event.relatedPlayerName) {
+        return "Assist: " + event.relatedPlayerName;
+    }
+
+    if (event.eventType === "SUBSTITUTION") {
+        return "In: " + event.playerName
+            + " / Out: " + event.relatedPlayerName;
+    }
+
+    return event.description ?? "";
+}

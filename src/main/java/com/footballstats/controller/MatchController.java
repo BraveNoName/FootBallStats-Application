@@ -2,29 +2,34 @@ package com.footballstats.controller;
 
 import com.footballstats.dto.LeagueTableRow;
 import com.footballstats.model.Match;
+import com.footballstats.model.MatchEvent;
+import com.footballstats.repository.MatchEventRepository;
 import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import com.footballstats.service.MatchGeneratorService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @Controller
 @RequestMapping("/matches")
 public class MatchController {
 
+    private final MatchEventRepository matchEventRepository;
     private final MatchRepository matchRepository;
     private final MatchGeneratorService matchGeneratorService;
     private final LeagueTableService leagueTableService;
 
     public MatchController(MatchRepository matchRepository,
                            MatchGeneratorService matchGeneratorService,
-                           LeagueTableService leagueTableService) {
+                           LeagueTableService leagueTableService,
+                           MatchEventRepository matchEventRepository) {
+
         this.matchRepository = matchRepository;
         this.matchGeneratorService = matchGeneratorService;
         this.leagueTableService = leagueTableService;
+        this.matchEventRepository = matchEventRepository;
     }
 
     @GetMapping
@@ -49,6 +54,12 @@ public class MatchController {
         model.addAttribute("leagues", getAvailableLeagues());
 
         return "matches";
+    }
+
+    @GetMapping("/{matchId}/events")
+    @ResponseBody
+    public List<MatchEvent> getMatchEvents(@PathVariable Long matchId) {
+        return matchEventRepository.findByMatchIdOrderByEventMinuteAsc(matchId);
     }
 
     @PostMapping("/generate")

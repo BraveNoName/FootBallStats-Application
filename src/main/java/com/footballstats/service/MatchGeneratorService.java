@@ -1,6 +1,8 @@
 package com.footballstats.service;
 
 import com.footballstats.model.Match;
+import com.footballstats.model.MatchEvent;
+import com.footballstats.repository.MatchEventRepository;
 import com.footballstats.repository.MatchRepository;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -14,16 +16,23 @@ import java.util.*;
 public class MatchGeneratorService {
 
     private final MatchRepository matchRepository;
+    private final MatchEventRepository matchEventRepository;
     private final Random random = new Random();
 
-    public MatchGeneratorService(MatchRepository matchRepository) {
+    private final Map<Long, InjuredPlayerInfo> injuredHomePlayers = new HashMap<>();
+    private final Map<Long, InjuredPlayerInfo> injuredAwayPlayers = new HashMap<>();
+
+    public MatchGeneratorService(MatchRepository matchRepository,
+                                 MatchEventRepository matchEventRepository) {
         this.matchRepository = matchRepository;
+        this.matchEventRepository = matchEventRepository;
     }
 
     @Transactional
     public void generateLeagueSeason(String league) {
 
         matchRepository.deleteByLeague(league);
+        matchEventRepository.deleteAll();
 
         List<TeamInfo> teams = loadTeamsFromLeagueFolder(league);
 
@@ -32,8 +41,11 @@ public class MatchGeneratorService {
         }
 
         List<Match> generatedMatches = generateRoundRobinMatches(league, teams);
+        List<Match> savedMatches = matchRepository.saveAll(generatedMatches);
 
-        matchRepository.saveAll(generatedMatches);
+        for (Match match : savedMatches) {
+            generateMatchEvents(match);
+        }
     }
 
     private List<Match> generateRoundRobinMatches(String league, List<TeamInfo> teams) {
@@ -115,18 +127,12 @@ public class MatchGeneratorService {
         match.setHomeTeamLogo(home.logo());
         match.setAwayTeamLogo(away.logo());
 
-        /* GOALS */
-
         int homeGoals = generateGoals();
         int awayGoals = generateGoals();
-
-        /* lekka przewaga gospodarzy */
 
         if (random.nextInt(100) < 12) {
             homeGoals++;
         }
-
-        /* ograniczenie absurdów typu 9:8 */
 
         if (homeGoals >= 7 && awayGoals >= 5) {
             awayGoals = random.nextInt(3);
@@ -139,25 +145,17 @@ public class MatchGeneratorService {
         match.setHomeGoals(homeGoals);
         match.setAwayGoals(awayGoals);
 
-        /* HALF TIME */
-
         match.setHalfTimeHomeGoals(random.nextInt(homeGoals + 1));
         match.setHalfTimeAwayGoals(random.nextInt(awayGoals + 1));
 
-        /* POSSESSION */
-
         match.setPossessionHome(40 + random.nextInt(30));
         match.setPossessionAway(100 - match.getPossessionHome());
-
-        /* SHOTS */
 
         match.setShotsHome(5 + random.nextInt(16));
         match.setShotsAway(5 + random.nextInt(16));
 
         match.setShotsOnTargetHome(random.nextInt(match.getShotsHome() + 1));
         match.setShotsOnTargetAway(random.nextInt(match.getShotsAway() + 1));
-
-        /* OTHER STATS */
 
         match.setCornersHome(random.nextInt(11));
         match.setCornersAway(random.nextInt(11));
@@ -188,6 +186,295 @@ public class MatchGeneratorService {
         match.setReferee("Random Referee");
 
         return match;
+    }
+
+    private void generateMatchEvents(Match match) {
+
+        generateEventsForTeam(
+                match,
+                match.getHomeTeam(),
+                match.getHomeGoals(),
+                match.getYellowCardsHome(),
+                match.getRedCardsHome(),
+                true
+        );
+
+        generateEventsForTeam(
+                match,
+                match.getAwayTeam(),
+                match.getAwayGoals(),
+                match.getYellowCardsAway(),
+                match.getRedCardsAway(),
+                false
+        );
+
+        generateInjuryEvents(match);
+
+        generateSubstitutionEvents(match, true);
+        generateSubstitutionEvents(match, false);
+
+        generatePenaltyMissEvents(match);
+        generateVarEvents(match);
+    }
+
+    private void generateEventsForTeam(Match match,
+                                       String teamName,
+                                       int goals,
+                                       int yellowCards,
+                                       int redCards,
+                                       boolean homeTeam) {
+
+        for (int i = 0; i < goals; i++) {
+
+            int roll = random.nextInt(100);
+
+            String eventType;
+            String description;
+            String iconUrl;
+
+            if (roll < 8) {
+                eventType = "PENALTY_GOAL";
+                description = "Penalty scored";
+                iconUrl = "/Images/match_events/penalty.png";
+            } else if (roll < 12) {
+                eventType = "OWN_GOAL";
+                description = "Own goal";
+                iconUrl = "/Images/match_events/goal.png";
+            } else {
+                eventType = "GOAL";
+                description = "Goal";
+                iconUrl = "/Images/match_events/goal.png";
+            }
+
+            MatchEvent event = new MatchEvent();
+
+            event.setMatchId(match.getId());
+            event.setEventMinute(1 + random.nextInt(90));
+            event.setEventType(eventType);
+            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setIconUrl(iconUrl);
+            event.setPlayerName(homeTeam ? "Home player" : "Away player");
+
+            if (eventType.equals("GOAL") && random.nextInt(100) < 75) {
+                event.setRelatedPlayerName(homeTeam ? "Home assistant" : "Away assistant");
+                event.setDescription("Goal, assist");
+            } else {
+                event.setDescription(description);
+            }
+
+            matchEventRepository.save(event);
+        }
+
+        for (int i = 0; i < yellowCards; i++) {
+            saveEvent(
+                    match,
+                    1 + random.nextInt(90),
+                    "YELLOW_CARD",
+                    homeTeam ? "Home player" : "Away player",
+                    "Yellow card",
+                    "/Images/match_events/yellow_card.png"
+            );
+        }
+
+        for (int i = 0; i < redCards; i++) {
+            saveEvent(
+                    match,
+                    1 + random.nextInt(90),
+                    "RED_CARD",
+                    homeTeam ? "Home player" : "Away player",
+                    "Red card",
+                    "/Images/match_events/red_card.png"
+            );
+        }
+    }
+
+    private void generateInjuryEvents(Match match) {
+
+        int injuries = random.nextInt(100) < 18 ? 1 : 0;
+
+        for (int i = 0; i < injuries; i++) {
+
+            boolean homeTeam = random.nextBoolean();
+
+            int injuryMinute = 10 + random.nextInt(65);
+
+            String injuredPlayer = homeTeam ? "Home injured player" : "Away injured player";
+
+            MatchEvent event = new MatchEvent();
+
+            event.setMatchId(match.getId());
+            event.setEventMinute(injuryMinute);
+            event.setEventType("INJURY");
+            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setIconUrl("/Images/match_events/injury.png");
+            event.setPlayerName(injuredPlayer);
+            event.setDescription("Injury: " + getRandomInjuryType());
+
+            matchEventRepository.save(event);
+
+            InjuredPlayerInfo injuredPlayerInfo =
+                    new InjuredPlayerInfo(injuredPlayer, injuryMinute);
+
+            if (homeTeam) {
+                injuredHomePlayers.put(match.getId(), injuredPlayerInfo);
+            } else {
+                injuredAwayPlayers.put(match.getId(), injuredPlayerInfo);
+            }
+        }
+    }
+
+    private void generateSubstitutionEvents(Match match, boolean homeTeam) {
+
+        InjuredPlayerInfo injuredPlayerInfo = homeTeam
+                ? injuredHomePlayers.remove(match.getId())
+                : injuredAwayPlayers.remove(match.getId());
+
+        int substitutions = 3 + random.nextInt(3);
+
+        for (int i = 0; i < substitutions; i++) {
+
+            boolean forcedInjurySubstitution = i == 0 && injuredPlayerInfo != null;
+
+            MatchEvent event = new MatchEvent();
+
+            event.setMatchId(match.getId());
+
+            if (forcedInjurySubstitution) {
+                event.setEventMinute(injuredPlayerInfo.injuryMinute() + 1);
+            } else {
+                event.setEventMinute(46 + random.nextInt(45));
+            }
+
+            event.setEventType("SUBSTITUTION");
+            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setIconUrl("/Images/match_events/change.png");
+
+            event.setPlayerName(homeTeam ? "Home player in" : "Away player in");
+
+            event.setRelatedPlayerName(
+                    forcedInjurySubstitution
+                            ? injuredPlayerInfo.playerName()
+                            : homeTeam ? "Home player out" : "Away player out"
+            );
+
+            event.setDescription(
+                    forcedInjurySubstitution
+                            ? "Substitution due to injury"
+                            : "Substitution"
+            );
+
+            matchEventRepository.save(event);
+        }
+    }
+
+    private void generatePenaltyMissEvents(Match match) {
+
+        int penaltiesMissed = random.nextInt(100) < 15 ? 1 : 0;
+
+        for (int i = 0; i < penaltiesMissed; i++) {
+
+            boolean homeTeam = random.nextBoolean();
+
+            MatchEvent event = new MatchEvent();
+
+            event.setMatchId(match.getId());
+            event.setEventMinute(1 + random.nextInt(90));
+            event.setEventType("PENALTY_MISSED");
+            event.setTeamSide(homeTeam ? "HOME" : "AWAY");
+            event.setIconUrl("/Images/match_events/penalty_missed.png");
+            event.setPlayerName(homeTeam ? "Home player" : "Away player");
+            event.setDescription("Penalty missed");
+
+            matchEventRepository.save(event);
+        }
+    }
+
+    private void generateVarEvents(Match match) {
+
+        int varEvents = random.nextInt(100) < 20 ? 1 : 0;
+
+        for (int i = 0; i < varEvents; i++) {
+
+            MatchEvent event = new MatchEvent();
+
+            event.setMatchId(match.getId());
+            event.setEventMinute(1 + random.nextInt(90));
+            event.setEventType("VAR");
+            event.setTeamSide("CENTER");
+            event.setIconUrl("/Images/match_events/Var.png");
+            event.setDescription("VAR review");
+
+            matchEventRepository.save(event);
+        }
+    }
+
+    private String getRandomInjuryType() {
+
+        return List.of(
+                "Concussion",
+                "Nasal fracture",
+                "Zygomatic fracture",
+                "Neck strain",
+                "Scalp laceration",
+                "Sports hernia",
+                "Abdominal strain",
+                "Rib contusion",
+                "Rib fracture",
+                "Lower back strain",
+                "Shoulder dislocation",
+                "Clavicle fracture",
+                "Rotator cuff strain",
+                "Finger sprain",
+                "Scaphoid fracture",
+                "Hip pointer",
+                "Femoroacetabular impingement",
+                "Hamstring strain",
+                "Quadriceps strain",
+                "Groin strain",
+                "Quadriceps contusion",
+                "Rectus femoris rupture",
+                "Anterior cruciate ligament tear",
+                "Posterior cruciate ligament tear",
+                "Medial collateral ligament sprain",
+                "Meniscus tear",
+                "Patellar tendinitis",
+                "Patellar dislocation",
+                "Runner's knee",
+                "Shin splints",
+                "Calf strain",
+                "Tibia fracture",
+                "Fibula fracture",
+                "Compartment syndrome",
+                "Ankle sprain",
+                "Ankle dislocation",
+                "Achilles tendinitis",
+                "Achilles tendon rupture",
+                "Plantar fasciitis",
+                "Metatarsal fracture",
+                "Metatarsal stress fracture",
+                "Foot injury",
+                "Toe injury",
+                "Turf toe"
+        ).get(random.nextInt(44));
+    }
+
+    private void saveEvent(Match match,
+                           int minute,
+                           String eventType,
+                           String playerName,
+                           String description,
+                           String iconUrl) {
+
+        MatchEvent event = new MatchEvent();
+
+        event.setMatchId(match.getId());
+        event.setEventMinute(minute);
+        event.setEventType(eventType);
+        event.setPlayerName(playerName);
+        event.setDescription(description);
+        event.setIconUrl(iconUrl);
+
+        matchEventRepository.save(event);
     }
 
     private int generateGoals() {
@@ -282,5 +569,8 @@ public class MatchGeneratorService {
     }
 
     private record TeamInfo(String name, String logo) {
+    }
+
+    private record InjuredPlayerInfo(String playerName, int injuryMinute) {
     }
 }

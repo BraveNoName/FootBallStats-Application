@@ -300,7 +300,22 @@
                                 </p>
                             </div>
 
-                            <div class="stats-grid">
+                            <div class="match-events-section">
+
+                                <button class="show-events-btn"
+                                        type="button"
+                                        th:attr="onclick='toggleMatchEvents(' + ${match.id} + ')'">
+                                    Match events
+                                </button>
+
+                                <div class="match-events-container"
+                                     th:id="'events-' + ${match.id}">
+                                </div>
+
+                            </div>
+
+                            <div class="stats-grid"
+                                 th:id="'stats-' + ${match.id}">
 
                                 <div class="stat-row"
                                      th:attr="data-home=${match.possessionHome}, data-away=${match.possessionAway}">
