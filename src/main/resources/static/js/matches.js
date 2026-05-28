@@ -1,5 +1,75 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    const toggleCompetitionHubBtn = document.getElementById("toggleCompetitionHubBtn");
+    const showDomesticPanel = document.getElementById("showDomesticPanel");
+    const showEuropeanPanel = document.getElementById("showEuropeanPanel");
+    const domesticControls = document.getElementById("domesticControls");
+    const europeanControls = document.getElementById("europeanControls");
+    const emptyMatchesInfo = document.getElementById("emptyMatchesInfo");
+    const competitionHub = document.querySelector(".competition-hub");
+    const seasonPanel = document.getElementById("seasonPanel");
+
+    if (window.location.search.includes("league=")) {
+
+        if (competitionHub) {
+            competitionHub.style.display = "none";
+        }
+
+        if (toggleCompetitionHubBtn) {
+            toggleCompetitionHubBtn.classList.remove("hidden-controls");
+        }
+
+        if (domesticControls) {
+            domesticControls.classList.add("show");
+        }
+    }
+
+    if (showDomesticPanel && showEuropeanPanel && domesticControls && europeanControls) {
+
+        showDomesticPanel.addEventListener("click", function () {
+
+            if (competitionHub) {
+                competitionHub.style.display = "none";
+            }
+
+            domesticControls.classList.add("show");
+            europeanControls.classList.remove("show");
+
+            if (emptyMatchesInfo) {
+                emptyMatchesInfo.classList.add("show");
+            }
+
+            if (toggleCompetitionHubBtn) {
+                toggleCompetitionHubBtn.classList.remove("hidden-controls");
+            }
+        });
+
+        showEuropeanPanel.addEventListener("click", function () {
+
+            if (competitionHub) {
+                competitionHub.style.display = "none";
+            }
+
+            europeanControls.classList.add("show");
+            domesticControls.classList.remove("show");
+
+            if (emptyMatchesInfo) {
+                emptyMatchesInfo.classList.remove("show");
+            }
+
+            if (toggleCompetitionHubBtn) {
+                toggleCompetitionHubBtn.classList.remove("hidden-controls");
+            }
+        });
+    }
+
+    if (toggleCompetitionHubBtn) {
+
+        toggleCompetitionHubBtn.addEventListener("click", function () {
+            window.location.href = "/matches";
+        });
+    }
+
     const leagueData = {
         england: {
             name: "Premier League",
@@ -153,6 +223,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
             div.addEventListener("click", function () {
                 leagueSelect.value = slug;
+
+                if (competitionHub) {
+                    competitionHub.style.display = "none";
+                }
+
+                if (seasonPanel) {
+                    seasonPanel.style.display = "block";
+                }
+
                 window.location.href = "/matches?league=" + slug;
             });
 

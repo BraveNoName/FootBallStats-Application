@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body class="matches-body">
 
 <nav class="navbar">
     <div class="nav-left">
@@ -144,72 +144,146 @@
 
     <section class="matches-panel">
 
-        <form action="/matches/generate"
-              method="post"
-              class="generate-form"
-              id="generateForm"
-              th:attr="data-season-generated=${seasonAlreadyGenerated}">
+        <button type="button"
+                id="toggleCompetitionHubBtn"
+                class="toggle-competition-btn hidden-controls">
 
-            <div class="league-select-wrapper">
+            <i class="fa-solid fa-repeat"></i>
+            Change competition
 
-                <select id="leagueSelect"
-                        name="league"
-                        class="real-league-select">
+        </button>
 
-                    <option value=""
-                            disabled
-                            th:selected="${league == null}">
-                        Select league
-                    </option>
+        <div class="competition-hub" id="competitionHub">
 
-                    <option th:each="leagueItem : ${leagues}"
-                            th:value="${leagueItem}"
-                            th:text="${leagueItem}"
-                            th:selected="${leagueItem == league}">
-                    </option>
+            <div class="competition-column domestic-column" id="showDomesticPanel">
 
-                </select>
+                <div class="competition-column-header">
+                    <i class="fa-solid fa-trophy"></i>
+                    <div>
+                        <h2>League Competitions</h2>
+                        <p>Choose domestic league simulation</p>
+                    </div>
+                </div>
 
-                <button type="button"
-                        id="leagueDropdownBtn"
-                        class="league-dropdown-btn">
-
-                    <img id="selectedLeagueLogo"
-                         src="/Images/Favicon.png"
-                         alt="League logo">
-
-                    <span id="selectedLeagueName">
-                        Select league
-                    </span>
-
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-
-                <div id="leagueDropdownMenu"
-                     class="league-dropdown-menu">
+                <div class="domestic-action-box">
+                    <p>Select one of your available domestic leagues and generate a full season.</p>
                 </div>
 
             </div>
 
-            <button type="submit"
-                    class="generate-season-btn"
-                    title="Generate full season simulation">
-                <i class="fa-solid fa-rotate"></i>
-                Generate season
-            </button>
+            <div class="competition-column european-column" id="showEuropeanPanel">
 
-            <p id="leagueError" class="league-error">
-                Please select a league first.
-            </p>
+                <div class="competition-column-header">
+                    <i class="fa-solid fa-earth-europe"></i>
+                    <div>
+                        <h2>European Competitions</h2>
+                        <p>UEFA tournaments in new league phase format</p>
+                    </div>
+                </div>
 
-        </form>
+                <div class="european-cups-grid">
+                    <a href="/matches/europe/champions-league" class="european-cup-card">
+                        <i class="fa-solid fa-star"></i>
+                        <span>Champions League</span>
+                    </a>
 
-        <section class="empty-matches"
+                    <a href="/matches/europe/europa-league" class="european-cup-card">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Europa League</span>
+                    </a>
+
+                    <a href="/matches/europe/conference-league" class="european-cup-card">
+                        <i class="fa-solid fa-globe"></i>
+                        <span>Conference League</span>
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="domesticControls" class="competition-controls hidden-controls">
+
+            <form action="/matches/generate"
+                  method="post"
+                  class="generate-form"
+                  id="generateForm"
+                  th:attr="data-season-generated=${seasonAlreadyGenerated}">
+
+                <div class="league-select-wrapper">
+
+                    <select id="leagueSelect"
+                            name="league"
+                            class="real-league-select">
+
+                        <option value=""
+                                disabled
+                                th:selected="${league == null}">
+                            Select league
+                        </option>
+
+                        <option th:each="leagueItem : ${leagues}"
+                                th:value="${leagueItem}"
+                                th:text="${leagueItem}"
+                                th:selected="${leagueItem == league}">
+                        </option>
+
+                    </select>
+
+                    <button type="button"
+                            id="leagueDropdownBtn"
+                            class="league-dropdown-btn">
+
+                        <img id="selectedLeagueLogo"
+                             src="/Images/Favicon.png"
+                             alt="League logo">
+
+                        <span id="selectedLeagueName">
+                            Select league
+                        </span>
+
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+
+                    <div id="leagueDropdownMenu"
+                         class="league-dropdown-menu">
+                    </div>
+
+                </div>
+
+                <button type="submit"
+                        class="generate-season-btn"
+                        title="Generate full season simulation">
+                    <i class="fa-solid fa-rotate"></i>
+                    Generate season
+                </button>
+
+                <p id="leagueError" class="league-error">
+                    Please select a league first.
+                </p>
+
+            </form>
+
+        </div>
+
+        <div id="europeanControls" class="competition-controls hidden-controls">
+
+            <div class="european-placeholder">
+                <h3>European competition selected</h3>
+                <p>Select Champions League, Europa League or Conference League above.</p>
+            </div>
+
+        </div>
+
+        <section class="empty-matches hidden-controls"
+                 id="emptyMatchesInfo"
                  th:if="${#lists.isEmpty(matches)}">
             <p>No matches generated yet.</p>
         </section>
 
-        <section class="season-panel"
+        <section id="seasonPanel"
+                 class="season-panel"
                  th:if="${!#lists.isEmpty(matches)}">
 
             <div class="view-switch">

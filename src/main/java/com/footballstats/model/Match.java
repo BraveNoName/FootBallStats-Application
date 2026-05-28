@@ -2,6 +2,8 @@ package com.footballstats.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name = "matches")
@@ -48,6 +50,10 @@ public class Match {
     private Double xgAway;
     private String homeFormation;
     private String awayFormation;
+
+    @ManyToOne
+    @JoinColumn(name = "competition_id")
+    private Competition competition;
 
     public Match() {
     }
@@ -167,5 +173,8 @@ public class Match {
 
     public String getAwayFormation() {return awayFormation;}
     public void setAwayFormation(String awayFormation) {this.awayFormation = awayFormation;}
+
+    public Competition getCompetition() { return competition;}
+    public void setCompetition(Competition competition) {this.competition = competition;}
 
 }

@@ -1,15 +1,20 @@
 
 .matches-page {
-    flex: 1;
-    padding: 105px 30px 60px;
+    position: relative;
+    z-index: 1;
+
+    flex: none;
+
+    padding: 105px 30px 40px;
+    box-sizing: border-box;
+
     color: #f8fafc;
 
     background:
-            radial-gradient(circle at top left, rgba(22,163,74,0.30), transparent 35%),
-            radial-gradient(circle at top right, rgba(59,130,246,0.25), transparent 35%),
-            linear-gradient(135deg, #07111f 0%, #0f172a 45%, #052e16 100%);
+        radial-gradient(circle at top left, rgba(22,163,74,0.30), transparent 35%),
+        radial-gradient(circle at top right, rgba(59,130,246,0.25), transparent 35%),
+        linear-gradient(135deg, #07111f 0%, #0f172a 45%, #052e16 100%);
 }
-
 /* HERO */
 
 .matches-hero {
@@ -37,32 +42,42 @@
 /* MAIN PANEL */
 
 .matches-panel {
-    position: relative;
+        position: static;
+
     overflow: visible;
     width: 94%;
     max-width: 1000px;
-    margin: 0 auto;
-    padding: 24px;
+    margin: 0 auto 40px;
+    padding: 24px 24px 40px;
     border-radius: 26px;
-    background: rgba(15, 23, 42, 0.72);
+    background: rgba(15, 23, 42, 0.92);
     box-shadow: 0 20px 55px rgba(0,0,0,0.35);
-    backdrop-filter: blur(14px);
     border: 1px solid rgba(255,255,255,0.10);
 }
 
 .matches-panel::before {
     content: "";
     position: absolute;
-    inset: -2px;
+    inset: 0;
+    border-radius: 26px;
     background:
             radial-gradient(circle at 15% 10%, rgba(34,197,94,0.12), transparent 22%),
             radial-gradient(circle at 85% 35%, rgba(59,130,246,0.10), transparent 24%);
     pointer-events: none;
 }
 
+.matches-panel::before {
+    z-index: 0;
+}
+
 .matches-panel > * {
     position: relative;
-    z-index: 2;
+}
+
+.generate-form,
+.league-select-wrapper,
+.league-dropdown-menu {
+    z-index: 999999;
 }
 
 /* GENERATE */
@@ -1222,7 +1237,7 @@
 .league-select-wrapper {
     position: relative;
     width: 280px;
-    z-index: 10001;
+    z-index: 9999999;
 }
 
 .league-dropdown-btn {
@@ -1309,4 +1324,232 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.competition-hub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.competition-column {
+    position: relative;
+    overflow: hidden;
+    min-height: 185px;
+    border-radius: 24px;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.26);
+}
+
+.competition-column::before {
+    content: "";
+    position: absolute;
+    width: 210px;
+    height: 210px;
+    right: -80px;
+    top: -90px;
+    border-radius: 50%;
+    opacity: 0.35;
+}
+
+.domestic-column {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(34,197,94,0.22), transparent 36%),
+        linear-gradient(135deg, rgba(6,78,59,0.88), rgba(15,23,42,0.96));
+}
+
+.domestic-column::before {
+    background: #22c55e;
+}
+
+.european-column {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(59,130,246,0.24), transparent 36%),
+        linear-gradient(135deg, rgba(30,64,175,0.76), rgba(15,23,42,0.96));
+}
+
+.european-column::before {
+    background: #3b82f6;
+}
+
+.competition-column-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.competition-column-header > i {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.10);
+    color: #22c55e;
+    font-size: 1.35rem;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
+}
+
+.european-column .competition-column-header > i {
+    color: #60a5fa;
+}
+
+.competition-column-header h2 {
+    margin: 0 0 5px;
+    font-size: 1.15rem;
+    font-family: 'Orbitron', sans-serif;
+    color: white;
+}
+
+.competition-column-header p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.domestic-action-box {
+    position: relative;
+    z-index: 2;
+    border-radius: 18px;
+    padding: 16px;
+    background: rgba(15,23,42,0.50);
+    border: 1px solid rgba(255,255,255,0.10);
+}
+
+.domestic-action-box p {
+    margin: 0;
+    color: #d1fae5;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.european-cups-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.european-cup-card {
+    text-decoration: none;
+    color: white;
+    min-height: 42px;
+    border-radius: 14px;
+    padding: 10px 13px;
+    background: rgba(15,23,42,0.56);
+    border: 1px solid rgba(255,255,255,0.10);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    transition: 0.2s ease;
+}
+
+.european-cup-card:hover {
+    transform: translateX(5px);
+    background: rgba(37,99,235,0.26);
+    border-color: rgba(96,165,250,0.65);
+}
+
+.european-cup-card i {
+    color: #60a5fa;
+    width: 22px;
+    text-align: center;
+}
+
+@media (max-width: 850px) {
+    .competition-hub {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hidden-controls {
+    display: none;
+}
+
+.competition-controls.show {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.toggle-competition-btn.hidden-controls {
+    display: none !important;
+}
+
+.competition-column {
+    cursor: pointer;
+}
+
+.competition-column.selected {
+    outline: 2px solid rgba(34,197,94,0.85);
+    box-shadow: 0 0 28px rgba(34,197,94,0.22);
+}
+
+.european-column.selected {
+    outline-color: rgba(96,165,250,0.85);
+    box-shadow: 0 0 28px rgba(59,130,246,0.25);
+}
+
+.european-placeholder {
+    max-width: 620px;
+    margin: 10px auto 26px;
+    padding: 24px;
+    border-radius: 22px;
+    background: rgba(15,23,42,0.72);
+    border: 1px solid rgba(96,165,250,0.22);
+    text-align: center;
+}
+
+.european-placeholder h3 {
+    margin: 0 0 8px;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.european-placeholder p {
+    margin: 0;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.toggle-competition-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 18px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(15,23,42,0.88);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 900;
+    transition: 0.2s ease;
+}
+
+.toggle-competition-btn:hover {
+    background: rgba(34,197,94,0.18);
+    border-color: rgba(34,197,94,0.45);
+}
+
+
+.season-panel {
+    padding-bottom: 40px;
+}
+
+.matches-page + footer {
+    margin-top: 0;
 }

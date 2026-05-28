@@ -15,7 +15,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.footballstats.dto.LeaguePlayerStatsRow;
 import com.footballstats.service.LeaguePlayerStatsService;
-
+import com.footballstats.model.Competition;
+import com.footballstats.model.CompetitionType;
+import com.footballstats.repository.CompetitionRepository;
 import java.util.*;
 
 @Controller
@@ -28,13 +30,15 @@ public class MatchController {
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
     private final LeaguePlayerStatsService leaguePlayerStatsService;
+    private final CompetitionRepository competitionRepository;
 
     public MatchController(MatchRepository matchRepository,
                            MatchGeneratorService matchGeneratorService,
                            LeagueTableService leagueTableService,
                            MatchEventRepository matchEventRepository,
                            GeneratedPlayerRepository generatedPlayerRepository,
-                           LeaguePlayerStatsService leaguePlayerStatsService) {
+                           LeaguePlayerStatsService leaguePlayerStatsService,
+                           CompetitionRepository competitionRepository)  {
 
         this.matchRepository = matchRepository;
         this.matchGeneratorService = matchGeneratorService;
@@ -42,6 +46,7 @@ public class MatchController {
         this.matchEventRepository = matchEventRepository;
         this.generatedPlayerRepository = generatedPlayerRepository;
         this.leaguePlayerStatsService = leaguePlayerStatsService;
+        this.competitionRepository = competitionRepository;
     }
 
     @GetMapping
@@ -61,8 +66,9 @@ public class MatchController {
         model.addAttribute("matches", matches);
         model.addAttribute("leagueTable", leagueTable);
         model.addAttribute("league", league);
-        model.addAttribute("leagues", getAvailableLeagues());
-
+        model.addAttribute("leagues", getLeagueSlugs());
+        model.addAttribute("leagueCompetitions", getLeagueCompetitions());
+        model.addAttribute("europeanCompetitions", getEuropeanCompetitions());
         model.addAttribute(
                 "seasonAlreadyGenerated",
                 league != null && !league.isBlank() && matchRepository.existsByLeague(league)
@@ -324,33 +330,25 @@ public class MatchController {
         };
     }
 
-    private List<String> getAvailableLeagues() {
-        return List.of(
-                "austria",
-                "belgium",
-                "bulgaria",
-                "croatia",
-                "czech-republic",
-                "denmark",
-                "england",
-                "france",
-                "germany",
-                "greece",
-                "israel",
-                "italy",
-                "netherlands",
-                "norway",
-                "poland",
-                "portugal",
-                "romania",
-                "russia",
-                "scotland",
-                "serbia",
-                "spain",
-                "sweden",
-                "switzerland",
-                "turkiye",
-                "ukraine"
-        );
+    private List<String> getLeagueSlugs() {
+        return competitionRepository.findAll()
+                .stream()
+                .filter(competition -> competition.getType() == CompetitionType.LEAGUE)
+                .map(Competition::getSlug)
+                .toList();
+    }
+
+    private List<Competition> getLeagueCompetitions() {
+        return competitionRepository.findAll()
+                .stream()
+                .filter(competition -> competition.getType() == CompetitionType.LEAGUE)
+                .toList();
+    }
+
+    private List<Competition> getEuropeanCompetitions() {
+        return competitionRepository.findAll()
+                .stream()
+                .filter(competition -> competition.getType() != CompetitionType.LEAGUE)
+                .toList();
     }
 }
