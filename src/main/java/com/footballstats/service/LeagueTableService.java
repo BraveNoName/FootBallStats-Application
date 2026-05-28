@@ -97,14 +97,8 @@ public class LeagueTableService {
 
         return switch (league) {
 
-            case "england", "spain", "italy" ->
-                    topFourLeague(position, size);
-
-            case "germany" ->
-                    germanyRules(position, size);
-
-            case "france" ->
-                    franceRules(position, size);
+            case "england", "spain", "italy", "germany", "france" ->
+                    topFiveLeague(position, size);
 
             case "netherlands" ->
                     netherlandsRules(position, size);
@@ -162,55 +156,15 @@ public class LeagueTableService {
         };
     }
 
-    private String topFourLeague(int position, int size) {
+    private String topFiveLeague(int position, int size) {
 
         if (position <= 4)
             return "CHAMPIONS_LEAGUE";
 
-        if (position == 5)
+        if (position <= 6)
             return "EUROPA_LEAGUE";
 
-        if (position == 6)
-            return "CONFERENCE_LEAGUE";
-
-        if (position >= size - 2)
-            return "RELEGATION";
-
-        return "SAFE";
-    }
-
-    private String germanyRules(int position, int size) {
-
-        if (position <= 4)
-            return "CHAMPIONS_LEAGUE";
-
-        if (position == 5)
-            return "EUROPA_LEAGUE";
-
-        if (position == 6)
-            return "CONFERENCE_LEAGUE";
-
-        if (position == size - 2)
-            return "RELEGATION_PLAYOFF";
-
-        if (position >= size - 1)
-            return "RELEGATION";
-
-        return "SAFE";
-    }
-
-    private String franceRules(int position, int size) {
-
-        if (position <= 3)
-            return "CHAMPIONS_LEAGUE";
-
-        if (position == 4)
-            return "CHAMPIONS_LEAGUE_QUALIFIERS";
-
-        if (position == 5)
-            return "EUROPA_LEAGUE";
-
-        if (position == 6)
+        if (position == 7)
             return "CONFERENCE_LEAGUE";
 
         if (position == size - 2)
@@ -224,17 +178,14 @@ public class LeagueTableService {
 
     private String netherlandsRules(int position, int size) {
 
-        if (position == 1)
+        if (position <= 2)
             return "CHAMPIONS_LEAGUE";
 
-        if (position == 2)
+        if (position == 3)
             return "CHAMPIONS_LEAGUE_QUALIFIERS";
 
-        if (position == 3)
+        if (position >= 5 && position <= 8)
             return "EUROPA_LEAGUE_QUALIFIERS";
-
-        if (position <= 5)
-            return "CONFERENCE_LEAGUE_QUALIFIERS";
 
         if (position == size - 2)
             return "RELEGATION_PLAYOFF";
@@ -247,16 +198,16 @@ public class LeagueTableService {
 
     private String portugalRules(int position, int size) {
 
-        if (position == 1)
+        if (position <= 2)
             return "CHAMPIONS_LEAGUE";
 
-        if (position == 2)
+        if (position == 3)
             return "CHAMPIONS_LEAGUE_QUALIFIERS";
 
-        if (position == 3)
-            return "EUROPA_LEAGUE_QUALIFIERS";
-
         if (position == 4)
+            return "EUROPA_LEAGUE";
+
+        if (position == 5)
             return "CONFERENCE_LEAGUE_QUALIFIERS";
 
         if (position == size - 2)

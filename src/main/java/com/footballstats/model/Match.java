@@ -50,6 +50,10 @@ public class Match {
     private Double xgAway;
     private String homeFormation;
     private String awayFormation;
+    private String homeClubSlug;
+    private String awayClubSlug;
+    private String homeLeagueSlug;
+    private String awayLeagueSlug;
 
     @ManyToOne
     @JoinColumn(name = "competition_id")
@@ -177,4 +181,36 @@ public class Match {
     public Competition getCompetition() { return competition;}
     public void setCompetition(Competition competition) {this.competition = competition;}
 
+
+    public String getHomeClubSlug() {
+        return homeClubSlug;
+    }
+
+    public void setHomeClubSlug(String homeClubSlug) {
+        this.homeClubSlug = homeClubSlug;
+    }
+
+    public String getAwayClubSlug() {
+        return awayClubSlug;
+    }
+
+    public void setAwayClubSlug(String awayClubSlug) {
+        this.awayClubSlug = awayClubSlug;
+    }
+
+    public String getHomeLeagueSlug() {
+        return homeLeagueSlug;
+    }
+
+    public void setHomeLeagueSlug(String homeLeagueSlug) {
+        this.homeLeagueSlug = homeLeagueSlug;
+    }
+
+    public String getAwayLeagueSlug() {
+        return awayLeagueSlug;
+    }
+
+    public void setAwayLeagueSlug(String awayLeagueSlug) {
+        this.awayLeagueSlug = awayLeagueSlug;
+    }
 }

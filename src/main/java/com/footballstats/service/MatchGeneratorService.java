@@ -1042,10 +1042,18 @@ public class MatchGeneratorService {
     }
 
     private List<GeneratedPlayer> getTeamPlayers(Match match, boolean homeTeam) {
-        String clubName = homeTeam ? match.getHomeTeam() : match.getAwayTeam();
+        String leagueSlug = homeTeam ? match.getHomeLeagueSlug() : match.getAwayLeagueSlug();
+        String clubSlug = homeTeam ? match.getHomeClubSlug() : match.getAwayClubSlug();
+
+        if (leagueSlug == null || clubSlug == null) {
+            String clubName = homeTeam ? match.getHomeTeam() : match.getAwayTeam();
+
+            leagueSlug = match.getLeague();
+            clubSlug = createSlug(clubName);
+        }
 
         List<GeneratedPlayer> players = generatedPlayerRepository
-                .findByLeagueSlugAndClubSlug(match.getLeague(), createSlug(clubName));
+                .findByLeagueSlugAndClubSlug(leagueSlug, clubSlug);
 
         if (players.isEmpty()) {
             return List.of();

@@ -1,0 +1,403 @@
+.european-page {
+    min-height: 100vh;
+    padding: 105px 30px 60px;
+    color: #f8fafc;
+    background: transparent;
+}
+
+.european-hero {
+    position: relative;
+    width: 94%;
+    max-width: 1180px;
+    min-height: 430px;
+    margin: 0 auto 32px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+}
+
+
+
+.hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0.72;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        radial-gradient(circle at 20% 20%, var(--theme-glow), transparent 34%),
+        linear-gradient(to top, rgba(2,6,23,0.72), transparent);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    min-height: 430px;
+    padding: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 34px;
+}
+
+.hero-left {
+    max-width: 660px;
+}
+
+.hero-label,
+.panel-kicker {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: var(--theme-accent);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+}
+
+.hero-left h1 {
+    margin: 0 0 18px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2rem, 5vw, 4.2rem);
+    line-height: 1.05;
+    color: #ffffff;
+    text-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+
+.hero-left p {
+    margin: 0;
+    max-width: 600px;
+    color: #dbeafe;
+    font-size: 1.02rem;
+    line-height: 1.65;
+    font-weight: 700;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 28px;
+}
+
+.hero-btn {
+    position: relative;
+    overflow: hidden;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 14px 22px;
+
+    border-radius: 999px;
+
+    text-decoration: none;
+    font-weight: 900;
+
+    transition: 0.3s ease;
+
+    backdrop-filter: blur(10px);
+}
+
+.hero-btn::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -120%;
+
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.22),
+        transparent
+    );
+
+    transition: 0.7s ease;
+}
+
+.hero-btn:hover::before {
+    left: 120%;
+}
+
+.hero-btn.primary {
+    color: #020617;
+    background: var(--theme-accent);
+}
+
+.hero-btn.secondary {
+    color: #f8fafc;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.16);
+}
+
+.hero-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.25),
+        0 0 18px var(--theme-glow);
+}
+
+.hero-right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.competition-logo,
+.competition-trophy {
+    object-fit: contain;
+    filter: drop-shadow(0 18px 28px rgba(0,0,0,0.55));
+}
+
+.competition-logo {
+    width: 150px;
+    height: 150px;
+    padding: 18px;
+    border-radius: 30px;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(10px);
+}
+
+.competition-trophy {
+    width: 190px;
+    height: 230px;
+    animation: trophyFloat 4s ease-in-out infinite;
+}
+
+@keyframes trophyFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+.european-actions {
+    width: 94%;
+    max-width: 1180px;
+    margin: 0 auto 28px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.action-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 185px;
+    padding: 26px;
+    border-radius: 26px;
+    text-decoration: none;
+    color: #f8fafc;
+    background: rgba(2, 6, 23, 0.52);
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+    transition: 0.25s ease;
+}
+
+.action-card::before {
+    content: "";
+
+    position: absolute;
+    top: -120%;
+    left: -40%;
+
+    width: 180%;
+    height: 300%;
+
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.08),
+        transparent
+    );
+
+    transform: rotate(25deg);
+
+    transition: 0.8s ease;
+}
+
+.action-card:hover::before {
+    top: -40%;
+    left: 100%;
+}
+
+.action-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--theme-accent);
+    box-shadow: 0 22px 55px rgba(0,0,0,0.42);
+}
+
+.action-card i {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 18px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    color: #020617;
+    background: var(--theme-accent);
+    font-size: 1.25rem;
+}
+
+.action-card h3 {
+    margin: 0 0 10px;
+    font-family: 'Orbitron', sans-serif;
+    color: #ffffff;
+}
+
+.action-card p {
+    margin: 0;
+    color: #cbd5e1;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.europe-info-panel {
+    width: 94%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px;
+    border-radius: 28px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.50);
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(12px);
+}
+
+.europe-info-panel h2 {
+    margin: 0 0 10px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.europe-info-panel p {
+    max-width: 750px;
+    margin: 0;
+    color: #cbd5e1;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.panel-badge {
+    min-width: 150px;
+    padding: 18px;
+    border-radius: 22px;
+    text-align: center;
+    background: rgba(255,255,255,0.08);
+}
+
+.panel-badge i {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--theme-accent);
+    font-size: 2rem;
+}
+
+.panel-badge span {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+}
+
+/* UEFA Champions League */
+body.ucl-theme {
+    background:
+        linear-gradient(rgba(2,6,23,0.88), rgba(2,6,23,0.96)),
+        url('/Images/european_leagues/lm_theme.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    --theme-accent: #8bbcff;
+    --theme-glow: rgba(59,130,246,0.40);
+}
+
+/* UEFA Europa League */
+body.uel-theme {
+    background:
+        linear-gradient(rgba(18,7,1,0.90), rgba(18,7,1,0.97)),
+        url('/Images/european_leagues/le_theme.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    --theme-accent: #ff8a2a;
+    --theme-glow: rgba(249,115,22,0.42);
+}
+
+/* UEFA Conference League */
+body.uecl-theme {
+    background:
+        linear-gradient(rgba(3,17,10,0.90), rgba(3,17,10,0.97)),
+        url('/Images/european_leagues/cl_theme.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    --theme-accent: #45ff9a;
+    --theme-glow: rgba(34,197,94,0.38);
+}
+
+@media (max-width: 950px) {
+    .hero-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .european-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .europe-info-panel {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 620px) {
+    .european-page {
+        padding: 95px 16px 45px;
+    }
+
+    .hero-content {
+        padding: 30px 22px;
+    }
+
+    .competition-logo {
+        width: 110px;
+        height: 110px;
+    }
+
+    .competition-trophy {
+        width: 130px;
+        height: 170px;
+    }
+}
+
+.hero-buttons form {
+    margin: 0;
+}

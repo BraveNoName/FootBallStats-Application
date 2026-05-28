@@ -1,0 +1,351 @@
+<!doctype html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${competitionName}">European Competition</title>
+
+    <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/european_matches.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/">
+            <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
+        </a>
+    </div>
+
+    <div class="nav-search">
+        <div class="search-box">
+            <input id="globalSearchInput"
+                   type="text"
+                   th:placeholder="#{search.placeholder}"
+                   autocomplete="off">
+
+            <button type="submit">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+            <div id="searchSuggestions" class="search-suggestions"></div>
+        </div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="/" th:text="#{nav.home}">Home</a></li>
+        <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
+        <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.players}">Players</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="/players/real">
+                    <i class="fa-solid fa-user"></i>
+                    Real Players
+                </a>
+
+                <a href="/players/generated">
+                    <i class="fa-solid fa-shuffle"></i>
+                    Generated Players
+                </a>
+            </div>
+        </li>
+
+        <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.language}">Language</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="?lang=en">
+                    <span class="fi fi-gb"></span> English
+                    <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=it">
+                    <span class="fi fi-it"></span> Italiano
+                    <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=es">
+                    <span class="fi fi-es"></span> Español
+                    <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=de">
+                    <span class="fi fi-de"></span> Deutsch
+                    <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=fr">
+                    <span class="fi fi-fr"></span> Français
+                    <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pl">
+                    <span class="fi fi-pl"></span> Polski
+                    <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=tr">
+                    <span class="fi fi-tr"></span> Türkçe
+                    <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+
+                <a href="?lang=pt">
+                    <span class="fi fi-pt"></span> Português
+                    <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i>
+                </a>
+            </div>
+        </li>
+
+        <li class="dropdown">
+            <a href="#" id="loginLink">
+                <i class="fa-regular fa-circle-user"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="#">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span th:text="#{auth.login}">Log In</span>
+                </a>
+
+                <a href="#">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span th:text="#{auth.register}">Create profile</span>
+                </a>
+            </div>
+        </li>
+    </ul>
+</nav>
+
+<main class="european-page" th:attr="data-competition=${competition}">
+
+    <section class="european-hero">
+        <video id="competitionIntro" class="hero-video" autoplay muted loop playsinline></video>
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+            <div class="hero-left">
+                <span class="hero-label">European Competition</span>
+
+                <h1 th:text="${competitionName}">UEFA Champions League</h1>
+
+                <p>
+                    The central hub for European competitions: fixtures, match simulations,
+                    league phase standings, statistics, and top club analysis.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="#european-actions" class="hero-btn primary">
+                        <i class="fa-solid fa-futbol"></i>
+                        Explore Modules
+                    </a>
+
+                    <a href="/matches" class="hero-btn secondary">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back
+                    </a>
+
+                    <form action="/europe/generate-participants" method="post">
+                        <button type="submit" class="hero-btn primary">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            Generate Participants
+                        </button>
+                    </form>
+
+                    <form th:action="@{'/europe/' + ${competition} + '/generate-league-phase'}"
+                          method="post">
+
+                        <button type="submit" class="hero-btn secondary">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            Generate League Phase
+                        </button>
+
+                    </form>
+
+                </div>
+            </div>
+
+            <div class="hero-right">
+                <img th:src="${competitionLogo}" class="competition-logo" alt="Competition logo">
+                <img id="competitionTrophy" class="competition-trophy"
+                     src="/Images/european_leagues/UCL_Trophy.png"
+                     alt="Competition trophy">
+            </div>
+        </div>
+    </section>
+
+    <section id="european-actions" class="european-actions">
+
+        <a href="#" class="action-card fixtures-card">
+            <i class="fa-solid fa-calendar-days"></i>
+
+            <h3>Fixtures</h3>
+
+            <p>
+                Browse the upcoming schedule, results, and match information.
+            </p>
+        </a>
+
+        <a href="#" class="action-card table-card">
+            <i class="fa-solid fa-table-list"></i>
+
+            <h3>League Phase</h3>
+
+            <p>
+                View standings, points, goal difference, and club rankings.
+            </p>
+        </a>
+
+        <a href="#" class="action-card stats-card">
+            <i class="fa-solid fa-chart-line"></i>
+
+            <h3>Statistics</h3>
+
+            <p>
+                Analyze team performance, goals, form, and advanced stats.
+            </p>
+        </a>
+
+    </section>
+
+    <section class="europe-info-panel">
+
+        <div>
+            <span class="panel-kicker">Module Status</span>
+
+            <h2>European Competitions Module</h2>
+
+            <p>
+                This page is prepared for future development including match generation,
+                league phase simulation, knockout stages, and advanced statistics.
+            </p>
+        </div>
+
+        <div class="panel-badge">
+            <i class="fa-solid fa-trophy"></i>
+            <span>2025/2026</span>
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-container">
+
+        <div class="footer-section">
+            <h3 class="footer-brand">Football<span>Stats</span></h3>
+
+            <ul>
+                <li>
+                    <a href="/">
+                        <i class="fa-solid fa-futbol"></i>
+                        [[#{footer.about}]]
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/">
+                        <i class="fa-solid fa-database"></i>
+                        [[#{footer.data}]]
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/">
+                        <i class="fa-solid fa-shield"></i>
+                        [[#{footer.security}]]
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3 th:text="#{footer.social}">Social</h3>
+
+            <div class="social-icons">
+                <a href="https://www.facebook.com/" target="_blank" class="facebook">
+                    <i class="fa-brands fa-facebook"></i>
+                </a>
+
+                <a href="https://www.instagram.com/" target="_blank" class="instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+
+                <a href="https://x.com/" target="_blank" class="x-twitter">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+
+                <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+
+                <a href="https://www.youtube.com/" target="_blank" class="youtube">
+                    <i class="fa-brands fa-youtube"></i>
+                </a>
+
+                <a href="https://www.tiktok.com/" target="_blank" class="tiktok">
+                    <i class="fa-brands fa-tiktok"></i>
+                </a>
+
+                <a href="https://www.linkedin.com/" target="_blank" class="linkedin">
+                    <i class="fa-brands fa-linkedin"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3 th:text="#{footer.apps}">Apps</h3>
+
+            <ul class="app-links">
+                <li>
+                    <a href="https://play.google.com/" target="_blank" class="google-play">
+                        <i class="fa-brands fa-google-play"></i>
+                        Google Play
+                    </a>
+                </li>
+
+                <li>
+                    <a href="https://apps.apple.com/" target="_blank" class="app-store">
+                        <i class="fa-brands fa-apple"></i>
+                        &nbsp;&nbsp;App Store
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="/js/search_nav_bar.js"></script>
+<script th:src="@{/js/tab_title.js}"></script>
+<script src="/js/european_matches.js"></script>
+
+<button type="button" id="scrollTopBtn" class="scroll-top-btn" title="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+</button>
+
+<script src="/js/scroll_top_btn.js"></script>
+
+</body>
+</html>

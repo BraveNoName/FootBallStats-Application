@@ -502,3 +502,57 @@ CREATE TABLE MATCH_EVENT (
 org.h2.jdbc.JdbcSQLTimeoutException: Czas oczekiwania na blokadę tabeli "GENERATED_PLAYER" skończył się
 Timeout trying to lock table "GENERATED_PLAYER"; SQL statement:
 update generated_player set active=?,age=?,birth_date=?,club_slug=?,contract_until=?,country_code=?,current_club=?,first_name=?,height=?,image_url=?,injured_matches=?,joined_club_date=?,last_contract_extension=?,last_name=?,league_slug=?,market_value=?,nationality=?,position=?,preferred_foot=?,shirt_number=?,team_id=? where id=? [50200-240]
+2026-05-29 00:16:00.760834+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "MATCH" nie istnieje
+Table "MATCH" not found; SQL statement:
+SELECT LEAGUE,
+       COUNT(*) AS MATCHES
+FROM MATCH
+WHERE LEAGUE IN (
+    'champions-league',
+    'europa-league',
+    'conference-league'
+)
+GROUP BY LEAGUE [42102-240]
+2026-05-29 00:16:08.207198+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "MATCH" nie istnieje
+Table "MATCH" not found; SQL statement:
+SELECT LEAGUE,
+       COUNT(*) AS MATCHES
+FROM MATCH
+WHERE LEAGUE IN (
+    'champions-league',
+    'europa-league',
+    'conference-league'
+)
+GROUP BY LEAGUE [42102-240]
+2026-05-29 00:16:13.702552+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "MATCH" nie istnieje
+Table "MATCH" not found; SQL statement:
+SELECT
+    LEAGUE,
+    ROUND_NUMBER,
+    HOME_TEAM,
+    AWAY_TEAM
+FROM MATCH
+WHERE LEAGUE IN (
+    'champions-league',
+    'europa-league',
+    'conference-league'
+)
+ORDER BY LEAGUE, ROUND_NUMBER [42102-240]
+2026-05-29 00:16:14.446628+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabela "MATCH" nie istnieje
+Table "MATCH" not found; SQL statement:
+SELECT
+    LEAGUE,
+    ROUND_NUMBER,
+    HOME_TEAM,
+    AWAY_TEAM
+FROM MATCH
+WHERE LEAGUE IN (
+    'champions-league',
+    'europa-league',
+    'conference-league'
+)
+ORDER BY LEAGUE, ROUND_NUMBER [42102-240]

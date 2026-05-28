@@ -135,7 +135,7 @@
     </ul>
 </nav>
 
-<main class="matches-page">
+<main class="matches-page" th:classappend="${league != null} ? ' league-selected' : ''">
 
     <section class="matches-hero">
         <h1>Matches</h1>
@@ -182,18 +182,18 @@
                 </div>
 
                 <div class="european-cups-grid">
-                    <a href="/matches/europe/champions-league" class="european-cup-card">
-                        <i class="fa-solid fa-star"></i>
+                    <a href="/matches/europe/champions-league" class="european-cup-card ucl-card">
+                        <img src="/Images/european_leagues/UCL.png" alt="Champions League">
                         <span>Champions League</span>
                     </a>
 
-                    <a href="/matches/europe/europa-league" class="european-cup-card">
-                        <i class="fa-solid fa-shield-halved"></i>
+                    <a href="/matches/europe/europa-league" class="european-cup-card uel-card">
+                        <img src="/Images/european_leagues/UEL.png" alt="Europa League">
                         <span>Europa League</span>
                     </a>
 
-                    <a href="/matches/europe/conference-league" class="european-cup-card">
-                        <i class="fa-solid fa-globe"></i>
+                    <a href="/matches/europe/conference-league" class="european-cup-card uecl-card">
+                        <img src="/Images/european_leagues/UECL.png" alt="Conference League">
                         <span>Conference League</span>
                     </a>
                 </div>
