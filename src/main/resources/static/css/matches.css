@@ -147,12 +147,35 @@
     display: none;
 }
 
-#tableView {
+#tableView,
+#playersView {
     display: none;
 }
 
-#tableView.active {
+#tableView.active,
+#playersView.active {
     display: block;
+}
+
+#playersView {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#playersView .league-table th,
+#playersView .league-table td {
+    padding: 8px 10px;
+}
+
+#playersView .league-table td:nth-child(2),
+#playersView .league-table th:nth-child(2) {
+    text-align: left;
+}
+
+#playersView .league-table td:nth-child(3),
+#playersView .league-table th:nth-child(3) {
+    text-align: left;
 }
 
 /* ROUND BUTTONS */
@@ -1145,5 +1168,30 @@
 
 #confirmSeasonGenerateBtn {
     background: #ef4444;
+    color: white;
+}
+
+.hidden-player-row {
+    display: none;
+}
+
+.show-more-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.show-more-btn {
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08);
+    color: #e5e7eb;
+    padding: 9px 22px;
+    border-radius: 999px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.show-more-btn:hover {
+    background: #16a34a;
     color: white;
 }

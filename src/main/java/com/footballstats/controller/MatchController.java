@@ -13,6 +13,8 @@ import com.footballstats.service.MatchGeneratorService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.footballstats.dto.LeaguePlayerStatsRow;
+import com.footballstats.service.LeaguePlayerStatsService;
 
 import java.util.*;
 
@@ -25,18 +27,21 @@ public class MatchController {
     private final MatchGeneratorService matchGeneratorService;
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
+    private final LeaguePlayerStatsService leaguePlayerStatsService;
 
     public MatchController(MatchRepository matchRepository,
                            MatchGeneratorService matchGeneratorService,
                            LeagueTableService leagueTableService,
                            MatchEventRepository matchEventRepository,
-                           GeneratedPlayerRepository generatedPlayerRepository) {
+                           GeneratedPlayerRepository generatedPlayerRepository,
+                           LeaguePlayerStatsService leaguePlayerStatsService) {
 
         this.matchRepository = matchRepository;
         this.matchGeneratorService = matchGeneratorService;
         this.leagueTableService = leagueTableService;
         this.matchEventRepository = matchEventRepository;
         this.generatedPlayerRepository = generatedPlayerRepository;
+        this.leaguePlayerStatsService = leaguePlayerStatsService;
     }
 
     @GetMapping
@@ -45,10 +50,12 @@ public class MatchController {
 
         List<Match> matches = List.of();
         List<LeagueTableRow> leagueTable = List.of();
+        List<LeaguePlayerStatsRow> playerStats = List.of();
 
         if (league != null && !league.isBlank()) {
             matches = matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(league);
             leagueTable = leagueTableService.calculateTable(matches, league);
+            playerStats = leaguePlayerStatsService.calculate(matches);
         }
 
         model.addAttribute("matches", matches);
@@ -60,6 +67,7 @@ public class MatchController {
                 "seasonAlreadyGenerated",
                 league != null && !league.isBlank() && matchRepository.existsByLeague(league)
         );
+        model.addAttribute("playerStats", playerStats);
 
         return "matches";
     }

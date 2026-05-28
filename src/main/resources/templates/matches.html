@@ -200,6 +200,13 @@
                         class="view-btn table-btn">
                     Table
                 </button>
+
+                <button type="button"
+                        id="showPlayersBtn"
+                        class="view-btn">
+                    Stats
+                </button>
+
             </div>
 
             <div id="fixturesView">
@@ -580,6 +587,86 @@
                         <span class="legend-color rel"></span>
                         Relegation
                     </div>
+
+                </div>
+
+            </section>
+
+            <section id="playersView"
+                     class="league-table-section">
+
+                <div class="table-header">
+                    <h2>Player Statistics</h2>
+                    <span th:text="${league}">league</span>
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table class="league-table">
+
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Club</th>
+                            <th>G</th>
+                            <th>A</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        <tr th:each="player, stat : ${playerStats}"
+                            th:classappend="${stat.index >= 20} ? 'extra-player-row hidden-player-row' : ''">
+
+                            <td th:text="${stat.index + 1}">
+                                1
+                            </td>
+
+                            <td>
+
+                                <div style="display:flex; align-items:center; gap:10px;">
+
+                        <span class="fi"
+                              th:classappend="' fi-' + ${player.countryCode}">
+                        </span>
+
+                                    <span th:text="${player.playerName}">
+                            Player
+                        </span>
+
+                                </div>
+
+                            </td>
+
+                            <td th:text="${player.teamName}">
+                                Club
+                            </td>
+
+                            <td th:text="${player.goals}">
+                                0
+                            </td>
+
+                            <td th:text="${player.assists}">
+                                0
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="show-more-wrapper"
+                     th:if="${playerStats.size() > 20}">
+
+                    <button id="showMorePlayersBtn"
+                            class="show-more-btn"
+                            type="button">
+                        Show More
+                    </button>
 
                 </div>
 

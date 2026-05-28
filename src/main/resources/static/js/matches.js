@@ -147,24 +147,55 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const showFixturesBtn = document.getElementById("showFixturesBtn");
     const showTableBtn = document.getElementById("showTableBtn");
+    const showPlayersBtn = document.getElementById("showPlayersBtn");
+
     const fixturesView = document.getElementById("fixturesView");
     const tableView = document.getElementById("tableView");
+    const playersView = document.getElementById("playersView");
 
-    if (showFixturesBtn && showTableBtn && fixturesView && tableView) {
+    if (
+        showFixturesBtn
+        && showTableBtn
+        && showPlayersBtn
+        && fixturesView
+        && tableView
+        && playersView
+    ) {
+
         showFixturesBtn.addEventListener("click", function () {
+
             fixturesView.classList.remove("hidden");
+
             tableView.classList.remove("active");
+            playersView.classList.remove("active");
 
             showFixturesBtn.classList.add("active");
             showTableBtn.classList.remove("active");
+            showPlayersBtn.classList.remove("active");
         });
 
         showTableBtn.addEventListener("click", function () {
+
             fixturesView.classList.add("hidden");
+
             tableView.classList.add("active");
+            playersView.classList.remove("active");
 
             showTableBtn.classList.add("active");
             showFixturesBtn.classList.remove("active");
+            showPlayersBtn.classList.remove("active");
+        });
+
+        showPlayersBtn.addEventListener("click", function () {
+
+            fixturesView.classList.add("hidden");
+
+            tableView.classList.remove("active");
+            playersView.classList.add("active");
+
+            showPlayersBtn.classList.add("active");
+            showFixturesBtn.classList.remove("active");
+            showTableBtn.classList.remove("active");
         });
     }
 
@@ -259,6 +290,17 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+
+    const showMorePlayersBtn = document.getElementById("showMorePlayersBtn");
+
+    if (showMorePlayersBtn) {
+        showMorePlayersBtn.addEventListener("click", function () {
+            document.querySelectorAll(".extra-player-row")
+                .forEach(row => row.classList.remove("hidden-player-row"));
+
+            showMorePlayersBtn.style.display = "none";
+        });
+    }
 
     updateStatBars();
 });
