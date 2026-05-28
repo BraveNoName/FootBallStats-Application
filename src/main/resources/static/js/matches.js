@@ -1,5 +1,177 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    const leagueData = {
+        england: {
+            name: "Premier League",
+            logo: "/Images/leagues/England - Premier League/premierleague.png"
+        },
+        spain: {
+            name: "LaLiga EA Sports",
+            logo: "/Images/leagues/Spain - LaLiga/laliga.png"
+        },
+        italy: {
+            name: "Serie A",
+            logo: "/Images/leagues/Italy - Serie A/seriea.png"
+        },
+        germany: {
+            name: "Bundesliga",
+            logo: "/Images/leagues/Germany - Bundesliga/bundesliga.png"
+        },
+        france: {
+            name: "Ligue 1",
+            logo: "/Images/leagues/France - Ligue 1/ligue1.png"
+        },
+        poland: {
+            name: "Ekstraklasa",
+            logo: "/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png"
+        },
+        portugal: {
+            name: "Liga Portugal",
+            logo: "/Images/leagues/Portugal - Liga Portugal/ligaportugal.png"
+        },
+        netherlands: {
+            name: "Eredivisie",
+            logo: "/Images/leagues/Netherlands - Eredivisie/eredivisie.png"
+        },
+        belgium: {
+            name: "Jupiler Pro League",
+            logo: "/Images/leagues/Belgium - Jupiler Pro League/proleague.png"
+        },
+        austria: {
+            name: "Austrian Bundesliga",
+            logo: "/Images/leagues/Austria - Bundesliga/austriabundesliga.png"
+        },
+        denmark: {
+            name: "Danish Superliga",
+            logo: "/Images/leagues/Denmark - Superliga/superliga.png"
+        },
+        norway: {
+            name: "Eliteserien",
+            logo: "/Images/leagues/Norway - Eliteserien/eliteserien.png"
+        },
+        scotland: {
+            name: "Scottish Premiership",
+            logo: "/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png"
+        },
+        sweden: {
+            name: "Allsvenskan",
+            logo: "/Images/leagues/Sweden - Allsvenskan/allsvenskan.png"
+        },
+        switzerland: {
+            name: "Swiss Super League",
+            logo: "/Images/leagues/Switzerland - Super League/superleague.png"
+        },
+        ukraine: {
+            name: "Ukrainian Premier League",
+            logo: "/Images/leagues/Ukraine - Premier Liga/premierliga.png"
+        },
+        serbia: {
+            name: "Serbian SuperLiga",
+            logo: "/Images/leagues/Serbia - Super liga Srbije/superligaserbije.png"
+        },
+        turkiye: {
+            name: "Süper Lig",
+            logo: "/Images/leagues/Türkiye - Süper Lig/superlig.png"
+        },
+        turkey: {
+            name: "Süper Lig",
+            logo: "/Images/leagues/Türkiye - Süper Lig/superlig.png"
+        },
+        greece: {
+            name: "Super League Greece",
+            logo: "/Images/leagues/Greece - Super League 1/superleague1.png"
+        },
+        czech: {
+            name: "Czech First League",
+            logo: "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png"
+        },
+        "czech-republic": {
+            name: "Czech First League",
+            logo: "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png"
+        },
+        croatia: {
+            name: "HNL",
+            logo: "/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png"
+        },
+        bulgaria: {
+            name: "efbet Liga",
+            logo: "/Images/leagues/Bulgaria - efbet Liga/efbetliga.png"
+        },
+        israel: {
+            name: "Ligat ha'Al",
+            logo: "/Images/leagues/Israel - Ligat ha'Al/ligathaai.png"
+        },
+        romania: {
+            name: "SuperLiga",
+            logo: "/Images/leagues/Romania - SuperLiga/romaniasuperliga.png"
+        },
+        russia: {
+            name: "Premier Liga",
+            logo: "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg"
+        }
+    };
+
+    const leagueSelect = document.getElementById("leagueSelect");
+    const leagueDropdownBtn = document.getElementById("leagueDropdownBtn");
+    const leagueDropdownMenu = document.getElementById("leagueDropdownMenu");
+    const selectedLeagueLogo = document.getElementById("selectedLeagueLogo");
+    const selectedLeagueName = document.getElementById("selectedLeagueName");
+
+    if (leagueSelect && leagueDropdownBtn && leagueDropdownMenu) {
+
+        function setSelectedLeague(slug) {
+            const data = leagueData[slug];
+
+            if (!data) {
+                selectedLeagueName.textContent = "Select league";
+                selectedLeagueLogo.src = "/Images/Favicon.png";
+                return;
+            }
+
+            selectedLeagueName.textContent = data.name;
+            selectedLeagueLogo.src = data.logo;
+        }
+
+        leagueDropdownMenu.innerHTML = "";
+
+        Array.from(leagueSelect.options).forEach(function (option) {
+            const slug = option.value;
+
+            if (!slug || !leagueData[slug]) {
+                return;
+            }
+
+            option.textContent = leagueData[slug].name;
+
+            const div = document.createElement("div");
+            div.className = "league-dropdown-option";
+
+            div.innerHTML = `
+                <img src="${leagueData[slug].logo}" alt="">
+                <span>${leagueData[slug].name}</span>
+            `;
+
+            div.addEventListener("click", function () {
+                leagueSelect.value = slug;
+                window.location.href = "/matches?league=" + slug;
+            });
+
+            leagueDropdownMenu.appendChild(div);
+        });
+
+        setSelectedLeague(leagueSelect.value);
+
+        leagueDropdownBtn.addEventListener("click", function () {
+            leagueDropdownMenu.classList.toggle("show");
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!event.target.closest(".league-select-wrapper")) {
+                leagueDropdownMenu.classList.remove("show");
+            }
+        });
+    }
+
     const roundButtons = document.querySelectorAll(".round-btn");
     const roundViews = document.querySelectorAll(".round-view");
 
@@ -161,9 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
         && tableView
         && playersView
     ) {
-
         showFixturesBtn.addEventListener("click", function () {
-
             fixturesView.classList.remove("hidden");
 
             tableView.classList.remove("active");
@@ -175,7 +345,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         showTableBtn.addEventListener("click", function () {
-
             fixturesView.classList.add("hidden");
 
             tableView.classList.add("active");
@@ -187,7 +356,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         showPlayersBtn.addEventListener("click", function () {
-
             fixturesView.classList.add("hidden");
 
             tableView.classList.remove("active");
@@ -200,52 +368,59 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const generateForm = document.getElementById("generateForm");
-    const leagueSelect = document.getElementById("leagueSelect");
     const leagueError = document.getElementById("leagueError");
 
-   const seasonConfirmOverlay = document.getElementById("seasonConfirmOverlay");
-   const cancelSeasonGenerateBtn = document.getElementById("cancelSeasonGenerateBtn");
-   const confirmSeasonGenerateBtn = document.getElementById("confirmSeasonGenerateBtn");
+    const seasonConfirmOverlay = document.getElementById("seasonConfirmOverlay");
+    const cancelSeasonGenerateBtn = document.getElementById("cancelSeasonGenerateBtn");
+    const confirmSeasonGenerateBtn = document.getElementById("confirmSeasonGenerateBtn");
 
-   if (cancelSeasonGenerateBtn && seasonConfirmOverlay) {
-       cancelSeasonGenerateBtn.addEventListener("click", function () {
-           seasonConfirmOverlay.classList.remove("show");
-       });
-   }
+    if (cancelSeasonGenerateBtn && seasonConfirmOverlay) {
+        cancelSeasonGenerateBtn.addEventListener("click", function () {
+            seasonConfirmOverlay.classList.remove("show");
+        });
+    }
 
-   if (confirmSeasonGenerateBtn && generateForm) {
-       confirmSeasonGenerateBtn.addEventListener("click", function () {
-           generateForm.dataset.confirmed = "true";
-           generateForm.submit();
-       });
-   }
+    if (confirmSeasonGenerateBtn && generateForm) {
+        confirmSeasonGenerateBtn.addEventListener("click", function () {
+            generateForm.dataset.confirmed = "true";
+            generateForm.submit();
+        });
+    }
 
-   if (generateForm) {
-       generateForm.addEventListener("submit", function (e) {
-           if (!leagueSelect.value) {
-               e.preventDefault();
+    if (generateForm && leagueSelect) {
+        generateForm.addEventListener("submit", function (e) {
+            if (!leagueSelect.value) {
+                e.preventDefault();
 
-               leagueError.classList.add("show");
-               leagueSelect.style.border = "1px solid rgba(248,113,113,0.8)";
-               return;
-           }
+                leagueError.classList.add("show");
 
-           leagueError.classList.remove("show");
-           leagueSelect.style.border = "1px solid rgba(255,255,255,0.14)";
+                if (leagueDropdownBtn) {
+                    leagueDropdownBtn.style.border = "1px solid rgba(248,113,113,0.8)";
+                }
 
-           if (generateForm.dataset.seasonGenerated === "true"
-               && generateForm.dataset.confirmed !== "true") {
+                return;
+            }
 
-               e.preventDefault();
+            leagueError.classList.remove("show");
 
-               if (seasonConfirmOverlay) {
-                   seasonConfirmOverlay.classList.add("show");
-               }
+            if (leagueDropdownBtn) {
+                leagueDropdownBtn.style.border = "1px solid rgba(255,255,255,0.14)";
+            }
 
-               return;
-           }
-       });
-   }
+            if (
+                generateForm.dataset.seasonGenerated === "true"
+                && generateForm.dataset.confirmed !== "true"
+            ) {
+                e.preventDefault();
+
+                if (seasonConfirmOverlay) {
+                    seasonConfirmOverlay.classList.add("show");
+                }
+
+                return;
+            }
+        });
+    }
 
     const sortableHeaders =
         document.querySelectorAll(".sortable-header th[data-sort]");
@@ -317,13 +492,9 @@ async function toggleMatchEvents(matchId) {
     }
 
     if (eventsContainer.innerHTML.trim() !== "") {
-
         eventsContainer.innerHTML = "";
-
         statsContainer.style.display = "block";
-
         button.textContent = "Match events";
-
         return;
     }
 
@@ -332,15 +503,12 @@ async function toggleMatchEvents(matchId) {
     }
 
     statsContainer.style.display = "none";
-
-    button.textContent =
-        "Click to return to match statistics";
+    button.textContent = "Click to return to match statistics";
 
     const response = await fetch(`/matches/${matchId}/events`);
     const events = await response.json();
 
     events.sort((a, b) => {
-
         if (a.eventMinute !== b.eventMinute) {
             return a.eventMinute - b.eventMinute;
         }
@@ -359,13 +527,11 @@ async function toggleMatchEvents(matchId) {
     `;
 
     events.forEach(event => {
-
         if (!event.teamSide) {
             return;
         }
 
         if (!secondHalfAdded && event.eventMinute >= 46) {
-
             html += `
                 <div class="half-divider">
                     <span>2nd half</span>
@@ -476,13 +642,8 @@ function renderTeamLineup(title, players, side) {
 }
 
 function renderLineupPlayer(player) {
-
     const number = player.shirtNumber ?? "-";
     const position = player.position ?? "";
-
-    const image = player.imageUrl && player.imageUrl.trim() !== ""
-        ? player.imageUrl
-        : "/Images/player_placeholder.png";
 
     const countryCode = player.countryCode
         ? player.countryCode.toLowerCase()
@@ -554,7 +715,6 @@ function formatLineupEventTitle(event) {
 }
 
 function renderEventContent(event) {
-
     return `
         <div class="timeline-event-content">
 
@@ -579,7 +739,6 @@ function renderEventContent(event) {
 }
 
 function formatRelatedEvent(event) {
-
     if (event.eventType === "GOAL") {
         return "Assist: " + event.relatedPlayerName;
     }
@@ -592,7 +751,6 @@ function formatRelatedEvent(event) {
 }
 
 function buildEventDescription(event) {
-
     if (event.eventType === "GOAL" && event.relatedPlayerName) {
         return "Assist: " + event.relatedPlayerName;
     }

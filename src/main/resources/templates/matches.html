@@ -150,25 +150,50 @@
               id="generateForm"
               th:attr="data-season-generated=${seasonAlreadyGenerated}">
 
-            <select id="leagueSelect"
-                    name="league"
-                    onchange="window.location.href='/matches?league=' + this.value">
+            <div class="league-select-wrapper">
 
-                <option value=""
-                        disabled
-                        th:selected="${league == null}">
-                    Select league
-                </option>
+                <select id="leagueSelect"
+                        name="league"
+                        class="real-league-select">
 
-                <option th:each="leagueItem : ${leagues}"
-                        th:value="${leagueItem}"
-                        th:text="${leagueItem}"
-                        th:selected="${leagueItem == league}">
-                </option>
+                    <option value=""
+                            disabled
+                            th:selected="${league == null}">
+                        Select league
+                    </option>
 
-            </select>
+                    <option th:each="leagueItem : ${leagues}"
+                            th:value="${leagueItem}"
+                            th:text="${leagueItem}"
+                            th:selected="${leagueItem == league}">
+                    </option>
 
-            <button type="submit" class="generate-season-btn" title="Generate full season simulation">
+                </select>
+
+                <button type="button"
+                        id="leagueDropdownBtn"
+                        class="league-dropdown-btn">
+
+                    <img id="selectedLeagueLogo"
+                         src="/Images/Favicon.png"
+                         alt="League logo">
+
+                    <span id="selectedLeagueName">
+                        Select league
+                    </span>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div id="leagueDropdownMenu"
+                     class="league-dropdown-menu">
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="generate-season-btn"
+                    title="Generate full season simulation">
                 <i class="fa-solid fa-rotate"></i>
                 Generate season
             </button>
@@ -179,7 +204,6 @@
 
         </form>
 
-
         <section class="empty-matches"
                  th:if="${#lists.isEmpty(matches)}">
             <p>No matches generated yet.</p>
@@ -189,24 +213,17 @@
                  th:if="${!#lists.isEmpty(matches)}">
 
             <div class="view-switch">
-                <button type="button"
-                        id="showFixturesBtn"
-                        class="view-btn active">
+                <button type="button" id="showFixturesBtn" class="view-btn active">
                     Matches
                 </button>
 
-                <button type="button"
-                        id="showTableBtn"
-                        class="view-btn table-btn">
+                <button type="button" id="showTableBtn" class="view-btn table-btn">
                     Table
                 </button>
 
-                <button type="button"
-                        id="showPlayersBtn"
-                        class="view-btn">
+                <button type="button" id="showPlayersBtn" class="view-btn">
                     Stats
                 </button>
-
             </div>
 
             <div id="fixturesView">
@@ -624,19 +641,17 @@
                             </td>
 
                             <td>
-
                                 <div style="display:flex; align-items:center; gap:10px;">
 
-                        <span class="fi"
-                              th:classappend="' fi-' + ${player.countryCode}">
-                        </span>
+                                    <span class="fi"
+                                          th:classappend="' fi-' + ${player.countryCode}">
+                                    </span>
 
                                     <span th:text="${player.playerName}">
-                            Player
-                        </span>
+                                        Player
+                                    </span>
 
                                 </div>
-
                             </td>
 
                             <td th:text="${player.teamName}">

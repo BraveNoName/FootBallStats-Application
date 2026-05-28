@@ -38,7 +38,7 @@
 
 .matches-panel {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     width: 94%;
     max-width: 1000px;
     margin: 0 auto;
@@ -77,20 +77,34 @@
 }
 
 .generate-form select {
-    min-width: 240px;
-    border: 1px solid rgba(255,255,255,0.14);
-    padding: 11px 16px;
+    min-width: 265px;
+    height: 46px;
+    border: 1px solid rgba(255,255,255,0.16);
+    padding: 0 18px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.10);
+    background: rgba(15,23,42,0.92);
     color: #ffffff;
-    font-weight: 800;
+    font-weight: 900;
     outline: none;
     cursor: pointer;
     font-size: 0.92rem;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+}
+
+.generate-form select:hover {
+    border-color: rgba(34,197,94,0.55);
+    background: rgba(15,23,42,1);
+}
+
+.generate-form select:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.20);
 }
 
 .generate-form select option {
-    color: #0f172a;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .generate-season-btn {
@@ -1194,4 +1208,105 @@
 .show-more-btn:hover {
     background: #16a34a;
     color: white;
+}
+
+.real-league-select {
+    display: none;
+}
+
+.generate-form {
+    position: relative;
+    z-index: 10000;
+}
+
+.league-select-wrapper {
+    position: relative;
+    width: 280px;
+    z-index: 10001;
+}
+
+.league-dropdown-btn {
+    width: 100%;
+    height: 48px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    background: rgba(15,23,42,0.96);
+    color: white;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 0.92rem;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+}
+
+.league-dropdown-btn img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    background: white;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.league-dropdown-btn i {
+    margin-left: auto;
+    font-size: 0.78rem;
+}
+
+.league-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 58px;
+    left: 0;
+    width: 280px;
+    box-sizing: border-box;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #151515;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 5px;
+    z-index: 999999;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+}
+
+.league-dropdown-menu.show {
+    display: block;
+}
+
+.league-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 6px 8px;
+    border-radius: 11px;
+    color: white;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.87rem;
+}
+
+.league-dropdown-option:hover {
+    background: rgba(34,197,94,0.18);
+}
+
+.league-dropdown-option img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    background: white;
+    border-radius: 8px;
+    padding: 3px;
+    flex-shrink: 0;
+}
+
+.league-dropdown-option span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
