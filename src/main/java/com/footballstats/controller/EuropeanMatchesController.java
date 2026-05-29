@@ -1,19 +1,27 @@
 package com.footballstats.controller;
 
+import com.footballstats.model.EuropeanCompetitionParticipant;
+import com.footballstats.model.EuropeanMatch;
+import com.footballstats.repository.EuropeanMatchRepository;
 import com.footballstats.service.europe.EuropeanCompetitionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 public class EuropeanMatchesController {
 
-    private final EuropeanCompetitionService europeanCompetitionService;
+    private static final String SEASON = "2025/2026";
 
-    public EuropeanMatchesController(EuropeanCompetitionService europeanCompetitionService) {
+    private final EuropeanCompetitionService europeanCompetitionService;
+    private final EuropeanMatchRepository europeanMatchRepository;
+
+    public EuropeanMatchesController(EuropeanCompetitionService europeanCompetitionService,
+                                     EuropeanMatchRepository europeanMatchRepository) {
         this.europeanCompetitionService = europeanCompetitionService;
+        this.europeanMatchRepository = europeanMatchRepository;
     }
 
     @GetMapping("/matches/europe/{competition}")
@@ -33,23 +41,31 @@ public class EuropeanMatchesController {
             default -> "/Images/Favicon.png";
         };
 
+        List<EuropeanCompetitionParticipant> participants =
+                europeanCompetitionService.getParticipants(SEASON, competition);
+
+        List<EuropeanMatch> matches =
+                europeanMatchRepository.findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(
+                        SEASON,
+                        competition
+                );
+
         model.addAttribute("competition", competition);
         model.addAttribute("competitionName", competitionName);
         model.addAttribute("competitionLogo", logo);
+        model.addAttribute("season", SEASON);
+        model.addAttribute("participants", participants);
+        model.addAttribute("matches", matches);
+        model.addAttribute("participantsCount", participants.size());
+        model.addAttribute("matchesCount", matches.size());
 
         return "european_matches";
     }
 
-    @PostMapping("/europe/generate-participants")
-    public String generateEuropeanParticipants() {
-        europeanCompetitionService.generateParticipantsFromDomesticTables("2025/2026");
-
-        return "redirect:/matches";
-    }
-
-    @PostMapping("/europe/{competition}/generate-league-phase")
-    public String generateEuropeanLeaguePhase(@PathVariable String competition) {
-        europeanCompetitionService.generateLeaguePhaseMatches("2025/2026", competition);
+    @PostMapping("/europe/{competition}/generate")
+    public String generateEuropeanCompetition(@PathVariable String competition) {
+        europeanCompetitionService.generateParticipantsFromDomesticTables(SEASON);
+        europeanCompetitionService.generateLeaguePhaseMatches(SEASON, competition);
 
         return "redirect:/matches/europe/" + competition;
     }

@@ -2,17 +2,18 @@ package com.footballstats.service.europe;
 
 import com.footballstats.dto.LeagueTableRow;
 import com.footballstats.model.EuropeanCompetitionParticipant;
+import com.footballstats.model.EuropeanMatch;
 import com.footballstats.model.GeneratedPlayer;
 import com.footballstats.model.Match;
 import com.footballstats.repository.EuropeanCompetitionParticipantRepository;
+import com.footballstats.repository.EuropeanMatchRepository;
 import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import com.footballstats.model.EuropeanMatch;
-import com.footballstats.repository.EuropeanMatchRepository;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,224 +44,108 @@ public class EuropeanCompetitionService {
         this.generatedPlayerRepository = generatedPlayerRepository;
     }
 
-    public List<EuropeanCompetitionParticipant> getParticipants(
-            String season,
-            String competitionSlug
-    ) {
+    public List<EuropeanCompetitionParticipant> getParticipants(String season, String competitionSlug) {
         return participantRepository
-                .findBySeasonAndCompetitionSlugOrderByPotNumberAscUefaRankingPointsDesc(
-                        season,
-                        competitionSlug
-                );
+                .findBySeasonAndCompetitionSlugOrderByPotNumberAscUefaRankingPointsDesc(season, competitionSlug);
     }
 
     public void generateParticipantsFromDomesticTables(String season) {
 
-        if (participantRepository.findAll()
-                .stream()
-                .anyMatch(p -> season.equals(p.getSeason()))) {
+        if (participantRepository.findAll().stream().anyMatch(p -> season.equals(p.getSeason()))) {
             return;
         }
 
         List<String> domesticLeagues = List.of(
-                "england",
-                "spain",
-                "italy",
-                "germany",
-                "france",
-                "netherlands",
-                "portugal",
-                "belgium",
-                "turkiye",
-                "scotland",
-                "austria",
-                "switzerland",
-                "greece",
-                "denmark",
-                "poland",
-                "sweden",
-                "norway",
-                "croatia",
-                "serbia",
-                "romania",
-                "bulgaria",
-                "ukraine",
-                "czech-republic",
-                "israel"
+                "england", "spain", "italy", "germany", "france", "netherlands",
+                "portugal", "belgium", "turkiye", "scotland", "austria",
+                "switzerland", "greece", "denmark", "poland", "sweden",
+                "norway", "croatia", "serbia", "romania", "bulgaria",
+                "ukraine", "czech-republic", "israel"
         );
 
         List<EuropeanCompetitionParticipant> allParticipants = new ArrayList<>();
 
-        // =========================================================
-        // CHAMPIONS LEAGUE
-        // =========================================================
-
         List<EuropeanCompetitionParticipant> directLM =
-                getDirectTeams(
-                        season,
-                        domesticLeagues,
-                        CHAMPIONS_LEAGUE
-                );
+                getDirectTeams(season, domesticLeagues, CHAMPIONS_LEAGUE);
 
         List<EuropeanCompetitionParticipant> qualificationLM =
-                new ArrayList<>(getQualificationTeams(
-                        season,
-                        domesticLeagues,
-                        CHAMPIONS_LEAGUE
-                ));
+                new ArrayList<>(getQualificationTeams(season, domesticLeagues, CHAMPIONS_LEAGUE));
 
-        qualificationLM.sort(
-                Comparator.comparingInt(
-                        EuropeanCompetitionParticipant::getUefaRankingPoints
-                ).reversed()
-        );
+        qualificationLM.sort(Comparator.comparingInt(
+                EuropeanCompetitionParticipant::getUefaRankingPoints).reversed());
 
-        List<EuropeanCompetitionParticipant> championsLeague =
-                new ArrayList<>(directLM);
-
-        List<EuropeanCompetitionParticipant> droppedToEuropa =
-                new ArrayList<>();
+        List<EuropeanCompetitionParticipant> championsLeague = new ArrayList<>(directLM);
+        List<EuropeanCompetitionParticipant> droppedToEuropa = new ArrayList<>();
 
         for (EuropeanCompetitionParticipant participant : qualificationLM) {
-
             if (championsLeague.size() < 36 &&
-                    canAddTeamFromLeague(
-                            championsLeague,
-                            CHAMPIONS_LEAGUE,
-                            participant
-                    )) {
-
+                    canAddTeamFromLeague(championsLeague, CHAMPIONS_LEAGUE, participant)) {
                 participant.setCompetitionSlug(CHAMPIONS_LEAGUE);
                 championsLeague.add(participant);
-
             } else {
-
                 droppedToEuropa.add(participant);
             }
         }
 
         trimTo36(championsLeague);
-
         assignPots(championsLeague);
-
         allParticipants.addAll(championsLeague);
 
-        // =========================================================
-        // EUROPA LEAGUE
-        // =========================================================
-
         List<EuropeanCompetitionParticipant> directLE =
-                getDirectTeams(
-                        season,
-                        domesticLeagues,
-                        EUROPA_LEAGUE
-                );
+                getDirectTeams(season, domesticLeagues, EUROPA_LEAGUE);
 
         List<EuropeanCompetitionParticipant> qualificationLE =
-                new ArrayList<>(getQualificationTeams(
-                        season,
-                        domesticLeagues,
-                        EUROPA_LEAGUE
-                ));
+                new ArrayList<>(getQualificationTeams(season, domesticLeagues, EUROPA_LEAGUE));
 
-        qualificationLE.sort(
-                Comparator.comparingInt(
-                        EuropeanCompetitionParticipant::getUefaRankingPoints
-                ).reversed()
-        );
+        qualificationLE.sort(Comparator.comparingInt(
+                EuropeanCompetitionParticipant::getUefaRankingPoints).reversed());
 
-        List<EuropeanCompetitionParticipant> europaLeague =
-                new ArrayList<>(directLE);
+        List<EuropeanCompetitionParticipant> europaLeague = new ArrayList<>(directLE);
 
         for (EuropeanCompetitionParticipant participant : droppedToEuropa) {
-
-            if (canAddTeamFromLeague(
-                    europaLeague,
-                    EUROPA_LEAGUE,
-                    participant
-            )) {
-
+            if (canAddTeamFromLeague(europaLeague, EUROPA_LEAGUE, participant)) {
                 participant.setCompetitionSlug(EUROPA_LEAGUE);
                 europaLeague.add(participant);
             }
         }
 
-        List<EuropeanCompetitionParticipant> droppedToConference =
-                new ArrayList<>();
+        List<EuropeanCompetitionParticipant> droppedToConference = new ArrayList<>();
 
         for (EuropeanCompetitionParticipant participant : qualificationLE) {
-
             if (europaLeague.size() < 36 &&
-                    canAddTeamFromLeague(
-                            europaLeague,
-                            EUROPA_LEAGUE,
-                            participant
-                    )) {
-
+                    canAddTeamFromLeague(europaLeague, EUROPA_LEAGUE, participant)) {
                 participant.setCompetitionSlug(EUROPA_LEAGUE);
                 europaLeague.add(participant);
-
             } else {
-
                 droppedToConference.add(participant);
             }
         }
 
         trimTo36(europaLeague);
-
         assignPots(europaLeague);
-
         allParticipants.addAll(europaLeague);
 
-        // =========================================================
-        // CONFERENCE LEAGUE
-        // =========================================================
-
         List<EuropeanCompetitionParticipant> directLK =
-                getDirectTeams(
-                        season,
-                        domesticLeagues,
-                        CONFERENCE_LEAGUE
-                );
+                getDirectTeams(season, domesticLeagues, CONFERENCE_LEAGUE);
 
         List<EuropeanCompetitionParticipant> qualificationLK =
-                new ArrayList<>(getQualificationTeams(
-                        season,
-                        domesticLeagues,
-                        CONFERENCE_LEAGUE
-                ));
+                new ArrayList<>(getQualificationTeams(season, domesticLeagues, CONFERENCE_LEAGUE));
 
-        qualificationLK.sort(
-                Comparator.comparingInt(
-                        EuropeanCompetitionParticipant::getUefaRankingPoints
-                ).reversed()
-        );
+        qualificationLK.sort(Comparator.comparingInt(
+                EuropeanCompetitionParticipant::getUefaRankingPoints).reversed());
 
-        List<EuropeanCompetitionParticipant> conferenceLeague =
-                new ArrayList<>(directLK);
+        List<EuropeanCompetitionParticipant> conferenceLeague = new ArrayList<>(directLK);
 
         for (EuropeanCompetitionParticipant participant : droppedToConference) {
-
-            if (canAddTeamFromLeague(
-                    conferenceLeague,
-                    CONFERENCE_LEAGUE,
-                    participant
-            )) {
-
+            if (canAddTeamFromLeague(conferenceLeague, CONFERENCE_LEAGUE, participant)) {
                 participant.setCompetitionSlug(CONFERENCE_LEAGUE);
                 conferenceLeague.add(participant);
             }
         }
 
         for (EuropeanCompetitionParticipant participant : qualificationLK) {
-
             if (conferenceLeague.size() < 36 &&
-                    canAddTeamFromLeague(
-                            conferenceLeague,
-                            CONFERENCE_LEAGUE,
-                            participant
-                    )) {
-
+                    canAddTeamFromLeague(conferenceLeague, CONFERENCE_LEAGUE, participant)) {
                 participant.setCompetitionSlug(CONFERENCE_LEAGUE);
                 conferenceLeague.add(participant);
             }
@@ -283,101 +168,51 @@ public class EuropeanCompetitionService {
         participantRepository.saveAll(allParticipants);
     }
 
-    // =========================================================
-    // DIRECT TEAMS
-    // =========================================================
-
     private List<EuropeanCompetitionParticipant> getDirectTeams(
             String season,
             List<String> domesticLeagues,
             String competitionSlug
     ) {
-
         return domesticLeagues.stream()
                 .flatMap(leagueSlug -> {
-
-                    List<Match> matches =
-                            matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(
-                                    leagueSlug
-                            );
+                    List<Match> matches = matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(leagueSlug);
 
                     if (matches.isEmpty()) {
                         return java.util.stream.Stream.empty();
                     }
 
-                    List<LeagueTableRow> table =
-                            leagueTableService.calculateTable(
-                                    matches,
-                                    leagueSlug
-                            );
+                    List<LeagueTableRow> table = leagueTableService.calculateTable(matches, leagueSlug);
 
                     return table.stream()
-                            .filter(row -> isDirectZone(
-                                    row,
-                                    competitionSlug
-                            ))
-                            .map(row -> createParticipantFromTableRow(
-                                    season,
-                                    competitionSlug,
-                                    leagueSlug,
-                                    row
-                            ));
+                            .filter(row -> isDirectZone(row, competitionSlug))
+                            .map(row -> createParticipantFromTableRow(season, competitionSlug, leagueSlug, row));
                 })
                 .toList();
     }
-
-    // =========================================================
-    // QUALIFICATION TEAMS
-    // =========================================================
 
     private List<EuropeanCompetitionParticipant> getQualificationTeams(
             String season,
             List<String> domesticLeagues,
             String competitionSlug
     ) {
-
         return domesticLeagues.stream()
                 .flatMap(leagueSlug -> {
-
-                    List<Match> matches =
-                            matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(
-                                    leagueSlug
-                            );
+                    List<Match> matches = matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(leagueSlug);
 
                     if (matches.isEmpty()) {
                         return java.util.stream.Stream.empty();
                     }
 
-                    List<LeagueTableRow> table =
-                            leagueTableService.calculateTable(
-                                    matches,
-                                    leagueSlug
-                            );
+                    List<LeagueTableRow> table = leagueTableService.calculateTable(matches, leagueSlug);
 
                     return table.stream()
-                            .filter(row -> isQualificationZone(
-                                    row,
-                                    competitionSlug
-                            ))
-                            .map(row -> createParticipantFromTableRow(
-                                    season,
-                                    competitionSlug,
-                                    leagueSlug,
-                                    row
-                            ));
+                            .filter(row -> isQualificationZone(row, competitionSlug))
+                            .map(row -> createParticipantFromTableRow(season, competitionSlug, leagueSlug, row));
                 })
                 .toList();
     }
 
-    // =========================================================
-    // ZONES
-    // =========================================================
-
-    private boolean isDirectZone(
-            LeagueTableRow row,
-            String competitionSlug
-    ) {
-
+    private boolean isDirectZone(LeagueTableRow row, String competitionSlug) {
         String zone = row.getZone();
 
         if (zone == null) {
@@ -385,25 +220,14 @@ public class EuropeanCompetitionService {
         }
 
         return switch (competitionSlug) {
-
-            case CHAMPIONS_LEAGUE ->
-                    zone.equals("CHAMPIONS_LEAGUE");
-
-            case EUROPA_LEAGUE ->
-                    zone.equals("EUROPA_LEAGUE");
-
-            case CONFERENCE_LEAGUE ->
-                    zone.equals("CONFERENCE_LEAGUE");
-
+            case CHAMPIONS_LEAGUE -> zone.equals("CHAMPIONS_LEAGUE");
+            case EUROPA_LEAGUE -> zone.equals("EUROPA_LEAGUE");
+            case CONFERENCE_LEAGUE -> zone.equals("CONFERENCE_LEAGUE");
             default -> false;
         };
     }
 
-    private boolean isQualificationZone(
-            LeagueTableRow row,
-            String competitionSlug
-    ) {
-
+    private boolean isQualificationZone(LeagueTableRow row, String competitionSlug) {
         String zone = row.getZone();
 
         if (zone == null) {
@@ -411,32 +235,18 @@ public class EuropeanCompetitionService {
         }
 
         return switch (competitionSlug) {
-
-            case CHAMPIONS_LEAGUE ->
-                    zone.equals("CHAMPIONS_LEAGUE_QUALIFIERS");
-
-            case EUROPA_LEAGUE ->
-                    zone.equals("EUROPA_LEAGUE_QUALIFIERS");
-
-            case CONFERENCE_LEAGUE ->
-                    zone.equals("CONFERENCE_LEAGUE_QUALIFIERS");
-
+            case CHAMPIONS_LEAGUE -> zone.equals("CHAMPIONS_LEAGUE_QUALIFIERS");
+            case EUROPA_LEAGUE -> zone.equals("EUROPA_LEAGUE_QUALIFIERS");
+            case CONFERENCE_LEAGUE -> zone.equals("CONFERENCE_LEAGUE_QUALIFIERS");
             default -> false;
         };
     }
-
-    // =========================================================
-    // LIMITS
-    // =========================================================
 
     private int getMaxTeamsPerLeague(String competitionSlug) {
-
         return switch (competitionSlug) {
-
             case CHAMPIONS_LEAGUE -> 5;
             case EUROPA_LEAGUE -> 4;
             case CONFERENCE_LEAGUE -> 3;
-
             default -> 3;
         };
     }
@@ -446,7 +256,6 @@ public class EuropeanCompetitionService {
             String competitionSlug,
             EuropeanCompetitionParticipant candidate
     ) {
-
         long count = current.stream()
                 .filter(p -> p.getLeagueSlug().equals(candidate.getLeagueSlug()))
                 .count();
@@ -454,17 +263,9 @@ public class EuropeanCompetitionService {
         return count < getMaxTeamsPerLeague(competitionSlug);
     }
 
-    // =========================================================
-    // HELPERS
-    // =========================================================
-
     private void trimTo36(List<EuropeanCompetitionParticipant> participants) {
-
-        participants.sort(
-                Comparator.comparingInt(
-                        EuropeanCompetitionParticipant::getUefaRankingPoints
-                ).reversed()
-        );
+        participants.sort(Comparator.comparingInt(
+                EuropeanCompetitionParticipant::getUefaRankingPoints).reversed());
 
         while (participants.size() > 36) {
             participants.remove(participants.size() - 1);
@@ -472,12 +273,8 @@ public class EuropeanCompetitionService {
     }
 
     private void assignPots(List<EuropeanCompetitionParticipant> participants) {
-
-        participants.sort(
-                Comparator.comparingInt(
-                        EuropeanCompetitionParticipant::getUefaRankingPoints
-                ).reversed()
-        );
+        participants.sort(Comparator.comparingInt(
+                EuropeanCompetitionParticipant::getUefaRankingPoints).reversed());
 
         for (int i = 0; i < participants.size(); i++) {
             participants.get(i).setPotNumber((i / 9) + 1);
@@ -495,41 +292,27 @@ public class EuropeanCompetitionService {
             String leagueSlug,
             LeagueTableRow row
     ) {
-
         String clubName = row.getTeam();
         String clubSlug = createSlug(clubName);
 
-        int rankingPoints =
-                calculateClubStrength(
-                        leagueSlug,
-                        clubSlug
-                );
+        int rankingPoints = calculateClubStrength(leagueSlug, clubSlug);
 
-        EuropeanCompetitionParticipant participant =
-                new EuropeanCompetitionParticipant();
+        EuropeanCompetitionParticipant participant = new EuropeanCompetitionParticipant();
 
         participant.setSeason(season);
         participant.setCompetitionSlug(competitionSlug);
-
         participant.setClubName(clubName);
         participant.setClubSlug(clubSlug);
         participant.setLeagueSlug(leagueSlug);
-
-        participant.setCountryCode(
-                resolveCountryCodeByLeague(leagueSlug)
-        );
-
+        participant.setCountryCode(resolveCountryCodeByLeague(leagueSlug));
         participant.setUefaRankingPoints(rankingPoints);
-
         participant.setTitleHolder(false);
 
         return participant;
     }
 
     private String resolveCountryCodeByLeague(String leagueSlug) {
-
         return switch (leagueSlug) {
-
             case "england" -> "gb-eng";
             case "spain" -> "es";
             case "italy" -> "it";
@@ -554,21 +337,13 @@ public class EuropeanCompetitionService {
             case "ukraine" -> "ua";
             case "czech-republic" -> "cz";
             case "israel" -> "il";
-
             default -> null;
         };
     }
 
-    private int calculateClubStrength(
-            String leagueSlug,
-            String clubSlug
-    ) {
-
+    private int calculateClubStrength(String leagueSlug, String clubSlug) {
         return generatedPlayerRepository
-                .findByLeagueSlugAndClubSlug(
-                        leagueSlug,
-                        clubSlug
-                )
+                .findByLeagueSlugAndClubSlug(leagueSlug, clubSlug)
                 .stream()
                 .map(GeneratedPlayer::getMarketValue)
                 .filter(Objects::nonNull)
@@ -577,7 +352,6 @@ public class EuropeanCompetitionService {
     }
 
     private String createSlug(String input) {
-
         if (input == null) {
             return "";
         }
@@ -597,7 +371,6 @@ public class EuropeanCompetitionService {
                 .replaceAll("^-|-$", "");
     }
 
-
     public void generateLeaguePhaseMatches(String season, String competitionSlug) {
         if (europeanMatchRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug)) {
             return;
@@ -615,6 +388,24 @@ public class EuropeanCompetitionService {
     }
 
     private List<EuropeanMatch> createLeaguePhaseDraw(
+            List<EuropeanCompetitionParticipant> teams,
+            String season,
+            String competitionSlug
+    ) {
+        RuntimeException lastError = null;
+
+        for (int attempt = 1; attempt <= 1000; attempt++) {
+            try {
+                return createSingleLeaguePhaseDraw(teams, season, competitionSlug);
+            } catch (RuntimeException e) {
+                lastError = e;
+            }
+        }
+
+        throw new RuntimeException("Could not create valid league phase draw after 1000 attempts.", lastError);
+    }
+
+    private List<EuropeanMatch> createSingleLeaguePhaseDraw(
             List<EuropeanCompetitionParticipant> teams,
             String season,
             String competitionSlug
@@ -639,17 +430,11 @@ public class EuropeanCompetitionService {
         Collections.shuffle(shuffledTeams);
 
         for (EuropeanCompetitionParticipant team : shuffledTeams) {
-
             for (int pot = 1; pot <= 4; pot++) {
-
                 final int currentPot = pot;
-
                 while (potCounter.get(team.getId()).getOrDefault(currentPot, 0) < 2) {
 
-                    List<EuropeanCompetitionParticipant> possibleOpponents = new ArrayList<>(teams);
-                    Collections.shuffle(possibleOpponents);
-
-                    Optional<EuropeanCompetitionParticipant> opponent = possibleOpponents.stream()
+                    List<EuropeanCompetitionParticipant> candidates = teams.stream()
                             .filter(candidate -> !candidate.getId().equals(team.getId()))
                             .filter(candidate -> candidate.getPotNumber() == currentPot)
                             .filter(candidate -> !opponents.get(team.getId()).contains(candidate.getId()))
@@ -659,26 +444,47 @@ public class EuropeanCompetitionService {
                                     .getOrDefault(candidate.getCountryCode(), 0) < 2)
                             .filter(candidate -> countryCounter.get(candidate.getId())
                                     .getOrDefault(team.getCountryCode(), 0) < 2)
-                            .findAny();
+                            .filter(candidate ->
+                                    (homeCounter.get(team.getId()) < 4 && awayCounter.get(candidate.getId()) < 4)
+                                            ||
+                                            (homeCounter.get(candidate.getId()) < 4 && awayCounter.get(team.getId()) < 4)
+                            )
+                            .collect(Collectors.toList());
 
-                    if (opponent.isEmpty()) {
-                        break;
+                    if (candidates.isEmpty()) {
+                        throw new RuntimeException("Draw attempt failed.");
                     }
 
-                    EuropeanCompetitionParticipant rival = opponent.get();
+                    Collections.shuffle(candidates);
 
-                    boolean teamHome = homeCounter.get(team.getId()) < 4
+                    EuropeanCompetitionParticipant rival = candidates.get(0);
+
+                    boolean teamCanHome = homeCounter.get(team.getId()) < 4
                             && awayCounter.get(rival.getId()) < 4;
 
-                    boolean rivalHome = homeCounter.get(rival.getId()) < 4
+                    boolean rivalCanHome = homeCounter.get(rival.getId()) < 4
                             && awayCounter.get(team.getId()) < 4;
 
-                    if (!teamHome && !rivalHome) {
-                        break;
-                    }
+                    EuropeanCompetitionParticipant home;
+                    EuropeanCompetitionParticipant away;
 
-                    EuropeanCompetitionParticipant home = teamHome ? team : rival;
-                    EuropeanCompetitionParticipant away = teamHome ? rival : team;
+                    if (teamCanHome && rivalCanHome) {
+                        if (homeCounter.get(team.getId()) <= homeCounter.get(rival.getId())) {
+                            home = team;
+                            away = rival;
+                        } else {
+                            home = rival;
+                            away = team;
+                        }
+                    } else if (teamCanHome) {
+                        home = team;
+                        away = rival;
+                    } else if (rivalCanHome) {
+                        home = rival;
+                        away = team;
+                    } else {
+                        throw new RuntimeException("Draw attempt failed - home/away blocked.");
+                    }
 
                     EuropeanMatch match = new EuropeanMatch();
                     match.setSeason(season);
@@ -715,6 +521,24 @@ public class EuropeanCompetitionService {
             throw new RuntimeException("Invalid league phase draw. Expected 144 matches, found: " + matches.size());
         }
 
+        for (EuropeanCompetitionParticipant team : teams) {
+            Long id = team.getId();
+
+            if (opponents.get(id).size() != 8) {
+                throw new RuntimeException("Invalid opponent count for: " + team.getClubName());
+            }
+
+            if (homeCounter.get(id) != 4 || awayCounter.get(id) != 4) {
+                throw new RuntimeException("Invalid home/away balance for: " + team.getClubName());
+            }
+
+            for (int pot = 1; pot <= 4; pot++) {
+                if (potCounter.get(id).getOrDefault(pot, 0) != 2) {
+                    throw new RuntimeException("Invalid pot balance for: " + team.getClubName());
+                }
+            }
+        }
+
         LocalDateTime startDate = LocalDateTime.now().plusDays(7);
 
         for (int i = 0; i < matches.size(); i++) {
@@ -726,7 +550,6 @@ public class EuropeanCompetitionService {
 
         return matches;
     }
-
 
     private void fillMissingTeamsFromFreeClubs(
             List<EuropeanCompetitionParticipant> targetCompetition,

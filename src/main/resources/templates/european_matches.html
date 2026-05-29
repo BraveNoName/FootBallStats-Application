@@ -63,73 +63,6 @@
         </li>
 
         <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
-
-        <li class="dropdown">
-            <a href="#">
-                <span th:text="#{nav.language}">Language</span>
-                <i class="fa-solid fa-angle-down"></i>
-            </a>
-
-            <div class="dropdown-content">
-                <a href="?lang=en">
-                    <span class="fi fi-gb"></span> English
-                    <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=it">
-                    <span class="fi fi-it"></span> Italiano
-                    <i th:if="${#locale.language == 'it'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=es">
-                    <span class="fi fi-es"></span> Español
-                    <i th:if="${#locale.language == 'es'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=de">
-                    <span class="fi fi-de"></span> Deutsch
-                    <i th:if="${#locale.language == 'de'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=fr">
-                    <span class="fi fi-fr"></span> Français
-                    <i th:if="${#locale.language == 'fr'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=pl">
-                    <span class="fi fi-pl"></span> Polski
-                    <i th:if="${#locale.language == 'pl'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=tr">
-                    <span class="fi fi-tr"></span> Türkçe
-                    <i th:if="${#locale.language == 'tr'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-
-                <a href="?lang=pt">
-                    <span class="fi fi-pt"></span> Português
-                    <i th:if="${#locale.language == 'pt'}" class="fa-solid fa-check check-mark"></i>
-                </a>
-            </div>
-        </li>
-
-        <li class="dropdown">
-            <a href="#" id="loginLink">
-                <i class="fa-regular fa-circle-user"></i>
-            </a>
-
-            <div class="dropdown-content">
-                <a href="#">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    <span th:text="#{auth.login}">Log In</span>
-                </a>
-
-                <a href="#">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span th:text="#{auth.register}">Create profile</span>
-                </a>
-            </div>
-        </li>
     </ul>
 </nav>
 
@@ -146,8 +79,8 @@
                 <h1 th:text="${competitionName}">UEFA Champions League</h1>
 
                 <p>
-                    The central hub for European competitions: fixtures, match simulations,
-                    league phase standings, statistics, and top club analysis.
+                    Generate European competition participants and league phase matches
+                    based on domestic league tables.
                 </p>
 
                 <div class="hero-buttons">
@@ -161,23 +94,12 @@
                         Back
                     </a>
 
-                    <form action="/europe/generate-participants" method="post">
+                    <form th:action="@{'/europe/' + ${competition} + '/generate'}" method="post">
                         <button type="submit" class="hero-btn primary">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            Generate Participants
+                            Generate Competition
                         </button>
                     </form>
-
-                    <form th:action="@{'/europe/' + ${competition} + '/generate-league-phase'}"
-                          method="post">
-
-                        <button type="submit" class="hero-btn secondary">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            Generate League Phase
-                        </button>
-
-                    </form>
-
                 </div>
             </div>
 
@@ -194,54 +116,92 @@
 
         <a href="#" class="action-card fixtures-card">
             <i class="fa-solid fa-calendar-days"></i>
-
             <h3>Fixtures</h3>
-
-            <p>
-                Browse the upcoming schedule, results, and match information.
-            </p>
+            <p>Browse generated European fixtures.</p>
         </a>
 
         <a href="#" class="action-card table-card">
             <i class="fa-solid fa-table-list"></i>
-
             <h3>League Phase</h3>
-
-            <p>
-                View standings, points, goal difference, and club rankings.
-            </p>
+            <p>View participants and league phase structure.</p>
         </a>
 
         <a href="#" class="action-card stats-card">
             <i class="fa-solid fa-chart-line"></i>
-
             <h3>Statistics</h3>
-
-            <p>
-                Analyze team performance, goals, form, and advanced stats.
-            </p>
+            <p>Analyze future European competition statistics.</p>
         </a>
 
     </section>
 
     <section class="europe-info-panel">
-
         <div>
-            <span class="panel-kicker">Module Status</span>
-
-            <h2>European Competitions Module</h2>
+            <span class="panel-kicker">Season</span>
+            <h2 th:text="${season}">2025/2026</h2>
 
             <p>
-                This page is prepared for future development including match generation,
-                league phase simulation, knockout stages, and advanced statistics.
+                Participants:
+                <strong th:text="${participantsCount}">0</strong>
+                |
+                League phase matches:
+                <strong th:text="${matchesCount}">0</strong>
             </p>
         </div>
 
         <div class="panel-badge">
             <i class="fa-solid fa-trophy"></i>
-            <span>2025/2026</span>
+            <span th:text="${competitionName}">Competition</span>
         </div>
+    </section>
 
+    <section class="europe-table-section" th:if="${participantsCount > 0}">
+        <h2>Participants</h2>
+
+        <table class="europe-table">
+            <thead>
+            <tr>
+                <th>Pot</th>
+                <th>Club</th>
+                <th>League</th>
+                <th>Ranking points</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="participant : ${participants}">
+                <td th:text="${participant.potNumber}">1</td>
+                <td th:text="${participant.clubName}">Club</td>
+                <td th:text="${participant.leagueSlug}">league</td>
+                <td th:text="${participant.uefaRankingPoints}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="europe-table-section" th:if="${matchesCount > 0}">
+        <h2>League Phase Matches</h2>
+
+        <table class="europe-table">
+            <thead>
+            <tr>
+                <th>Round</th>
+                <th>Date</th>
+                <th>Home</th>
+                <th>Away</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="match : ${matches}">
+                <td th:text="${match.roundNumber}">1</td>
+                <td th:text="${#temporals.format(match.matchDate, 'dd.MM.yyyy HH:mm')}">date</td>
+                <td th:text="${match.homeTeam}">Home</td>
+                <td th:text="${match.awayTeam}">Away</td>
+                <td th:text="${match.status}">SCHEDULED</td>
+            </tr>
+            </tbody>
+        </table>
     </section>
 
 </main>
