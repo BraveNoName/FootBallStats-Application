@@ -36,3 +36,77 @@ document.addEventListener("DOMContentLoaded", function () {
         intro.play().catch(() => {});
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const slides = document.querySelectorAll(".league-round-slide");
+    const prevBtn = document.getElementById("prevRoundBtn");
+    const nextBtn = document.getElementById("nextRoundBtn");
+    const title = document.getElementById("roundSliderTitle");
+
+    if (!slides.length || !prevBtn || !nextBtn || !title) {
+        return;
+    }
+
+    let currentIndex = 0;
+
+    function showSlide(index) {
+        slides.forEach(slide => slide.classList.remove("active"));
+
+        slides[index].classList.add("active");
+
+        const roundNumber = slides[index].dataset.round;
+        title.textContent = `Round ${roundNumber}`;
+
+        prevBtn.disabled = index === 0;
+        nextBtn.disabled = index === slides.length - 1;
+    }
+
+    prevBtn.addEventListener("click", () => {
+        if (currentIndex > 0) {
+            currentIndex--;
+            showSlide(currentIndex);
+        }
+    });
+
+    nextBtn.addEventListener("click", () => {
+        if (currentIndex < slides.length - 1) {
+            currentIndex++;
+            showSlide(currentIndex);
+        }
+    });
+
+    showSlide(currentIndex);
+});
+
+document.addEventListener("click", (e) => {
+
+    if (e.target.id === "toggleMatchesBtn") {
+
+        const container =
+            document.querySelector(".league-round-slide.active .round-matches-container");
+
+        if (!container) return;
+
+        container.classList.toggle("hidden");
+
+        e.target.textContent =
+            container.classList.contains("hidden")
+                ? "Show Matches"
+                : "Hide Matches";
+    }
+
+    if (e.target.id === "toggleTableBtn") {
+
+        const container =
+            document.querySelector(".league-round-slide.active .round-table-container");
+
+        if (!container) return;
+
+        container.classList.toggle("hidden");
+
+        e.target.textContent =
+            container.classList.contains("hidden")
+                ? "Show Table"
+                : "Hide Table";
+    }
+});

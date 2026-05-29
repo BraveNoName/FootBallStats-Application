@@ -1,5 +1,6 @@
 package com.footballstats.service.europe;
 
+import com.footballstats.dto.EuropeanLeaguePhaseRoundView;
 import com.footballstats.dto.LeagueTableRow;
 import com.footballstats.model.EuropeanCompetitionParticipant;
 import com.footballstats.model.EuropeanMatch;
@@ -11,7 +12,7 @@ import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import org.springframework.stereotype.Service;
-
+import com.footballstats.dto.EuropeanLeagueTableRow;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -371,6 +372,188 @@ public class EuropeanCompetitionService {
                 .replaceAll("^-|-$", "");
     }
 
+    public List<EuropeanLeagueTableRow> calculateLeaguePhaseTable(String season, String competitionSlug) {
+        List<EuropeanCompetitionParticipant> participants = getParticipants(season, competitionSlug);
+
+        List<EuropeanMatch> matches = europeanMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(season, competitionSlug);
+
+        Map<String, EuropeanLeagueTableRow> table = new LinkedHashMap<>();
+
+        for (EuropeanCompetitionParticipant participant : participants) {
+            String key = participant.getLeagueSlug() + "|" + participant.getClubSlug();
+            table.put(key, new EuropeanLeagueTableRow(participant.getClubName(), participant.getLeagueSlug()));
+        }
+
+        for (EuropeanMatch match : matches) {
+            if (!"FINISHED".equalsIgnoreCase(match.getStatus()) && !"PLAYED".equalsIgnoreCase(match.getStatus())) {
+                continue;
+            }
+
+            String homeKey = match.getHomeLeagueSlug() + "|" + match.getHomeClubSlug();
+            String awayKey = match.getAwayLeagueSlug() + "|" + match.getAwayClubSlug();
+
+            EuropeanLeagueTableRow home = table.get(homeKey);
+            EuropeanLeagueTableRow away = table.get(awayKey);
+
+            if (home == null || away == null) {
+                continue;
+            }
+
+            int homeGoals = match.getHomeGoals();
+            int awayGoals = match.getAwayGoals();
+
+            if (homeGoals > awayGoals) {
+                home.addWin(homeGoals, awayGoals);
+                away.addLoss(awayGoals, homeGoals);
+            } else if (homeGoals < awayGoals) {
+                home.addLoss(homeGoals, awayGoals);
+                away.addWin(awayGoals, homeGoals);
+            } else {
+                home.addDraw(homeGoals, awayGoals);
+                away.addDraw(awayGoals, homeGoals);
+            }
+        }
+
+        List<EuropeanLeagueTableRow> rows = table.values()
+                .stream()
+                .sorted(Comparator
+                        .comparingInt(EuropeanLeagueTableRow::getPoints).reversed()
+                        .thenComparing(Comparator.comparingInt(EuropeanLeagueTableRow::getGoalDifference).reversed())
+                        .thenComparing(Comparator.comparingInt(EuropeanLeagueTableRow::getGoalsFor).reversed())
+                        .thenComparing(EuropeanLeagueTableRow::getTeam))
+                .toList();
+
+        for (int i = 0; i < rows.size(); i++) {
+            if (i < 8) {
+                rows.get(i).setZone("1/8");
+            } else if (i < 24) {
+                rows.get(i).setZone("PLAY_OFF");
+            } else {
+                rows.get(i).setZone("OUT");
+            }
+        }
+
+        return rows;
+    }
+
+    private List<EuropeanLeagueTableRow> calculateLeaguePhaseTableFromMatches(
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches
+    ) {
+        List<EuropeanCompetitionParticipant> participants = getParticipants(season, competitionSlug);
+
+        Map<String, EuropeanLeagueTableRow> table = new LinkedHashMap<>();
+
+        for (EuropeanCompetitionParticipant participant : participants) {
+            String key = participant.getLeagueSlug() + "|" + participant.getClubSlug();
+            table.put(key, new EuropeanLeagueTableRow(
+                    participant.getClubName(),
+                    participant.getLeagueSlug()
+            ));
+        }
+
+        for (EuropeanMatch match : matches) {
+            if (!"FINISHED".equalsIgnoreCase(match.getStatus()) &&
+                    !"PLAYED".equalsIgnoreCase(match.getStatus())) {
+                continue;
+            }
+
+            String homeKey = match.getHomeLeagueSlug() + "|" + match.getHomeClubSlug();
+            String awayKey = match.getAwayLeagueSlug() + "|" + match.getAwayClubSlug();
+
+            EuropeanLeagueTableRow home = table.get(homeKey);
+            EuropeanLeagueTableRow away = table.get(awayKey);
+
+            if (home == null || away == null) {
+                continue;
+            }
+
+            int homeGoals = match.getHomeGoals();
+            int awayGoals = match.getAwayGoals();
+
+            if (homeGoals > awayGoals) {
+                home.addWin(homeGoals, awayGoals);
+                away.addLoss(awayGoals, homeGoals);
+            } else if (homeGoals < awayGoals) {
+                home.addLoss(homeGoals, awayGoals);
+                away.addWin(awayGoals, homeGoals);
+            } else {
+                home.addDraw(homeGoals, awayGoals);
+                away.addDraw(awayGoals, homeGoals);
+            }
+        }
+
+        List<EuropeanLeagueTableRow> rows = table.values()
+                .stream()
+                .sorted(Comparator
+                        .comparingInt(EuropeanLeagueTableRow::getPoints).reversed()
+                        .thenComparing(Comparator.comparingInt(EuropeanLeagueTableRow::getGoalDifference).reversed())
+                        .thenComparing(Comparator.comparingInt(EuropeanLeagueTableRow::getGoalsFor).reversed())
+                        .thenComparing(EuropeanLeagueTableRow::getTeam))
+                .toList();
+
+        for (int i = 0; i < rows.size(); i++) {
+            if (i < 8) {
+                rows.get(i).setZone("1/8");
+            } else if (i < 24) {
+                rows.get(i).setZone("PLAY_OFF");
+            } else {
+                rows.get(i).setZone("OUT");
+            }
+        }
+
+        return rows;
+    }
+
+    public List<EuropeanLeaguePhaseRoundView> buildLeaguePhaseRoundViews(
+            String season,
+            String competitionSlug
+    ) {
+        List<EuropeanMatch> allMatches = europeanMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(
+                        season,
+                        competitionSlug
+                );
+
+        List<Integer> rounds = allMatches.stream()
+                .map(EuropeanMatch::getRoundNumber)
+                .distinct()
+                .sorted()
+                .toList();
+
+        List<EuropeanLeaguePhaseRoundView> roundViews = new ArrayList<>();
+
+        for (Integer roundNumber : rounds) {
+
+            List<EuropeanMatch> matchesUpToRound = allMatches.stream()
+                    .filter(match -> match.getRoundNumber() <= roundNumber)
+                    .toList();
+
+            List<EuropeanMatch> matchesInRound = allMatches.stream()
+                    .filter(match -> match.getRoundNumber() == roundNumber)
+                    .toList();
+
+            List<EuropeanLeagueTableRow> tableAfterRound =
+                    calculateLeaguePhaseTableFromMatches(
+                            season,
+                            competitionSlug,
+                            matchesUpToRound
+                    );
+
+            roundViews.add(
+                    new EuropeanLeaguePhaseRoundView(
+                            roundNumber,
+                            tableAfterRound,
+                            matchesInRound
+                    )
+            );
+        }
+
+        return roundViews;
+    }
+
     public void generateLeaguePhaseMatches(String season, String competitionSlug) {
         if (europeanMatchRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug)) {
             return;
@@ -383,8 +566,21 @@ public class EuropeanCompetitionService {
         }
 
         List<EuropeanMatch> matches = createLeaguePhaseDraw(teams, season, competitionSlug);
-
+        simulateEuropeanMatches(matches);
         europeanMatchRepository.saveAll(matches);
+    }
+
+    private void simulateEuropeanMatches(List<EuropeanMatch> matches) {
+        Random random = new Random();
+
+        for (EuropeanMatch match : matches) {
+            int homeGoals = random.nextInt(5);
+            int awayGoals = random.nextInt(5);
+
+            match.setHomeGoals(homeGoals);
+            match.setAwayGoals(awayGoals);
+            match.setStatus("FINISHED");
+        }
     }
 
     private List<EuropeanMatch> createLeaguePhaseDraw(
@@ -392,17 +588,51 @@ public class EuropeanCompetitionService {
             String season,
             String competitionSlug
     ) {
-        RuntimeException lastError = null;
+        return createSimpleLeaguePhaseSchedule(teams, season, competitionSlug);
+    }
 
-        for (int attempt = 1; attempt <= 1000; attempt++) {
-            try {
-                return createSingleLeaguePhaseDraw(teams, season, competitionSlug);
-            } catch (RuntimeException e) {
-                lastError = e;
+    private List<EuropeanMatch> createSimpleLeaguePhaseSchedule(
+            List<EuropeanCompetitionParticipant> teams,
+            String season,
+            String competitionSlug
+    ) {
+        List<EuropeanMatch> matches = new ArrayList<>();
+        LocalDateTime startDate = LocalDateTime.now().plusDays(7);
+
+        for (int round = 1; round <= 8; round++) {
+            List<EuropeanCompetitionParticipant> roundTeams = new ArrayList<>(teams);
+            Collections.shuffle(roundTeams);
+
+            for (int i = 0; i < roundTeams.size(); i += 2) {
+                EuropeanCompetitionParticipant home = roundTeams.get(i);
+                EuropeanCompetitionParticipant away = roundTeams.get(i + 1);
+
+                EuropeanMatch match = new EuropeanMatch();
+
+                match.setSeason(season);
+                match.setCompetitionSlug(competitionSlug);
+
+                match.setHomeTeam(home.getClubName());
+                match.setAwayTeam(away.getClubName());
+
+                match.setHomeClubSlug(home.getClubSlug());
+                match.setAwayClubSlug(away.getClubSlug());
+
+                match.setHomeLeagueSlug(home.getLeagueSlug());
+                match.setAwayLeagueSlug(away.getLeagueSlug());
+
+                match.setHomeGoals(0);
+                match.setAwayGoals(0);
+                match.setStatus("SCHEDULED");
+
+                match.setRoundNumber(round);
+                match.setMatchDate(startDate.plusWeeks(round - 1));
+
+                matches.add(match);
             }
         }
 
-        throw new RuntimeException("Could not create valid league phase draw after 1000 attempts.", lastError);
+        return matches;
     }
 
     private List<EuropeanMatch> createSingleLeaguePhaseDraw(
@@ -540,15 +770,45 @@ public class EuropeanCompetitionService {
         }
 
         LocalDateTime startDate = LocalDateTime.now().plusDays(7);
+        assignLeaguePhaseRounds(matches, startDate);
+        return matches;
+    }
 
-        for (int i = 0; i < matches.size(); i++) {
-            int round = (i / 18) + 1;
+    private void assignLeaguePhaseRounds(List<EuropeanMatch> matches, LocalDateTime startDate) {
+        List<EuropeanMatch> remainingMatches = new ArrayList<>(matches);
 
-            matches.get(i).setRoundNumber(round);
-            matches.get(i).setMatchDate(startDate.plusWeeks(round - 1));
+        for (int round = 1; round <= 8; round++) {
+            List<EuropeanMatch> roundMatches = new ArrayList<>();
+            Set<String> usedTeams = new HashSet<>();
+
+            Iterator<EuropeanMatch> iterator = remainingMatches.iterator();
+
+            while (iterator.hasNext() && roundMatches.size() < 18) {
+                EuropeanMatch match = iterator.next();
+
+                String homeKey = match.getHomeLeagueSlug() + "|" + match.getHomeClubSlug();
+                String awayKey = match.getAwayLeagueSlug() + "|" + match.getAwayClubSlug();
+
+                if (!usedTeams.contains(homeKey) && !usedTeams.contains(awayKey)) {
+                    match.setRoundNumber(round);
+                    match.setMatchDate(startDate.plusWeeks(round - 1));
+
+                    usedTeams.add(homeKey);
+                    usedTeams.add(awayKey);
+
+                    roundMatches.add(match);
+                    iterator.remove();
+                }
+            }
+
+            if (roundMatches.size() != 18) {
+                throw new RuntimeException("Could not build full round " + round + ". Matches: " + roundMatches.size());
+            }
         }
 
-        return matches;
+        if (!remainingMatches.isEmpty()) {
+            throw new RuntimeException("Unassigned European matches: " + remainingMatches.size());
+        }
     }
 
     private void fillMissingTeamsFromFreeClubs(
@@ -595,4 +855,7 @@ public class EuropeanCompetitionService {
             }
         }
     }
+
+
+
 }

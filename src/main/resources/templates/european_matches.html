@@ -25,15 +25,8 @@
 
     <div class="nav-search">
         <div class="search-box">
-            <input id="globalSearchInput"
-                   type="text"
-                   th:placeholder="#{search.placeholder}"
-                   autocomplete="off">
-
-            <button type="submit">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-
+            <input id="globalSearchInput" type="text" th:placeholder="#{search.placeholder}" autocomplete="off">
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             <div id="searchSuggestions" class="search-suggestions"></div>
         </div>
     </div>
@@ -44,21 +37,10 @@
         <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
 
         <li class="dropdown">
-            <a href="#">
-                <span th:text="#{nav.players}">Players</span>
-                <i class="fa-solid fa-angle-down"></i>
-            </a>
-
+            <a href="#"><span th:text="#{nav.players}">Players</span><i class="fa-solid fa-angle-down"></i></a>
             <div class="dropdown-content">
-                <a href="/players/real">
-                    <i class="fa-solid fa-user"></i>
-                    Real Players
-                </a>
-
-                <a href="/players/generated">
-                    <i class="fa-solid fa-shuffle"></i>
-                    Generated Players
-                </a>
+                <a href="/players/real"><i class="fa-solid fa-user"></i> Real Players</a>
+                <a href="/players/generated"><i class="fa-solid fa-shuffle"></i> Generated Players</a>
             </div>
         </li>
 
@@ -75,7 +57,6 @@
         <div class="hero-content">
             <div class="hero-left">
                 <span class="hero-label">European Competition</span>
-
                 <h1 th:text="${competitionName}">UEFA Champions League</h1>
 
                 <p>
@@ -114,22 +95,19 @@
 
     <section id="european-actions" class="european-actions">
 
-        <a th:href="@{'/europe/' + ${competition} + '/draw-simulation'}"
-           class="action-card draw-card">
+        <a th:href="@{'/europe/' + ${competition} + '/draw-simulation'}" class="action-card draw-card">
             <i class="fa-solid fa-shuffle"></i>
             <h3>Draw Simulation</h3>
             <p>Animated pots draw and generated opponents for every club.</p>
         </a>
 
-        <a th:href="@{'/europe/' + ${competition} + '/league-phase'}"
-           class="action-card league-phase-card">
+        <a th:href="@{'/europe/' + ${competition} + '/league-phase'}" class="action-card league-phase-card">
             <i class="fa-solid fa-table-list"></i>
             <h3>League Phase</h3>
             <p>Rounds, fixtures, match details, events and table after each round.</p>
         </a>
 
-        <a th:href="@{'/europe/' + ${competition} + '/knockout'}"
-           class="action-card knockout-card">
+        <a th:href="@{'/europe/' + ${competition} + '/knockout'}" class="action-card knockout-card">
             <i class="fa-solid fa-sitemap"></i>
             <h3>Knockout Stage</h3>
             <p>Playoffs, round of 16, quarter-finals, semi-finals and final bracket.</p>
@@ -157,54 +135,161 @@
         </div>
     </section>
 
-    <section class="europe-table-section" th:if="${participantsCount > 0}">
-        <h2>Participants</h2>
+    <section class="europe-table-section" th:if="${activeEuropeanView == 'league-phase'}">
 
-        <table class="europe-table">
-            <thead>
-            <tr>
-                <th>Pot</th>
-                <th>Club</th>
-                <th>League</th>
-                <th>Ranking points</th>
-            </tr>
-            </thead>
+        <div class="round-topbar">
+            <button type="button" class="round-nav-btn" id="prevRoundBtn">
+                <i class="fa-solid fa-chevron-left"></i>
+                Previous
+            </button>
 
-            <tbody>
-            <tr th:each="participant : ${participants}">
-                <td th:text="${participant.potNumber}">1</td>
-                <td th:text="${participant.clubName}">Club</td>
-                <td th:text="${participant.leagueSlug}">league</td>
-                <td th:text="${participant.uefaRankingPoints}">0</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
+            <div class="round-center-title">
+                <span>Champions league table phase</span>
+                <strong id="roundSliderTitle">Round 1</strong>
+            </div>
 
-    <section class="europe-table-section" th:if="${matchesCount > 0}">
-        <h2>League Phase Matches</h2>
+            <button type="button" class="round-nav-btn" id="nextRoundBtn">
+                Next
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
 
-        <table class="europe-table">
-            <thead>
-            <tr>
-                <th>Round</th>
-                <th>Date</th>
-                <th>Home</th>
-                <th>Away</th>
-                <th>Status</th>
-            </tr>
-            </thead>
+        <div th:each="roundView, stat : ${roundViews}"
+             class="league-round-slide"
+             th:classappend="${stat.index == 0} ? ' active'"
+             th:attr="data-round=${roundView.roundNumber}">
 
-            <tbody>
-            <tr th:each="match : ${matches}">
-                <td th:text="${match.roundNumber}">1</td>
-                <td th:text="${#temporals.format(match.matchDate, 'dd.MM.yyyy HH:mm')}">date</td>
-                <td th:text="${match.homeTeam}">Home</td>
-                <td th:text="${match.awayTeam}">Away</td>
-                <td th:text="${match.status}">SCHEDULED</td>
-            </tr>
-            </tbody>
-        </table>
+            <h2 class="round-section-title" th:text="'Round ' + ${roundView.roundNumber}">
+                Round 1
+            </h2>
+
+            <div class="round-view-controls">
+                <button type="button" id="toggleMatchesBtn" class="round-view-btn">
+                    Show Matches
+                </button>
+
+                <button type="button" id="toggleTableBtn" class="round-view-btn">
+                    Hide Table
+                </button>
+            </div>
+
+            <div class="round-matches-container hidden">
+
+                <div class="round-matches-grid">
+
+                    <a class="round-match-card"
+                       th:each="match : ${roundView.matches}"
+                       th:href="@{'/europe/' + ${competition} + '/match/' + ${match.id}}">
+
+                        <div class="match-team home">
+                            <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
+                                 onerror="this.style.display='none'"
+                                 alt="home crest">
+                            <span th:text="${match.homeTeam}">Home</span>
+                        </div>
+
+                        <div class="match-score">
+                            <strong th:text="${match.homeGoals + ' - ' + match.awayGoals}">0 - 0</strong>
+                            <small th:text="${match.status}">FINISHED</small>
+                        </div>
+
+                        <div class="match-team away">
+                            <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
+                                 onerror="this.style.display='none'"
+                                 alt="away crest">
+                            <span th:text="${match.awayTeam}">Away</span>
+                        </div>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="round-table-container">
+
+                <section class="league-table-section european-league-table-section">
+
+                    <div class="table-wrapper">
+
+                        <table class="league-table">
+
+                            <thead>
+                            <tr>
+                                <th title="Position">#</th>
+                                <th title="Club">Club</th>
+                                <th title="Matches Played">MP</th>
+                                <th title="Wins">W</th>
+                                <th title="Draws">D</th>
+                                <th title="Losses">L</th>
+                                <th title="Goals For">GF</th>
+                                <th title="Goals Against">GA</th>
+                                <th title="Goal Difference">GD</th>
+                                <th title="Points">PTS</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            <tr class="table-row"
+                                th:each="row, tableStat : ${roundView.tableRows}"
+                                th:classappend="${tableStat.index < 8} ? ' zone-EURO_DIRECT' : (${tableStat.index < 24} ? ' zone-EURO_PLAYOFF' : ' zone-EURO_OUT')">
+
+                                <td class="table-position" th:text="${tableStat.index + 1}">
+                                    1
+                                </td>
+
+                                <td class="club-cell">
+                                    <img th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.team} + '.png'}"
+                                         onerror="this.style.display='none'"
+                                         alt="club crest">
+
+                                    <span th:text="${row.team}">
+                                        Club
+                                    </span>
+                                </td>
+
+                                <td th:text="${row.played}">0</td>
+                                <td th:text="${row.wins}">0</td>
+                                <td th:text="${row.draws}">0</td>
+                                <td th:text="${row.losses}">0</td>
+                                <td th:text="${row.goalsFor}">0</td>
+                                <td th:text="${row.goalsAgainst}">0</td>
+                                <td th:text="${row.goalDifference}">0</td>
+
+                                <td class="points" th:text="${row.points}">
+                                    0
+                                </td>
+
+                            </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div class="table-legend">
+                        <div>
+                            <span class="legend-color euro-direct"></span>
+                            Direct 1/8 final
+                        </div>
+
+                        <div>
+                            <span class="legend-color euro-playoff"></span>
+                            Play-off
+                        </div>
+
+                        <div>
+                            <span class="legend-color euro-out"></span>
+                            Out of competition
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+
     </section>
 
 </main>
@@ -219,6 +304,7 @@
                 <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
             </ul>
         </div>
+
         <div class="footer-section">
             <h3 th:text="#{footer.social}">Social</h3>
             <div class="social-icons">
@@ -231,6 +317,7 @@
                 <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
             </div>
         </div>
+
         <div class="footer-section">
             <h3 th:text="#{footer.apps}">Apps</h3>
             <ul class="app-links">
@@ -247,6 +334,7 @@
             </ul>
         </div>
     </div>
+
     <div class="footer-bottom">
         <p>&copy; 2026 FootballStats System. All rights reserved.</p>
     </div>

@@ -59,6 +59,9 @@ public class EuropeanMatchesController {
         model.addAttribute("matches", matches);
         model.addAttribute("participantsCount", participants.size());
         model.addAttribute("matchesCount", matches.size());
+        model.addAttribute("leaguePhaseTable",
+                europeanCompetitionService.calculateLeaguePhaseTable(SEASON, competition));
+        model.addAttribute("activeEuropeanView", "overview");
         model.addAttribute("leagueFolders", getLeagueFolders());
 
         return "european_matches";
@@ -80,7 +83,16 @@ public class EuropeanMatchesController {
 
     @GetMapping("/europe/{competition}/league-phase")
     public String leaguePhase(@PathVariable String competition, Model model) {
-        return europeanCompetition(competition, model);
+        String view = europeanCompetition(competition, model);
+        model.addAttribute("activeEuropeanView", "league-phase");
+        model.addAttribute(
+                "roundViews",
+                europeanCompetitionService.buildLeaguePhaseRoundViews(
+                        SEASON,
+                        competition
+                )
+        );
+        return view;
     }
 
     @GetMapping("/europe/{competition}/knockout")
