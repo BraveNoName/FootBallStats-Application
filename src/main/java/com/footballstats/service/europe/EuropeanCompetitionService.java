@@ -13,6 +13,8 @@ import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import org.springframework.stereotype.Service;
 import com.footballstats.dto.EuropeanLeagueTableRow;
+import com.footballstats.model.EuropeanMatchEvent;
+import com.footballstats.repository.EuropeanMatchEventRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -27,19 +29,23 @@ public class EuropeanCompetitionService {
 
     private final EuropeanCompetitionParticipantRepository participantRepository;
     private final EuropeanMatchRepository europeanMatchRepository;
+    private final EuropeanMatchEventRepository europeanMatchEventRepository;
     private final MatchRepository matchRepository;
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
+
 
     public EuropeanCompetitionService(
             EuropeanCompetitionParticipantRepository participantRepository,
             EuropeanMatchRepository europeanMatchRepository,
             MatchRepository matchRepository,
             LeagueTableService leagueTableService,
-            GeneratedPlayerRepository generatedPlayerRepository
-    ) {
+            GeneratedPlayerRepository generatedPlayerRepository,
+            EuropeanMatchEventRepository europeanMatchEventRepository
+    )  {
         this.participantRepository = participantRepository;
         this.europeanMatchRepository = europeanMatchRepository;
+        this.europeanMatchEventRepository = europeanMatchEventRepository;
         this.matchRepository = matchRepository;
         this.leagueTableService = leagueTableService;
         this.generatedPlayerRepository = generatedPlayerRepository;
@@ -567,11 +573,375 @@ public class EuropeanCompetitionService {
 
         List<EuropeanMatch> matches = createLeaguePhaseDraw(teams, season, competitionSlug);
         simulateEuropeanMatches(matches);
-        europeanMatchRepository.saveAll(matches);
+
+        List<EuropeanMatch> savedMatches = europeanMatchRepository.saveAll(matches);
+
+        for (EuropeanMatch match : savedMatches) {
+            europeanMatchEventRepository.saveAll(generateEuropeanMatchEvents(match));
+        }
+    }
+
+
+    private List<EuropeanMatchEvent> generateEuropeanMatchEvents(EuropeanMatch match) {
+        Random random = new Random(match.getId());
+        List<EuropeanMatchEvent> events = new ArrayList<>();
+
+        List<GeneratedPlayer> homePlayers = generateLineupForEuropeanMatch(
+                match.getHomeLeagueSlug(),
+                match.getHomeClubSlug(),
+                match.getHomeFormation()
+        );
+
+        List<GeneratedPlayer> awayPlayers = generateLineupForEuropeanMatch(
+                match.getAwayLeagueSlug(),
+                match.getAwayClubSlug(),
+                match.getAwayFormation()
+        );
+
+        for (int i = 0; i < safeInt(match.getHomeGoals()); i++) {
+            events.add(createEuropeanGoalEvent(match, homePlayers, "HOME", random));
+        }
+
+        for (int i = 0; i < safeInt(match.getAwayGoals()); i++) {
+            events.add(createEuropeanGoalEvent(match, awayPlayers, "AWAY", random));
+        }
+
+        for (int i = 0; i < safeInt(match.getYellowCardsHome()); i++) {
+            events.add(createEuropeanSimpleEvent(match, homePlayers, "HOME", "YELLOW_CARD",
+                    "Yellow card", "/Images/match_events/yellow_card.png", random));
+        }
+
+        for (int i = 0; i < safeInt(match.getYellowCardsAway()); i++) {
+            events.add(createEuropeanSimpleEvent(match, awayPlayers, "AWAY", "YELLOW_CARD",
+                    "Yellow card", "/Images/match_events/yellow_card.png", random));
+        }
+
+        for (int i = 0; i < safeInt(match.getRedCardsHome()); i++) {
+            boolean secondYellow = random.nextInt(100) < 20;
+
+            events.add(createEuropeanSimpleEvent(
+                    match,
+                    homePlayers,
+                    "HOME",
+                    secondYellow ? "SECOND_YELLOW_RED_CARD" : "RED_CARD",
+                    secondYellow ? "Second yellow card" : "Red card",
+                    secondYellow
+                            ? "/Images/match_events/two_yellows_to_red_card.png"
+                            : "/Images/match_events/red_card.png",
+                    random
+            ));
+        }
+
+        for (int i = 0; i < safeInt(match.getRedCardsAway()); i++) {
+            boolean secondYellow = random.nextInt(100) < 20;
+
+            events.add(createEuropeanSimpleEvent(
+                    match,
+                    awayPlayers,
+                    "AWAY",
+                    secondYellow ? "SECOND_YELLOW_RED_CARD" : "RED_CARD",
+                    secondYellow ? "Second yellow card" : "Red card",
+                    secondYellow
+                            ? "/Images/match_events/two_yellows_to_red_card.png"
+                            : "/Images/match_events/red_card.png",
+                    random
+            ));
+        }
+
+        addEuropeanSubstitutions(match, homePlayers, "HOME", events, random);
+        addEuropeanSubstitutions(match, awayPlayers, "AWAY", events, random);
+        addEuropeanPenaltyMiss(match, homePlayers, "HOME", events, random);
+        addEuropeanPenaltyMiss(match, awayPlayers, "AWAY", events, random);
+
+        events.sort(Comparator
+                .comparing(EuropeanMatchEvent::getEventMinute)
+                .thenComparing(event -> event.getId() == null ? 0L : event.getId()));
+
+        return events;
+    }
+
+    private EuropeanMatchEvent createEuropeanGoalEvent(EuropeanMatch match,
+                                                       List<GeneratedPlayer> players,
+                                                       String side,
+                                                       Random random) {
+        EuropeanMatchEvent event = new EuropeanMatchEvent();
+
+        List<GeneratedPlayer> starters = players.stream().limit(11).toList();
+        GeneratedPlayer scorer = randomPlayer(starters, random);
+
+        int roll = random.nextInt(100);
+        String eventType;
+        String description;
+        String iconUrl;
+
+        if (roll < 8) {
+            eventType = "PENALTY_GOAL";
+            description = "Penalty scored";
+            iconUrl = "/Images/match_events/penalty.png";
+        } else if (roll < 12) {
+            eventType = "OWN_GOAL";
+            description = "Own goal";
+            iconUrl = "/Images/match_events/own_goal.png";
+        } else {
+            eventType = "GOAL";
+            description = "Goal";
+            iconUrl = "/Images/match_events/goal.png";
+        }
+
+        event.setMatchId(match.getId());
+        event.setEventMinute(1 + random.nextInt(90));
+        event.setEventType(eventType);
+        event.setTeamSide(side);
+        event.setPlayerId(scorer != null ? scorer.getId() : null);
+        event.setPlayerName(playerName(scorer));
+        event.setIconUrl(iconUrl);
+
+        if ("GOAL".equals(eventType) && random.nextInt(100) < 75) {
+            GeneratedPlayer assist = randomPlayer(starters, random);
+
+            if (scorer != null && assist != null && scorer.getId().equals(assist.getId())) {
+                assist = null;
+            }
+
+            event.setRelatedPlayerId(assist != null ? assist.getId() : null);
+            event.setRelatedPlayerName(assist != null ? playerName(assist) : null);
+            event.setDescription(assist != null ? "Goal, assist" : description);
+        } else {
+            event.setDescription(description);
+        }
+
+        return event;
+    }
+
+    private EuropeanMatchEvent createEuropeanSimpleEvent(EuropeanMatch match,
+                                                         List<GeneratedPlayer> players,
+                                                         String side,
+                                                         String type,
+                                                         String description,
+                                                         String iconUrl,
+                                                         Random random) {
+        EuropeanMatchEvent event = new EuropeanMatchEvent();
+
+        GeneratedPlayer player = randomPlayer(players.stream().limit(11).toList(), random);
+
+        event.setMatchId(match.getId());
+        event.setEventMinute(1 + random.nextInt(90));
+        event.setEventType(type);
+        event.setTeamSide(side);
+        event.setPlayerId(player != null ? player.getId() : null);
+        event.setPlayerName(playerName(player));
+        event.setDescription(description);
+        event.setIconUrl(iconUrl);
+
+        return event;
+    }
+
+    private void addEuropeanSubstitutions(EuropeanMatch match,
+                                          List<GeneratedPlayer> players,
+                                          String side,
+                                          List<EuropeanMatchEvent> events,
+                                          Random random) {
+        if (players.size() < 16) {
+            return;
+        }
+
+        int substitutions = 3 + random.nextInt(3);
+
+        List<GeneratedPlayer> starters = new ArrayList<>(players.stream().limit(11).toList());
+        List<GeneratedPlayer> bench = new ArrayList<>(players.stream().skip(11).limit(9).toList());
+
+        Collections.shuffle(starters, random);
+        Collections.shuffle(bench, random);
+
+        for (int i = 0; i < substitutions && i < starters.size() && i < bench.size(); i++) {
+            GeneratedPlayer playerIn = bench.get(i);
+            GeneratedPlayer playerOut = starters.get(i);
+
+            EuropeanMatchEvent event = new EuropeanMatchEvent();
+
+            event.setMatchId(match.getId());
+            event.setEventMinute(55 + random.nextInt(36));
+            event.setEventType("SUBSTITUTION");
+            event.setTeamSide(side);
+            event.setPlayerId(playerIn.getId());
+            event.setPlayerName(playerName(playerIn));
+            event.setRelatedPlayerId(playerOut.getId());
+            event.setRelatedPlayerName(playerName(playerOut));
+            event.setDescription("In: " + playerName(playerIn) + " / Out: " + playerName(playerOut));
+            event.setIconUrl("/Images/match_events/change.png");
+
+            events.add(event);
+        }
+    }
+
+
+    private void addEuropeanPenaltyMiss(EuropeanMatch match,
+                                        List<GeneratedPlayer> players,
+                                        String side,
+                                        List<EuropeanMatchEvent> events,
+                                        Random random) {
+        if (random.nextInt(100) >= 15) {
+            return;
+        }
+
+        events.add(createEuropeanSimpleEvent(
+                match,
+                players,
+                side,
+                "PENALTY_MISSED",
+                "Penalty missed",
+                "/Images/match_events/penalty_missed.png",
+                random
+        ));
+    }
+
+    private List<GeneratedPlayer> generateLineupForEuropeanMatch(String leagueSlug,
+                                                                 String clubSlug,
+                                                                 String formation) {
+        List<GeneratedPlayer> players =
+                generatedPlayerRepository.findByLeagueSlugAndClubSlug(leagueSlug, clubSlug);
+
+        return generateLineup(players, formation);
+    }
+
+    private List<GeneratedPlayer> generateLineup(List<GeneratedPlayer> players,
+                                                 String formation) {
+        if (players == null || players.isEmpty()) {
+            return List.of();
+        }
+
+        int defenders = 4;
+        int midfielders = 3;
+        int forwards = 3;
+
+        if (formation != null && !formation.isBlank()) {
+            String[] split = formation.split("-");
+
+            defenders = Integer.parseInt(split[0]);
+            forwards = Integer.parseInt(split[split.length - 1]);
+            midfielders = 10 - defenders - forwards;
+        }
+
+        List<GeneratedPlayer> starting = new ArrayList<>();
+
+        starting.addAll(bestPlayers(players, "goalkeeper", 1));
+        starting.addAll(bestPlayers(players, "defender", defenders));
+        starting.addAll(bestPlayers(players, "midfielder", midfielders));
+        starting.addAll(bestPlayers(players, "forward", forwards));
+
+        List<GeneratedPlayer> bench = players.stream()
+                .filter(player -> !starting.contains(player))
+                .sorted(Comparator.comparing(
+                        GeneratedPlayer::getMarketValue,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .limit(9)
+                .toList();
+
+        List<GeneratedPlayer> result = new ArrayList<>();
+        result.addAll(starting.stream().distinct().limit(11).toList());
+        result.addAll(bench.stream().distinct().limit(9).toList());
+
+        return result;
+    }
+
+    private List<GeneratedPlayer> bestPlayers(List<GeneratedPlayer> players,
+                                              String type,
+                                              int limit) {
+        return players.stream()
+                .filter(player -> matchesPosition(player, type))
+                .sorted(Comparator.comparing(
+                        GeneratedPlayer::getMarketValue,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .limit(limit)
+                .toList();
+    }
+
+    private boolean matchesPosition(GeneratedPlayer player, String type) {
+        String position = player.getPosition() == null
+                ? ""
+                : player.getPosition().toLowerCase();
+
+        return switch (type) {
+            case "goalkeeper" ->
+                    position.contains("goalkeeper")
+                            || position.contains("keeper")
+                            || position.contains("bramkarz");
+
+            case "defender" ->
+                    position.contains("back")
+                            || position.contains("defender")
+                            || position.contains("obrońca")
+                            || position.contains("obronca");
+
+            case "midfielder" ->
+                    position.contains("midfield")
+                            || position.contains("midfielder")
+                            || position.contains("pomocnik");
+
+            case "forward" ->
+                    position.contains("forward")
+                            || position.contains("striker")
+                            || position.contains("winger")
+                            || position.contains("napastnik");
+
+            default -> false;
+        };
+    }
+
+    private GeneratedPlayer randomPlayer(List<GeneratedPlayer> players, Random random) {
+        if (players == null || players.isEmpty()) {
+            return null;
+        }
+
+        return players.get(random.nextInt(players.size()));
+    }
+
+    private String playerName(GeneratedPlayer player) {
+        if (player == null) {
+            return "Unknown player";
+        }
+
+        return player.getFirstName() + " " + player.getLastName();
+    }
+
+    private int safeInt(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private void simulateEuropeanMatches(List<EuropeanMatch> matches) {
         Random random = new Random();
+
+        List<String> formations = List.of(
+                "4-4-2", "4-3-3", "4-2-3-1", "4-1-2-1-2",
+                "3-5-2", "3-4-3", "3-4-2-1",
+                "5-3-2", "5-4-1"
+        );
+
+        List<String> referees = List.of(
+                "Szymon Marciniak",
+                "Daniele Orsato",
+                "Michael Oliver",
+                "Clément Turpin",
+                "Anthony Taylor",
+                "Felix Zwayer",
+                "Danny Makkelie",
+                "François Letexier",
+                "Daniel Siebert",
+                "Maurizio Mariani",
+                "Slavko Vinčić",
+                "István Kovács",
+                "Jesús Gil Manzano",
+                "Glenn Nyberg",
+                "Sandro Schärer",
+                "Davide Massa",
+                "José María Sánchez Martínez",
+                "Alejandro Hernández Hernández",
+                "Ivan Kružliak",
+                "Irfan Peljto",
+                "Espen Eskås"
+        );
 
         for (EuropeanMatch match : matches) {
             int homeGoals = random.nextInt(5);
@@ -579,9 +949,82 @@ public class EuropeanCompetitionService {
 
             match.setHomeGoals(homeGoals);
             match.setAwayGoals(awayGoals);
+
+            match.setHalfTimeHomeGoals(Math.min(homeGoals, random.nextInt(homeGoals + 1)));
+            match.setHalfTimeAwayGoals(Math.min(awayGoals, random.nextInt(awayGoals + 1)));
+
             match.setStatus("FINISHED");
+
+            match.setHomeFormation(formations.get(random.nextInt(formations.size())));
+            match.setAwayFormation(formations.get(random.nextInt(formations.size())));
+
+            match.setStadium(match.getHomeTeam() + " Stadium");
+            match.setReferee(referees.get(random.nextInt(referees.size())));
+
+            int possessionHome = 42 + random.nextInt(17);
+            int possessionAway = 100 - possessionHome;
+
+            match.setPossessionHome(possessionHome);
+            match.setPossessionAway(possessionAway);
+
+            int shotsHome = 6 + random.nextInt(16);
+            int shotsAway = 6 + random.nextInt(16);
+
+            match.setShotsHome(shotsHome);
+            match.setShotsAway(shotsAway);
+
+            match.setShotsOnTargetHome(Math.min(shotsHome, 2 + random.nextInt(8)));
+            match.setShotsOnTargetAway(Math.min(shotsAway, 2 + random.nextInt(8)));
+
+            match.setCornersHome(random.nextInt(9));
+            match.setCornersAway(random.nextInt(9));
+
+            match.setFoulsHome(6 + random.nextInt(13));
+            match.setFoulsAway(6 + random.nextInt(13));
+
+            match.setOffsidesHome(random.nextInt(5));
+            match.setOffsidesAway(random.nextInt(5));
+
+            match.setYellowCardsHome(random.nextInt(5));
+            match.setYellowCardsAway(random.nextInt(5));
+
+            match.setRedCardsHome(random.nextInt(20) == 0 ? 1 : 0);
+            match.setRedCardsAway(random.nextInt(20) == 0 ? 1 : 0);
+
+            match.setPassesHome(320 + random.nextInt(380));
+            match.setPassesAway(320 + random.nextInt(380));
+
+            match.setPassAccuracyHome(74 + random.nextInt(18));
+            match.setPassAccuracyAway(74 + random.nextInt(18));
+
+            match.setXgHome(Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0);
+            match.setXgAway(Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0);
         }
     }
+
+    List<String> referees = List.of(
+            "Szymon Marciniak",
+            "Daniele Orsato",
+            "Michael Oliver",
+            "Clément Turpin",
+            "Anthony Taylor",
+            "Felix Zwayer",
+            "Danny Makkelie",
+            "François Letexier",
+            "Daniel Siebert",
+            "Maurizio Mariani",
+            "Slavko Vinčić",
+            "István Kovács",
+            "Jesús Gil Manzano",
+            "Glenn Nyberg",
+            "Sandro Schärer",
+            "Davide Massa",
+            "José María Sánchez Martínez",
+            "Alejandro Hernández Hernández",
+            "Ivan Kružliak",
+            "Irfan Peljto",
+            "Espen Eskås"
+    );
 
     private List<EuropeanMatch> createLeaguePhaseDraw(
             List<EuropeanCompetitionParticipant> teams,

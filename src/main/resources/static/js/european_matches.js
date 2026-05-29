@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", function () {
         intro.load();
         intro.play().catch(() => {});
     }
+
+    updateEuropeanStatBars();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -79,11 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("click", (e) => {
-
-    if (e.target.id === "toggleMatchesBtn") {
-
-        const container =
-            document.querySelector(".league-round-slide.active .round-matches-container");
+    if (e.target.classList.contains("toggle-matches-btn")) {
+        const activeSlide = e.target.closest(".league-round-slide");
+        const container = activeSlide?.querySelector(".round-matches-container");
 
         if (!container) return;
 
@@ -95,10 +95,9 @@ document.addEventListener("click", (e) => {
                 : "Hide Matches";
     }
 
-    if (e.target.id === "toggleTableBtn") {
-
-        const container =
-            document.querySelector(".league-round-slide.active .round-table-container");
+    if (e.target.classList.contains("toggle-table-btn")) {
+        const activeSlide = e.target.closest(".league-round-slide");
+        const container = activeSlide?.querySelector(".round-table-container");
 
         if (!container) return;
 
@@ -110,3 +109,253 @@ document.addEventListener("click", (e) => {
                 : "Hide Table";
     }
 });
+
+function updateEuropeanStatBars() {
+    const statRows = document.querySelectorAll(".stat-row");
+
+    statRows.forEach(row => {
+        const home = Number(row.dataset.home);
+        const away = Number(row.dataset.away);
+        const total = home + away;
+
+        const homeFill = row.querySelector(".home-fill");
+        const awayFill = row.querySelector(".away-fill");
+
+        if (!homeFill || !awayFill) return;
+
+        if (total === 0 || isNaN(total)) {
+            homeFill.style.width = "50%";
+            awayFill.style.width = "50%";
+            return;
+        }
+
+        homeFill.style.width = ((home / total) * 100) + "%";
+        awayFill.style.width = ((away / total) * 100) + "%";
+    });
+}
+
+async function toggleEuropeanMatchEvents(matchId) {
+    const eventsContainer = document.getElementById(`europe-events-${matchId}`);
+    const lineupsContainer = document.getElementById(`europe-lineups-${matchId}`);
+    const statsContainer = document.getElementById(`europe-stats-${matchId}`);
+    const button = document.querySelector(`[onclick="toggleEuropeanMatchEvents(${matchId})"]`);
+    const lineupsButton = document.querySelector(`[onclick="toggleEuropeanMatchLineups(${matchId})"]`);
+
+    if (!eventsContainer || !statsContainer || !button) return;
+
+    if (eventsContainer.innerHTML.trim() !== "") {
+        eventsContainer.innerHTML = "";
+        statsContainer.style.display = "block";
+        button.textContent = "Match events";
+        updateEuropeanStatBars();
+        return;
+    }
+
+    if (lineupsContainer) {
+        lineupsContainer.innerHTML = "";
+    }
+
+    if (lineupsButton) {
+        lineupsButton.textContent = "Lineups";
+    }
+
+    statsContainer.style.display = "none";
+    button.textContent = "Click to return to match statistics";
+
+    const response = await fetch(`/europe/match/${matchId}/events`);
+    const events = await response.json();
+
+    events.sort((a, b) => {
+        if (a.eventMinute !== b.eventMinute) {
+            return a.eventMinute - b.eventMinute;
+        }
+
+        return a.id - b.id;
+    });
+
+    let html = `
+        <div class="events-timeline">
+
+            <div class="half-divider">
+                <span>1st half</span>
+            </div>
+    `;
+
+    let secondHalfAdded = false;
+
+    events.forEach(event => {
+        if (!event.teamSide) return;
+
+        if (!secondHalfAdded && event.eventMinute >= 46) {
+            html += `
+                <div class="half-divider">
+                    <span>2nd half</span>
+                </div>
+            `;
+
+            secondHalfAdded = true;
+        }
+
+        html += `
+            <div class="timeline-row">
+
+                <div class="timeline-cell home-cell">
+                    ${event.teamSide === "HOME" ? renderEuropeanEvent(event) : ""}
+                </div>
+
+                <div class="timeline-minute">
+                    ${event.eventMinute}'
+                </div>
+
+                <div class="timeline-cell away-cell">
+                    ${event.teamSide === "AWAY" ? renderEuropeanEvent(event) : ""}
+                </div>
+
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    eventsContainer.innerHTML = html;
+}
+
+async function toggleEuropeanMatchLineups(matchId) {
+    const lineupsContainer = document.getElementById(`europe-lineups-${matchId}`);
+    const eventsContainer = document.getElementById(`europe-events-${matchId}`);
+    const statsContainer = document.getElementById(`europe-stats-${matchId}`);
+    const button = document.querySelector(`[onclick="toggleEuropeanMatchLineups(${matchId})"]`);
+    const eventsButton = document.querySelector(`[onclick="toggleEuropeanMatchEvents(${matchId})"]`);
+
+    if (!lineupsContainer || !statsContainer || !button) return;
+
+    if (lineupsContainer.innerHTML.trim() !== "") {
+        lineupsContainer.innerHTML = "";
+        statsContainer.style.display = "block";
+        button.textContent = "Lineups";
+        updateEuropeanStatBars();
+        return;
+    }
+
+    if (eventsContainer) {
+        eventsContainer.innerHTML = "";
+    }
+
+    if (eventsButton) {
+        eventsButton.textContent = "Match events";
+    }
+
+    statsContainer.style.display = "none";
+    button.textContent = "Click to return to match statistics";
+
+    const response = await fetch(`/europe/match/${matchId}/lineups`);
+    const lineups = await response.json();
+
+    lineupsContainer.innerHTML = `
+        <div class="lineups-section-title">
+            Starting lineups
+        </div>
+
+        <div class="lineups-board">
+            ${renderEuropeanTeamLineup(lineups.homeLineup, "home")}
+            ${renderEuropeanTeamLineup(lineups.awayLineup, "away")}
+        </div>
+
+        <div class="lineups-section-title bench-title">
+            Bench
+        </div>
+
+        <div class="lineups-board">
+            ${renderEuropeanTeamLineup(lineups.homeBench, "home")}
+            ${renderEuropeanTeamLineup(lineups.awayBench, "away")}
+        </div>
+    `;
+}
+
+function renderEuropeanTeamLineup(players, side) {
+    if (!players || players.length === 0) {
+        return `
+            <div class="lineup-column ${side}">
+                <p class="empty-lineup">No generated players for this team.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="lineup-column ${side}">
+            ${players.map(renderEuropeanLineupPlayer).join("")}
+        </div>
+    `;
+}
+
+function renderEuropeanLineupPlayer(player) {
+    const number = player.shirtNumber ?? "-";
+    const position = player.position ?? "";
+    const countryCode = player.countryCode ? player.countryCode.toLowerCase() : "";
+    const flag = countryCode ? `<span class="fi fi-${countryCode} lineup-flag"></span>` : "";
+
+    const eventIcons = player.events && player.events.length > 0
+        ? player.events.map(event => `
+            <img class="lineup-event-icon"
+                 src="${event.iconUrl}"
+                 title="${formatEuropeanLineupEventTitle(event)}"
+                 alt="${event.eventType}">
+        `).join("")
+        : "";
+
+    return `
+        <div class="lineup-player">
+
+            <div class="lineup-player-left">
+
+                <div class="lineup-number">
+                    ${number}
+                </div>
+
+                ${flag}
+
+                <div class="lineup-player-info">
+                    <strong>${player.name}</strong>
+                    <span>${position}</span>
+                </div>
+
+            </div>
+
+            <div class="lineup-player-events">
+                ${eventIcons}
+            </div>
+
+        </div>
+    `;
+}
+
+function renderEuropeanEvent(event) {
+    return `
+        <div class="timeline-event-content">
+
+            <img class="event-icon"
+                 src="${event.iconUrl}"
+                 alt="${event.eventType}">
+
+            <div class="event-text">
+                <strong>${event.playerName ?? ""}</strong>
+                <small>${event.description ?? ""}</small>
+            </div>
+
+        </div>
+    `;
+}
+
+function formatEuropeanLineupEventTitle(event) {
+    const names = {
+        GOAL: "Goal",
+        ASSIST: "Assist",
+        YELLOW_CARD: "Yellow card",
+        RED_CARD: "Red card"
+    };
+
+    const eventName = names[event.eventType] ?? event.eventType;
+    const minute = event.minute ? ` ${event.minute}'` : "";
+
+    return eventName + minute;
+}

@@ -1210,3 +1210,447 @@ footer {
     background: var(--theme-accent);
     color: #020617;
 }
+
+.european-match-details-card {
+    max-width: 900px;
+    margin: 30px auto;
+    border-radius: 22px;
+    overflow: hidden;
+    background:
+        linear-gradient(145deg, rgba(2,6,23,0.88), rgba(15,23,42,0.80)),
+        radial-gradient(circle at center, rgba(59,130,246,0.08), transparent 45%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 18px 38px rgba(0,0,0,0.32);
+}
+
+.european-match-details-card .match-league {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15,23,42,0.92);
+    padding: 12px 18px;
+    font-weight: 900;
+    color: #e5e7eb;
+    font-size: 0.88rem;
+}
+
+.european-match-details-card .match-content {
+    display: grid;
+    grid-template-columns: 1fr 180px 1fr;
+    align-items: center;
+    padding: 32px 28px;
+    gap: 18px;
+}
+
+.european-match-details-card .team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.european-match-details-card .team-logo {
+    width: 76px;
+    height: 76px;
+    object-fit: contain;
+    background: #ffffff;
+    padding: 9px;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+}
+
+.european-match-details-card .team span {
+    font-size: 0.92rem;
+    font-weight: 900;
+    text-align: center;
+    color: #f8fafc;
+}
+
+.european-match-details-card .match-center {
+    text-align: center;
+}
+
+.european-match-details-card .match-date {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 7px;
+    font-weight: 900;
+    margin-bottom: 11px;
+    font-size: 0.75rem;
+}
+
+.european-match-details-card .match-score {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+}
+
+.european-match-details-card .match-status {
+    margin-top: 10px;
+    color: #cbd5e1;
+    font-weight: 900;
+    font-size: 0.85rem;
+}
+
+.european-match-details-card .match-details {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 13px 16px;
+    background: rgba(15,23,42,0.72);
+    color: #cbd5e1;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+
+.european-match-details-card .match-details p {
+    margin: 0;
+}
+
+.european-match-details-card .stats-grid {
+    padding: 20px 32px 28px;
+}
+
+.european-match-details-card .stat-row {
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.european-match-details-card .stat-values {
+    display: grid;
+    grid-template-columns: 70px 1fr 70px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+.european-match-details-card .stat-values strong {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #e5e7eb;
+}
+
+.european-match-details-card .stat-values span:first-child {
+    text-align: left;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.european-match-details-card .stat-values span:last-child {
+    text-align: right;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.european-match-details-card .stat-meter {
+    height: 6px;
+    display: flex;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+}
+
+.european-match-details-card .stat-fill {
+    height: 100%;
+    transition: width 0.35s ease;
+}
+
+/* Champions League */
+body.ucl-theme .european-match-details-card .home-fill {
+    background: #2563eb;
+}
+
+body.ucl-theme .european-match-details-card .away-fill {
+    background: #ffffff;
+}
+
+/* Europa League */
+body.uel-theme .european-match-details-card .home-fill {
+    background: #f97316;
+}
+
+body.uel-theme .european-match-details-card .away-fill {
+    background: #ffffff;
+}
+
+/* Conference League */
+body.uecl-theme .european-match-details-card .home-fill {
+    background: #16a34a;
+}
+
+body.uecl-theme .european-match-details-card .away-fill {
+    background: #ffffff;
+}
+
+
+.match-events-section {
+    padding: 25px 30px 35px;
+}
+
+.match-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.show-events-btn,
+.show-lineups-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: .25s;
+}
+
+.show-events-btn:hover,
+.show-lineups-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.events-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timeline-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 1fr;
+    align-items: center;
+    gap: 15px;
+}
+
+.timeline-cell {
+    min-height: 48px;
+}
+
+.home-cell {
+    text-align: right;
+}
+
+.away-cell {
+    text-align: left;
+}
+
+.timeline-minute {
+    text-align: center;
+    font-weight: 900;
+    color: white;
+}
+
+.timeline-event-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.event-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.event-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.event-text strong {
+    color: white;
+    font-size: 0.82rem;
+}
+
+.event-text small {
+    color: #cbd5e1;
+    font-size: 0.72rem;
+}
+
+.half-divider {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0;
+}
+
+.half-divider span {
+    background: rgba(255,255,255,0.08);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.lineups-section-title {
+    text-align: center;
+    margin: 25px 0 15px;
+    color: white;
+    font-weight: 900;
+    font-size: 1rem;
+}
+
+.lineups-board {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.lineup-column {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.lineup-player {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.lineup-player:last-child {
+    border-bottom: none;
+}
+
+.lineup-player-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lineup-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+
+.lineup-flag {
+    font-size: 0.9rem;
+}
+
+.lineup-player-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.lineup-player-info strong {
+    color: white;
+    font-size: 0.85rem;
+}
+
+.lineup-player-info span {
+    color: #94a3b8;
+    font-size: 0.72rem;
+}
+
+.empty-lineup {
+    text-align: center;
+    color: #94a3b8;
+    padding: 20px;
+}
+
+.european-match-details-card .event-icon {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.european-match-details-card .timeline-event-content img {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+}
+
+.european-match-details-card .lineup-event-icon {
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px !important;
+    max-width: 15px !important;
+    object-fit: contain;
+    border-radius: 3px;
+}
+
+.match-events-container img {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+}
+
+.european-match-details-card .match-events-container .timeline-event-content .event-icon {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+}
+
+.european-match-details-card .match-lineups-container .lineup-event-icon {
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px !important;
+    max-width: 15px !important;
+    min-height: 15px !important;
+    max-height: 15px !important;
+    object-fit: contain !important;
+}
+
+.european-match-details-card .lineup-player {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.european-match-details-card .lineup-player-left {
+    min-width: 0;
+    flex: 1;
+}
+
+.european-match-details-card .lineup-player-events {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 40px;
+    flex-shrink: 0;
+}
+
+.european-match-details-card .lineup-event-icon {
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px !important;
+    max-width: 15px !important;
+    min-height: 15px !important;
+    max-height: 15px !important;
+    object-fit: contain !important;
+    border-radius: 3px !important;
+    background: rgba(255,255,255,0.08);
+    padding: 1px;
+}

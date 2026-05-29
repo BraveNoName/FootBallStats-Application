@@ -144,7 +144,7 @@
             </button>
 
             <div class="round-center-title">
-                <span>Champions league table phase</span>
+                <span>League table phase</span>
                 <strong id="roundSliderTitle">Round 1</strong>
             </div>
 
@@ -164,11 +164,11 @@
             </h2>
 
             <div class="round-view-controls">
-                <button type="button" id="toggleMatchesBtn" class="round-view-btn">
+                <button type="button" class="round-view-btn toggle-matches-btn">
                     Show Matches
                 </button>
 
-                <button type="button" id="toggleTableBtn" class="round-view-btn">
+                <button type="button" class="round-view-btn toggle-table-btn">
                     Hide Table
                 </button>
             </div>
@@ -287,6 +287,234 @@
                 </section>
 
             </div>
+
+        </div>
+
+    </section>
+
+    <section class="europe-table-section" th:if="${activeEuropeanView == 'match-details'}">
+
+        <div class="round-topbar">
+            <a th:href="@{'/europe/' + ${competition} + '/league-phase'}"
+               class="round-nav-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to League Phase
+            </a>
+
+            <div class="round-center-title">
+                <span th:text="${competitionName}">Competition</span>
+                <strong th:text="'Round ' + ${selectedMatch.roundNumber}">Round 1</strong>
+            </div>
+        </div>
+
+        <div class="match-card european-match-details-card active">
+
+            <div class="match-league">
+                <span th:text="'Round ' + ${selectedMatch.roundNumber}">Round</span>
+                <span th:text="${selectedMatch.status}">FINISHED</span>
+            </div>
+
+            <div class="match-content">
+
+                <div class="team">
+                    <img class="team-logo"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedMatch.homeLeagueSlug]} + '/' + ${selectedMatch.homeTeam} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="Home logo">
+
+                    <span th:text="${selectedMatch.homeTeam}">
+                    Home Team
+                </span>
+                </div>
+
+                <div class="match-center">
+
+                    <div class="match-date"
+                         th:if="${selectedMatch.matchDate != null}"
+                         th:text="${#temporals.format(selectedMatch.matchDate, 'dd.MM.yyyy HH:mm')}">
+                        21.05.2026 20:30
+                    </div>
+
+                    <div class="match-score"
+                         th:text="${selectedMatch.homeGoals + ' - ' + selectedMatch.awayGoals}">
+                        0 - 0
+                    </div>
+
+                    <div class="match-status"
+                         th:text="${selectedMatch.status}">
+                        FINISHED
+                    </div>
+
+                </div>
+
+                <div class="team">
+                    <img class="team-logo"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedMatch.awayLeagueSlug]} + '/' + ${selectedMatch.awayTeam} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="Away logo">
+
+                    <span th:text="${selectedMatch.awayTeam}">
+                    Away Team
+                </span>
+                </div>
+
+            </div>
+
+            <div class="match-details">
+                <p>
+                    <strong>Season:</strong>
+                    <span th:text="${selectedMatch.season}">2025/2026</span>
+                </p>
+
+                <p>
+                    <strong>Competition:</strong>
+                    <span th:text="${competitionName}">Competition</span>
+                </p>
+
+                <p>
+                    <strong>Round:</strong>
+                    <span th:text="${selectedMatch.roundNumber}">1</span>
+                </p>
+            </div>
+
+            <div class="match-events-section">
+
+                <div class="match-action-buttons">
+
+                    <button class="show-events-btn"
+                            type="button"
+                            th:attr="onclick='toggleEuropeanMatchEvents(' + ${selectedMatch.id} + ')'">
+                        Match events
+                    </button>
+
+                    <button class="show-lineups-btn"
+                            type="button"
+                            th:attr="onclick='toggleEuropeanMatchLineups(' + ${selectedMatch.id} + ')'">
+                        Lineups
+                    </button>
+
+                </div>
+
+                <div class="match-events-container"
+                     th:id="'europe-events-' + ${selectedMatch.id}">
+                </div>
+
+                <div class="match-lineups-container"
+                     th:id="'europe-lineups-' + ${selectedMatch.id}">
+                </div>
+
+            </div>
+
+            <div class="stats-grid"
+                 th:id="'europe-stats-' + ${selectedMatch.id}">
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.possessionHome}, data-away=${selectedMatch.possessionAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.possessionHome + '%'}">50%</span>
+                        <strong>Possession</strong>
+                        <span th:text="${selectedMatch.possessionAway + '%'}">50%</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.shotsHome}, data-away=${selectedMatch.shotsAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.shotsHome}">0</span>
+                        <strong>Shots</strong>
+                        <span th:text="${selectedMatch.shotsAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.shotsOnTargetHome}, data-away=${selectedMatch.shotsOnTargetAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.shotsOnTargetHome}">0</span>
+                        <strong>Shots on target</strong>
+                        <span th:text="${selectedMatch.shotsOnTargetAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.cornersHome}, data-away=${selectedMatch.cornersAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.cornersHome}">0</span>
+                        <strong>Corners</strong>
+                        <span th:text="${selectedMatch.cornersAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.foulsHome}, data-away=${selectedMatch.foulsAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.foulsHome}">0</span>
+                        <strong>Fouls</strong>
+                        <span th:text="${selectedMatch.foulsAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.yellowCardsHome}, data-away=${selectedMatch.yellowCardsAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.yellowCardsHome}">0</span>
+                        <strong>Yellow cards</strong>
+                        <span th:text="${selectedMatch.yellowCardsAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.redCardsHome}, data-away=${selectedMatch.redCardsAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.redCardsHome}">0</span>
+                        <strong>Red cards</strong>
+                        <span th:text="${selectedMatch.redCardsAway}">0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                     th:attr="data-home=${selectedMatch.xgHome}, data-away=${selectedMatch.xgAway}">
+                    <div class="stat-values">
+                        <span th:text="${selectedMatch.xgHome}">0.0</span>
+                        <strong>xG</strong>
+                        <span th:text="${selectedMatch.xgAway}">0.0</span>
+                    </div>
+                    <div class="stat-meter">
+                        <div class="stat-fill home-fill"></div>
+                        <div class="stat-fill away-fill"></div>
+                    </div>
+                </div>
+
+            </div>
+
+
 
         </div>
 
