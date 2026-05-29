@@ -18,6 +18,8 @@ import com.footballstats.repository.EuropeanMatchEventRepository;
 import java.math.BigDecimal;
 import com.footballstats.service.MatchGeneratorService;
 import org.springframework.transaction.annotation.Transactional;
+import com.footballstats.model.Referee;
+import com.footballstats.repository.RefereeRepository;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +38,7 @@ public class EuropeanCompetitionService {
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
     private final MatchGeneratorService matchGeneratorService;
+    private final RefereeRepository refereeRepository;
 
     public EuropeanCompetitionService(
             EuropeanCompetitionParticipantRepository participantRepository,
@@ -44,7 +47,8 @@ public class EuropeanCompetitionService {
             LeagueTableService leagueTableService,
             GeneratedPlayerRepository generatedPlayerRepository,
             EuropeanMatchEventRepository europeanMatchEventRepository,
-            MatchGeneratorService matchGeneratorService
+            MatchGeneratorService matchGeneratorService,
+            RefereeRepository refereeRepository
     )  {
         this.participantRepository = participantRepository;
         this.europeanMatchRepository = europeanMatchRepository;
@@ -53,6 +57,7 @@ public class EuropeanCompetitionService {
         this.leagueTableService = leagueTableService;
         this.generatedPlayerRepository = generatedPlayerRepository;
         this.matchGeneratorService = matchGeneratorService;
+        this.refereeRepository = refereeRepository;
     }
 
     public List<EuropeanCompetitionParticipant> getParticipants(String season, String competitionSlug) {
@@ -917,34 +922,18 @@ public class EuropeanCompetitionService {
     private void simulateEuropeanMatches(List<EuropeanMatch> matches) {
         Random random = new Random();
 
+        List<Referee> referees = refereeRepository.findAll();
+
+        if (referees.isEmpty()) {
+            throw new RuntimeException("No referees found in database.");
+        }
+
+        Map<java.time.LocalDate, List<Referee>> availableRefereesByDate = new HashMap<>();
+
         List<String> formations = List.of(
                 "4-4-2", "4-3-3", "4-2-3-1", "4-1-2-1-2",
                 "3-5-2", "3-4-3", "3-4-2-1",
                 "5-3-2", "5-4-1"
-        );
-
-        List<String> referees = List.of(
-                "Szymon Marciniak",
-                "Daniele Orsato",
-                "Michael Oliver",
-                "Clément Turpin",
-                "Anthony Taylor",
-                "Felix Zwayer",
-                "Danny Makkelie",
-                "François Letexier",
-                "Daniel Siebert",
-                "Maurizio Mariani",
-                "Slavko Vinčić",
-                "István Kovács",
-                "Jesús Gil Manzano",
-                "Glenn Nyberg",
-                "Sandro Schärer",
-                "Davide Massa",
-                "José María Sánchez Martínez",
-                "Alejandro Hernández Hernández",
-                "Ivan Kružliak",
-                "Irfan Peljto",
-                "Espen Eskås"
         );
 
         for (EuropeanMatch match : matches) {
@@ -962,8 +951,25 @@ public class EuropeanCompetitionService {
             match.setHomeFormation(formations.get(random.nextInt(formations.size())));
             match.setAwayFormation(formations.get(random.nextInt(formations.size())));
 
+            java.time.LocalDate matchDay = match.getMatchDate().toLocalDate();
+
+            List<Referee> availableReferees = availableRefereesByDate.computeIfAbsent(
+                    matchDay,
+                    day -> {
+                        List<Referee> copy = new ArrayList<>(referees);
+                        Collections.shuffle(copy, random);
+                        return copy;
+                    }
+            );
+
+            if (availableReferees.isEmpty()) {
+                throw new RuntimeException("Not enough referees for match day: " + matchDay);
+            }
+
+            Referee referee = availableReferees.remove(0);
+
             match.setStadium(match.getHomeTeam() + " Stadium");
-            match.setReferee(referees.get(random.nextInt(referees.size())));
+            match.setReferee(referee.getName());
 
             int possessionHome = 42 + random.nextInt(17);
             int possessionAway = 100 - possessionHome;
@@ -1005,30 +1011,6 @@ public class EuropeanCompetitionService {
             match.setXgAway(Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0);
         }
     }
-
-    List<String> referees = List.of(
-            "Szymon Marciniak",
-            "Daniele Orsato",
-            "Michael Oliver",
-            "Clément Turpin",
-            "Anthony Taylor",
-            "Felix Zwayer",
-            "Danny Makkelie",
-            "François Letexier",
-            "Daniel Siebert",
-            "Maurizio Mariani",
-            "Slavko Vinčić",
-            "István Kovács",
-            "Jesús Gil Manzano",
-            "Glenn Nyberg",
-            "Sandro Schärer",
-            "Davide Massa",
-            "José María Sánchez Martínez",
-            "Alejandro Hernández Hernández",
-            "Ivan Kružliak",
-            "Irfan Peljto",
-            "Espen Eskås"
-    );
 
     private List<EuropeanMatch> createLeaguePhaseDraw(
             List<EuropeanCompetitionParticipant> teams,
