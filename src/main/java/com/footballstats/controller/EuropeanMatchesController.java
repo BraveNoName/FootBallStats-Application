@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class EuropeanMatchesController {
@@ -58,6 +59,7 @@ public class EuropeanMatchesController {
         model.addAttribute("matches", matches);
         model.addAttribute("participantsCount", participants.size());
         model.addAttribute("matchesCount", matches.size());
+        model.addAttribute("leagueFolders", getLeagueFolders());
 
         return "european_matches";
     }
@@ -68,5 +70,50 @@ public class EuropeanMatchesController {
         europeanCompetitionService.generateLeaguePhaseMatches(SEASON, competition);
 
         return "redirect:/matches/europe/" + competition;
+    }
+
+    @GetMapping("/europe/{competition}/draw-simulation")
+    public String drawSimulation(@PathVariable String competition, Model model) {
+        europeanCompetition(competition, model);
+        return "european_draw_simulation";
+    }
+
+    @GetMapping("/europe/{competition}/league-phase")
+    public String leaguePhase(@PathVariable String competition, Model model) {
+        return europeanCompetition(competition, model);
+    }
+
+    @GetMapping("/europe/{competition}/knockout")
+    public String knockout(@PathVariable String competition, Model model) {
+        return europeanCompetition(competition, model);
+    }
+
+    private Map<String, String> getLeagueFolders() {
+        return Map.ofEntries(
+                Map.entry("england", "England - Premier League"),
+                Map.entry("spain", "Spain - LaLiga"),
+                Map.entry("italy", "Italy - Serie A"),
+                Map.entry("germany", "Germany - Bundesliga"),
+                Map.entry("france", "France - Ligue 1"),
+                Map.entry("netherlands", "Netherlands - Eredivisie"),
+                Map.entry("portugal", "Portugal - Liga Portugal"),
+                Map.entry("belgium", "Belgium - Jupiler Pro League"),
+                Map.entry("turkiye", "Türkiye - Süper Lig"),
+                Map.entry("scotland", "Scotland - Scottish Premiership"),
+                Map.entry("austria", "Austria - Bundesliga"),
+                Map.entry("switzerland", "Switzerland - Super League"),
+                Map.entry("greece", "Greece - Super League 1"),
+                Map.entry("denmark", "Denmark - Superliga"),
+                Map.entry("poland", "Poland - PKO BP Ekstraklasa"),
+                Map.entry("sweden", "Sweden - Allsvenskan"),
+                Map.entry("norway", "Norway - Eliteserien"),
+                Map.entry("croatia", "Croatia - SuperSport HNL"),
+                Map.entry("serbia", "Serbia - Super liga Srbije"),
+                Map.entry("romania", "Romania - SuperLiga"),
+                Map.entry("bulgaria", "Bulgaria - efbet Liga"),
+                Map.entry("ukraine", "Ukraine - Premier Liga"),
+                Map.entry("czech-republic", "Czech Republic - Chance Liga"),
+                Map.entry("israel", "Israel - Ligat ha'Al")
+        );
     }
 }

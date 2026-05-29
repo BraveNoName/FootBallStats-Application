@@ -1,0 +1,256 @@
+<!doctype html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${competitionName}">European Draw Simulation</title>
+
+  <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/european_matches.css">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="/">
+      <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
+    </a>
+  </div>
+
+  <div class="nav-search">
+    <div class="search-box">
+      <input id="globalSearchInput" type="text" th:placeholder="#{search.placeholder}" autocomplete="off">
+      <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <div id="searchSuggestions" class="search-suggestions"></div>
+    </div>
+  </div>
+
+  <ul class="nav-links">
+    <li><a href="/" th:text="#{nav.home}">Home</a></li>
+    <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
+    <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+    <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
+  </ul>
+</nav>
+
+<main class="european-page" th:attr="data-competition=${competition}">
+
+  <section class="european-hero">
+    <video id="competitionIntro" class="hero-video" autoplay muted loop playsinline></video>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+      <div class="hero-left">
+        <span class="hero-label">Draw Simulation</span>
+        <h1 th:text="${competitionName}">UEFA Champions League</h1>
+
+        <p>
+          Visual draw overview: pots, club balls and each team’s league phase opponents.
+        </p>
+
+        <div class="hero-buttons">
+          <a th:href="@{'/matches/europe/' + ${competition}}" class="hero-btn secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Competition
+          </a>
+
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <img th:src="${competitionLogo}" class="competition-logo" alt="Competition logo">
+        <img id="competitionTrophy" class="competition-trophy"
+             src="/Images/european_leagues/UCL_Trophy.png"
+             alt="Competition trophy">
+      </div>
+    </div>
+  </section>
+
+  <section class="draw-simulation-panel" th:if="${participantsCount > 0}">
+    <div class="draw-header">
+      <span class="panel-kicker">Draw setup</span>
+      <h2>Competition Pots</h2>
+      <p>Clubs are displayed as draw balls with their crest and league.</p>
+    </div>
+
+    <div class="draw-pots-grid">
+      <div class="draw-pot-card" th:each="potNumber : ${#numbers.sequence(1, 4)}">
+        <h3 th:text="'Pot ' + ${potNumber}">Pot 1</h3>
+
+        <div class="draw-balls">
+          <div class="club-ball"
+               th:each="participant : ${participants}"
+               th:if="${participant.potNumber == potNumber}"
+               th:title="${participant.clubName}">
+
+            <img th:src="@{'/Images/leagues/' + ${leagueFolders[participant.leagueSlug]} + '/' + ${participant.clubName} + '.png'}"
+                 onerror="this.src='/Images/Favicon.png'"
+                 alt="Club crest">
+
+            <span th:text="${participant.clubName}">Club</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="draw-simulation-panel" th:if="${matchesCount > 0}">
+    <div class="draw-header">
+      <span class="panel-kicker">Generated draw</span>
+      <h2>Team Draw Slides</h2>
+      <p>Each slide shows one club and its 8 league phase matches: home or away.</p>
+    </div>
+
+    <div class="draw-slider">
+
+      <button type="button" class="draw-nav-btn" id="drawPrevBtn">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <div class="draw-slides">
+
+        <article class="team-draw-slide"
+                 th:each="participant, iterStat : ${participants}"
+                 th:classappend="${iterStat.index == 0} ? ' active' : ''">
+
+          <div class="team-slide-main">
+            <div class="team-slide-crest">
+              <img th:src="@{'/Images/leagues/' + ${leagueFolders[participant.leagueSlug]} + '/' + ${participant.clubName} + '.png'}"
+                   onerror="this.src='/Images/Favicon.png'"
+                   alt="Club crest">
+            </div>
+
+            <div>
+              <span class="team-slide-label" th:text="'Pot ' + ${participant.potNumber}">Pot 1</span>
+              <h3 th:text="${participant.clubName}">Club</h3>
+              <p th:text="${participant.leagueSlug}">league</p>
+            </div>
+          </div>
+
+          <div class="team-fixtures-grid">
+            <div class="team-fixture-card"
+                 th:each="match : ${matches}"
+                 th:if="${match.homeTeam == participant.clubName or match.awayTeam == participant.clubName}">
+
+              <div class="fixture-side"
+                   th:classappend="${match.homeTeam == participant.clubName} ? ' home-game' : ' away-game'">
+                <span th:if="${match.homeTeam == participant.clubName}">HOME</span>
+                <span th:if="${match.awayTeam == participant.clubName}">AWAY</span>
+              </div>
+
+              <div class="fixture-opponent">
+                <img th:if="${match.homeTeam == participant.clubName}"
+                     th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
+                     onerror="this.src='/Images/Favicon.png'"
+                     alt="Opponent crest">
+
+                <img th:if="${match.awayTeam == participant.clubName}"
+                     th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
+                     onerror="this.src='/Images/Favicon.png'"
+                     alt="Opponent crest">
+
+                <strong th:if="${match.homeTeam == participant.clubName}"
+                        th:text="${match.awayTeam}">Opponent</strong>
+
+                <strong th:if="${match.awayTeam == participant.clubName}"
+                        th:text="${match.homeTeam}">Opponent</strong>
+
+                <small th:text="'Round ' + ${match.roundNumber}">Round 1</small>
+              </div>
+            </div>
+          </div>
+
+        </article>
+
+      </div>
+
+      <button type="button" class="draw-nav-btn" id="drawNextBtn">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+    </div>
+
+    <div class="draw-club-selector">
+
+      <button type="button"
+              class="club-selector-btn"
+              th:each="participant, iterStat : ${participants}"
+              th:classappend="${iterStat.index == 0} ? ' active' : ''"
+              th:title="${participant.clubName}">
+
+        <img th:src="@{'/Images/leagues/' + ${leagueFolders[participant.leagueSlug]} + '/' + ${participant.clubName} + '.png'}"
+             onerror="this.src='/Images/Favicon.png'"
+             alt="Club crest">
+
+      </button>
+
+    </div>
+  </section>
+
+  <section class="draw-simulation-panel" th:if="${participantsCount == 0}">
+    <div class="draw-header">
+      <span class="panel-kicker">No data</span>
+      <h2>No participants generated yet</h2>
+      <p>Click Generate Competition to create participants and league phase matches.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3 class="footer-brand">Football<span>Stats</span></h3>
+      <ul>
+        <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+        <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3 th:text="#{footer.social}">Social</h3>
+      <div class="social-icons">
+        <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+        <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+        <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+      </div>
+    </div>
+    <div class="footer-section">
+      <h3 th:text="#{footer.apps}">Apps</h3>
+      <ul class="app-links">
+        <li>
+          <a href="https://play.google.com/" target="_blank" class="google-play">
+            <i class="fa-brands fa-google-play"></i> Google Play
+          </a>
+        </li>
+        <li>
+          <a href="https://apps.apple.com/" target="_blank" class="app-store">
+            <i class="fa-brands fa-apple"></i>&nbsp;&nbsp;App Store
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="/js/search_nav_bar.js"></script>
+<script th:src="@{/js/tab_title.js}"></script>
+<script src="/js/european_matches.js"></script>
+<script src="/js/european_draw_simulation.js"></script>
+<script src="/js/scroll_top_btn.js"></script>
+
+</body>
+</html>

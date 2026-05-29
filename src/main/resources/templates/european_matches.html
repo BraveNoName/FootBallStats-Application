@@ -114,22 +114,25 @@
 
     <section id="european-actions" class="european-actions">
 
-        <a href="#" class="action-card fixtures-card">
-            <i class="fa-solid fa-calendar-days"></i>
-            <h3>Fixtures</h3>
-            <p>Browse generated European fixtures.</p>
+        <a th:href="@{'/europe/' + ${competition} + '/draw-simulation'}"
+           class="action-card draw-card">
+            <i class="fa-solid fa-shuffle"></i>
+            <h3>Draw Simulation</h3>
+            <p>Animated pots draw and generated opponents for every club.</p>
         </a>
 
-        <a href="#" class="action-card table-card">
+        <a th:href="@{'/europe/' + ${competition} + '/league-phase'}"
+           class="action-card league-phase-card">
             <i class="fa-solid fa-table-list"></i>
             <h3>League Phase</h3>
-            <p>View participants and league phase structure.</p>
+            <p>Rounds, fixtures, match details, events and table after each round.</p>
         </a>
 
-        <a href="#" class="action-card stats-card">
-            <i class="fa-solid fa-chart-line"></i>
-            <h3>Statistics</h3>
-            <p>Analyze future European competition statistics.</p>
+        <a th:href="@{'/europe/' + ${competition} + '/knockout'}"
+           class="action-card knockout-card">
+            <i class="fa-solid fa-sitemap"></i>
+            <h3>Knockout Stage</h3>
+            <p>Playoffs, round of 16, quarter-finals, semi-finals and final bracket.</p>
         </a>
 
     </section>
@@ -208,90 +211,42 @@
 
 <footer>
     <div class="footer-container">
-
         <div class="footer-section">
             <h3 class="footer-brand">Football<span>Stats</span></h3>
-
             <ul>
-                <li>
-                    <a href="/">
-                        <i class="fa-solid fa-futbol"></i>
-                        [[#{footer.about}]]
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/">
-                        <i class="fa-solid fa-database"></i>
-                        [[#{footer.data}]]
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/">
-                        <i class="fa-solid fa-shield"></i>
-                        [[#{footer.security}]]
-                    </a>
-                </li>
+                <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
             </ul>
         </div>
-
         <div class="footer-section">
             <h3 th:text="#{footer.social}">Social</h3>
-
             <div class="social-icons">
-                <a href="https://www.facebook.com/" target="_blank" class="facebook">
-                    <i class="fa-brands fa-facebook"></i>
-                </a>
-
-                <a href="https://www.instagram.com/" target="_blank" class="instagram">
-                    <i class="fa-brands fa-instagram"></i>
-                </a>
-
-                <a href="https://x.com/" target="_blank" class="x-twitter">
-                    <i class="fa-brands fa-x-twitter"></i>
-                </a>
-
-                <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp">
-                    <i class="fa-brands fa-whatsapp"></i>
-                </a>
-
-                <a href="https://www.youtube.com/" target="_blank" class="youtube">
-                    <i class="fa-brands fa-youtube"></i>
-                </a>
-
-                <a href="https://www.tiktok.com/" target="_blank" class="tiktok">
-                    <i class="fa-brands fa-tiktok"></i>
-                </a>
-
-                <a href="https://www.linkedin.com/" target="_blank" class="linkedin">
-                    <i class="fa-brands fa-linkedin"></i>
-                </a>
+                <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
             </div>
         </div>
-
         <div class="footer-section">
             <h3 th:text="#{footer.apps}">Apps</h3>
-
             <ul class="app-links">
                 <li>
                     <a href="https://play.google.com/" target="_blank" class="google-play">
-                        <i class="fa-brands fa-google-play"></i>
-                        Google Play
+                        <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
                 </li>
-
                 <li>
                     <a href="https://apps.apple.com/" target="_blank" class="app-store">
-                        <i class="fa-brands fa-apple"></i>
-                        &nbsp;&nbsp;App Store
+                        <i class="fa-brands fa-apple"></i>&nbsp;&nbsp;App Store
                     </a>
                 </li>
             </ul>
         </div>
-
     </div>
-
     <div class="footer-bottom">
         <p>&copy; 2026 FootballStats System. All rights reserved.</p>
     </div>
