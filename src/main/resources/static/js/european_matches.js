@@ -49,7 +49,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const requestedRound = params.get("round");
+
     let currentIndex = 0;
+
+    if (requestedRound) {
+        const foundIndex = Array.from(slides).findIndex(slide =>
+            slide.dataset.round === requestedRound
+        );
+
+        if (foundIndex !== -1) {
+            currentIndex = foundIndex;
+        }
+    }
 
     function showSlide(index) {
         slides.forEach(slide => slide.classList.remove("active"));
@@ -359,3 +372,70 @@ function formatEuropeanLineupEventTitle(event) {
 
     return eventName + minute;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("generateEuropeanForm");
+    const overlay = document.getElementById("europeanGenerateOverlay");
+    const title = document.getElementById("europeanGenerateTitle");
+    const message = document.getElementById("europeanGenerateMessage");
+    const cancelBtn = document.getElementById("cancelEuropeanGenerateBtn");
+    const confirmBtn = document.getElementById("confirmEuropeanGenerateBtn");
+
+    const page = document.querySelector(".european-page");
+    const competition = page?.dataset.competition || "";
+
+    if (!form || !overlay || !title || !message || !cancelBtn || !confirmBtn) {
+        return;
+    }
+
+    form.addEventListener("submit", async (e) => {
+        if (form.dataset.confirmed === "true") {
+            return;
+        }
+
+        e.preventDefault();
+
+        const response = await fetch(`/europe/${competition}/generation-status`);
+        const status = await response.json();
+
+        if (status.needsDomesticRegeneration) {
+            title.textContent = "Domestic leagues need regeneration";
+
+            message.textContent =
+                `Missing domestic leagues: ${status.missingLeaguesCount}. ` +
+                "The system will generate new domestic seasons first, then create this European competition.";
+
+            confirmBtn.style.display = "inline-block";
+            confirmBtn.textContent = "Generate all";
+
+        } else if (status.competitionGenerated) {
+            title.textContent = "European competition already generated";
+
+            message.textContent =
+                "Domestic leagues are ready. Generating again will create a new European competition season.";
+
+            confirmBtn.style.display = "inline-block";
+            confirmBtn.textContent = "Generate new season";
+
+        } else {
+            title.textContent = "Generate European competition";
+
+            message.textContent =
+                "Domestic leagues are ready. The system will generate this European competition.";
+
+            confirmBtn.style.display = "inline-block";
+            confirmBtn.textContent = "Generate";
+        }
+
+        overlay.classList.add("show");
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        overlay.classList.remove("show");
+    });
+
+    confirmBtn.addEventListener("click", () => {
+        form.dataset.confirmed = "true";
+        form.submit();
+    });
+});

@@ -14,5 +14,11 @@ public interface EuropeanMatchRepository extends JpaRepository<EuropeanMatch, Lo
             String competitionSlug
     );
 
+    List<EuropeanMatch> findBySeasonAndCompetitionSlugAndRoundNumberOrderByMatchDateAsc(
+            String season,
+            String competitionSlug,
+            Integer roundNumber
+    );
+
     void deleteBySeasonAndCompetitionSlug(String season, String competitionSlug);
 }

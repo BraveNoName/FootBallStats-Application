@@ -36,8 +36,17 @@ public class MatchGeneratorService {
 
     @Transactional
     public void generateLeagueSeason(String league) {
+
+        List<Long> oldMatchIds = matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(league)
+                .stream()
+                .map(Match::getId)
+                .toList();
+
+        if (!oldMatchIds.isEmpty()) {
+            matchEventRepository.deleteByMatchIdIn(oldMatchIds);
+        }
+
         matchRepository.deleteByLeague(league);
-        matchEventRepository.deleteAll();
 
         List<TeamInfo> teams = loadTeamsFromLeagueFolder(league);
 

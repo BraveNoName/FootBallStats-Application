@@ -44,23 +44,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        showEuropeanPanel.addEventListener("click", function () {
-
-            if (competitionHub) {
-                competitionHub.style.display = "none";
-            }
-
-            europeanControls.classList.add("show");
-            domesticControls.classList.remove("show");
-
-            if (emptyMatchesInfo) {
-                emptyMatchesInfo.classList.remove("show");
-            }
-
-            if (toggleCompetitionHubBtn) {
-                toggleCompetitionHubBtn.classList.remove("hidden-controls");
-            }
-        });
     }
 
     if (toggleCompetitionHubBtn) {

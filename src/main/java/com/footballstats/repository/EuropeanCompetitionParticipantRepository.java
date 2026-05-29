@@ -14,4 +14,5 @@ public interface EuropeanCompetitionParticipantRepository
     );
 
     boolean existsBySeasonAndCompetitionSlug(String season, String competitionSlug);
+    void deleteBySeason(String season);
 }

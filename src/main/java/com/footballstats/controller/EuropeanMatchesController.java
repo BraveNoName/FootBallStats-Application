@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,10 +85,27 @@ public class EuropeanMatchesController {
 
     @PostMapping("/europe/{competition}/generate")
     public String generateEuropeanCompetition(@PathVariable String competition) {
-        europeanCompetitionService.generateParticipantsFromDomesticTables(SEASON);
-        europeanCompetitionService.generateLeaguePhaseMatches(SEASON, competition);
+        europeanCompetitionService.generateOrRegenerateEuropeanCompetition(SEASON, competition);
 
         return "redirect:/matches/europe/" + competition;
+    }
+
+    @GetMapping("/europe/{competition}/generation-status")
+    @ResponseBody
+    public Map<String, Object> europeanGenerationStatus(@PathVariable String competition) {
+        Map<String, Object> status = new HashMap<>();
+
+        status.put(
+                "competitionGenerated",
+                europeanCompetitionService.isEuropeanCompetitionGenerated(SEASON, competition)
+        );
+
+        status.put(
+                "allDomesticLeaguesGenerated",
+                europeanCompetitionService.areAllDomesticLeaguesGenerated()
+        );
+
+        return status;
     }
 
     @GetMapping("/europe/{competition}/draw-simulation")
@@ -126,10 +144,42 @@ public class EuropeanMatchesController {
             throw new RuntimeException("Match does not belong to this competition: " + matchId);
         }
 
+        List<EuropeanMatch> roundMatches =
+                europeanMatchRepository
+                        .findBySeasonAndCompetitionSlugAndRoundNumberOrderByMatchDateAsc(
+                                match.getSeason(),
+                                match.getCompetitionSlug(),
+                                match.getRoundNumber()
+                        );
+
+        Long previousMatchId = null;
+        Long nextMatchId = null;
+
+        int currentIndex = -1;
+
+        for (int i = 0; i < roundMatches.size(); i++) {
+            if (roundMatches.get(i).getId().equals(match.getId())) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex > 0) {
+            previousMatchId = roundMatches.get(currentIndex - 1).getId();
+        }
+
+        if (currentIndex >= 0 && currentIndex < roundMatches.size() - 1) {
+            nextMatchId = roundMatches.get(currentIndex + 1).getId();
+        }
+
         europeanCompetition(competition, model);
 
         model.addAttribute("activeEuropeanView", "match-details");
         model.addAttribute("selectedMatch", match);
+        model.addAttribute("previousMatchId", previousMatchId);
+        model.addAttribute("nextMatchId", nextMatchId);
+        model.addAttribute("matchPosition", currentIndex + 1);
+        model.addAttribute("matchesInRound", roundMatches.size());
 
         return "european_matches";
     }

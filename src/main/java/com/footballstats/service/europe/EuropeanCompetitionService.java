@@ -16,6 +16,8 @@ import com.footballstats.dto.EuropeanLeagueTableRow;
 import com.footballstats.model.EuropeanMatchEvent;
 import com.footballstats.repository.EuropeanMatchEventRepository;
 import java.math.BigDecimal;
+import com.footballstats.service.MatchGeneratorService;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ public class EuropeanCompetitionService {
     private final MatchRepository matchRepository;
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
-
+    private final MatchGeneratorService matchGeneratorService;
 
     public EuropeanCompetitionService(
             EuropeanCompetitionParticipantRepository participantRepository,
@@ -41,7 +43,8 @@ public class EuropeanCompetitionService {
             MatchRepository matchRepository,
             LeagueTableService leagueTableService,
             GeneratedPlayerRepository generatedPlayerRepository,
-            EuropeanMatchEventRepository europeanMatchEventRepository
+            EuropeanMatchEventRepository europeanMatchEventRepository,
+            MatchGeneratorService matchGeneratorService
     )  {
         this.participantRepository = participantRepository;
         this.europeanMatchRepository = europeanMatchRepository;
@@ -49,6 +52,7 @@ public class EuropeanCompetitionService {
         this.matchRepository = matchRepository;
         this.leagueTableService = leagueTableService;
         this.generatedPlayerRepository = generatedPlayerRepository;
+        this.matchGeneratorService = matchGeneratorService;
     }
 
     public List<EuropeanCompetitionParticipant> getParticipants(String season, String competitionSlug) {
@@ -1299,6 +1303,83 @@ public class EuropeanCompetitionService {
         }
     }
 
+    public boolean areAllDomesticLeaguesGenerated() {
+        List<String> domesticLeagues = List.of(
+                "england", "spain", "italy", "germany", "france", "netherlands",
+                "portugal", "belgium", "turkiye", "scotland", "austria",
+                "switzerland", "greece", "denmark", "poland", "sweden",
+                "norway", "croatia", "serbia", "romania", "bulgaria",
+                "ukraine", "czech-republic", "israel"
+        );
 
+        return domesticLeagues.stream()
+                .allMatch(matchRepository::existsByLeague);
+    }
 
+    public boolean isEuropeanCompetitionGenerated(String season, String competitionSlug) {
+        return europeanMatchRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug);
+    }
+
+    private static final List<String> DOMESTIC_LEAGUES = List.of(
+            "england", "spain", "italy", "germany", "france", "netherlands",
+            "portugal", "belgium", "turkiye", "scotland", "austria",
+            "switzerland", "greece", "denmark", "poland", "sweden",
+            "norway", "croatia", "serbia", "romania", "bulgaria",
+            "ukraine", "czech-republic", "israel"
+    );
+
+    public Map<String, Object> getGenerationStatus(String season, String competitionSlug) {
+        boolean competitionGenerated =
+                europeanMatchRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug);
+
+        List<String> missingLeagues = getMissingDomesticLeagues();
+
+        return Map.of(
+                "competitionGenerated", competitionGenerated,
+                "allDomesticLeaguesGenerated", missingLeagues.isEmpty(),
+                "needsDomesticRegeneration", !missingLeagues.isEmpty(),
+                "missingLeaguesCount", missingLeagues.size()
+        );
+    }
+
+    private List<String> getMissingDomesticLeagues() {
+        return DOMESTIC_LEAGUES.stream()
+                .filter(league -> !matchRepository.existsByLeague(league))
+                .toList();
+    }
+
+    @Transactional
+    public void generateOrRegenerateEuropeanCompetition(String season, String competitionSlug) {
+        List<String> missingLeagues = getMissingDomesticLeagues();
+
+        if (!missingLeagues.isEmpty()) {
+            for (String league : DOMESTIC_LEAGUES) {
+                matchGeneratorService.generateLeagueSeason(league);
+            }
+
+            participantRepository.deleteBySeason(season);
+        }
+
+        if (!participantRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug)) {
+            participantRepository.deleteBySeason(season);
+            generateParticipantsFromDomesticTables(season);
+        }
+
+        deleteEuropeanCompetitionData(season, competitionSlug);
+        generateLeaguePhaseMatches(season, competitionSlug);
+    }
+
+    private void deleteEuropeanCompetitionData(String season, String competitionSlug) {
+        List<Long> matchIds = europeanMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(season, competitionSlug)
+                .stream()
+                .map(EuropeanMatch::getId)
+                .toList();
+
+        if (!matchIds.isEmpty()) {
+            europeanMatchEventRepository.deleteByMatchIdIn(matchIds);
+        }
+
+        europeanMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
+    }
 }

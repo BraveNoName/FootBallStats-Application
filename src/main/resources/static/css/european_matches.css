@@ -1400,19 +1400,21 @@ body.uecl-theme .european-match-details-card .away-fill {
 
 .show-events-btn,
 .show-lineups-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: white;
-    padding: 10px 18px;
-    border-radius: 10px;
+    background: var(--theme-accent);
+    border: none;
+    color: #020617;
+    padding: 11px 20px;
+    border-radius: 999px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 900;
     transition: .25s;
+    box-shadow: 0 0 14px var(--theme-glow);
 }
 
 .show-events-btn:hover,
 .show-lineups-btn:hover {
-    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 0 22px var(--theme-glow);
 }
 
 .events-timeline {
@@ -1531,13 +1533,18 @@ body.uecl-theme .european-match-details-card .away-fill {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #2563eb;
+    background: var(--theme-accent);
+    color: #020617;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 0.75rem;
     font-weight: 900;
+}
+
+body.uecl-theme .lineup-number {
+    color: #000000;
 }
 
 .lineup-flag {
@@ -1653,4 +1660,94 @@ body.uecl-theme .european-match-details-card .away-fill {
     border-radius: 3px !important;
     background: rgba(255,255,255,0.08);
     padding: 1px;
+}
+
+.round-nav-btn.disabled {
+    opacity: .35;
+    pointer-events: none;
+}
+.match-details-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.match-details-wrapper .european-match-details-card {
+    flex: 1;
+}
+
+.match-side-arrow {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: var(--theme-accent);
+    color: #020617;
+    font-size: 1.4rem;
+    font-weight: 900;
+    box-shadow: 0 0 18px var(--theme-glow);
+    transition: .2s;
+    flex-shrink: 0;
+}
+
+.match-side-arrow:hover {
+    transform: scale(1.08);
+}
+
+.match-side-arrow.disabled {
+    opacity: .25;
+    pointer-events: none;
+}
+
+.season-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.75);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.season-confirm-overlay.show {
+    display: flex;
+}
+
+.season-confirm-modal {
+    width: min(460px, calc(100% - 32px));
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 22px;
+    padding: 24px;
+    color: white;
+    text-align: center;
+}
+
+.season-confirm-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.season-confirm-actions button {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+#cancelEuropeanGenerateBtn {
+    background: #334155;
+    color: white;
+}
+
+#confirmEuropeanGenerateBtn {
+    background: var(--theme-accent);
+    color: #020617;
 }
