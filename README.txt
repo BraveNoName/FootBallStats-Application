@@ -183,3 +183,7 @@ Create final groups of 36 teams.
 Assign UEFA pots.
 
 IMPORTANT: EUROPEAN COMPETITIONS USE NEW FORMAT SINCE SEASON 2024/2025
+
+TODO: 1. drzewo turniejowe,
+TODO: 2. search nav bar - dac ze do ligi krajowej/eurpoejskich - tych generowanych,
+TODO: 3. sile klubow zeby barcelony itd bylo wiecej zespolow z topu bo  za duzo jaskow jest.

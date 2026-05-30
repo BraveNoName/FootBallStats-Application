@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class MatchGeneratorService {
@@ -22,9 +23,6 @@ public class MatchGeneratorService {
     private final GeneratedPlayerRepository generatedPlayerRepository;
     private final Random random = new Random();
 
-    private final Map<Long, InjuredPlayerInfo> injuredHomePlayers = new HashMap<>();
-    private final Map<Long, InjuredPlayerInfo> injuredAwayPlayers = new HashMap<>();
-    private final Map<Long, Set<Long>> sentOffPlayers = new HashMap<>();
 
     public MatchGeneratorService(MatchRepository matchRepository,
                                  MatchEventRepository matchEventRepository,
@@ -208,337 +206,527 @@ public class MatchGeneratorService {
     }
 
     private void generateMatchEvents(Match match) {
-        sentOffPlayers.remove(match.getId());
+        TeamMatchState homeState = createTeamState(match, true);
+        TeamMatchState awayState = createTeamState(match, false);
 
-        generateInjuryEvents(match);
+        List<PlannedEvent> plannedEvents = new ArrayList<>();
 
-        generateEventsForTeam(match, match.getHomeGoals(), match.getYellowCardsHome(), match.getRedCardsHome(), true);
-        generateEventsForTeam(match, match.getAwayGoals(), match.getYellowCardsAway(), match.getRedCardsAway(), false);
+        addGoalPlans(plannedEvents, match.getHomeGoals(), PlannedEventType.HOME_GOAL);
+        addGoalPlans(plannedEvents, match.getAwayGoals(), PlannedEventType.AWAY_GOAL);
 
-        generateSubstitutionEvents(match, true);
-        generateSubstitutionEvents(match, false);
+        addCardPlans(plannedEvents, match.getYellowCardsHome(), PlannedEventType.HOME_YELLOW);
+        addCardPlans(plannedEvents, match.getYellowCardsAway(), PlannedEventType.AWAY_YELLOW);
 
-        generatePenaltyMissEvents(match);
-        // generateVarEvents(match);
+        addCardPlans(plannedEvents, match.getRedCardsHome(), PlannedEventType.HOME_RED);
+        addCardPlans(plannedEvents, match.getRedCardsAway(), PlannedEventType.AWAY_RED);
+
+        addSubstitutionPlans(plannedEvents, generateSubstitutionsCount(), PlannedEventType.HOME_SUBSTITUTION);
+        addSubstitutionPlans(plannedEvents, generateSubstitutionsCount(), PlannedEventType.AWAY_SUBSTITUTION);
+
+        if (random.nextInt(100) < 18) {
+            plannedEvents.add(new PlannedEvent(1 + random.nextInt(90), PlannedEventType.INJURY));
+        }
+
+        if (random.nextInt(100) < 15) {
+            PlannedEventType type = random.nextBoolean()
+                    ? PlannedEventType.HOME_PENALTY_MISSED
+                    : PlannedEventType.AWAY_PENALTY_MISSED;
+            plannedEvents.add(new PlannedEvent(1 + random.nextInt(90), type));
+        }
+
+        plannedEvents.sort(Comparator
+                .comparingInt(PlannedEvent::minute)
+                .thenComparingInt(event -> eventPriority(event.type())));
+
+        for (PlannedEvent plannedEvent : plannedEvents) {
+            handlePlannedEvent(match, plannedEvent, homeState, awayState);
+        }
     }
 
-    private void generateEventsForTeam(Match match,
-                                       int goals,
-                                       int yellowCards,
-                                       int redCards,
-                                       boolean homeTeam) {
-
-        String teamSide = homeTeam ? "HOME" : "AWAY";
-
+    private TeamMatchState createTeamState(Match match, boolean homeTeam) {
         List<GeneratedPlayer> teamPlayers = getTeamPlayers(match, homeTeam);
+
         List<GeneratedPlayer> startingPlayers = getStartingPlayers(
                 teamPlayers,
                 homeTeam ? match.getHomeFormation() : match.getAwayFormation()
         );
 
+        List<GeneratedPlayer> benchPlayers = getBenchPlayers(teamPlayers, startingPlayers);
+
+        return new TeamMatchState(homeTeam, startingPlayers, benchPlayers);
+    }
+
+    private void addGoalPlans(List<PlannedEvent> events, int goals, PlannedEventType type) {
         for (int i = 0; i < goals; i++) {
-            int roll = random.nextInt(100);
+            int minute;
+            int guard = 0;
 
-            String eventType;
-            String description;
-            String iconUrl;
+            do {
+                minute = 1 + random.nextInt(90);
+                guard++;
+            } while (hasGoalInSameMinute(events, minute) && guard < 200);
 
-            if (roll < 8) {
-                eventType = "PENALTY_GOAL";
-                description = "Penalty scored";
-                iconUrl = "/Images/match_events/penalty.png";
-            } else if (roll < 12) {
-                eventType = "OWN_GOAL";
-                description = "Own goal";
-                iconUrl = "/Images/match_events/own_goal.png";
-            } else {
-                eventType = "GOAL";
-                description = "Goal";
-                iconUrl = "/Images/match_events/goal.png";
-            }
+            events.add(new PlannedEvent(minute, type));
+        }
+    }
 
-            GeneratedPlayer scorer = randomAvailablePlayerWithoutGoalkeepers(startingPlayers, match.getId());
+    private boolean hasGoalInSameMinute(List<PlannedEvent> events, int minute) {
+        return events.stream()
+                .anyMatch(event -> event.minute() == minute
+                        && (event.type() == PlannedEventType.HOME_GOAL || event.type() == PlannedEventType.AWAY_GOAL));
+    }
 
-            MatchEvent event = new MatchEvent();
+    private void addCardPlans(List<PlannedEvent> events, int cards, PlannedEventType type) {
+        for (int i = 0; i < cards; i++) {
+            events.add(new PlannedEvent(generateCardMinute(), type));
+        }
+    }
 
-            event.setMatchId(match.getId());
-            event.setEventMinute(1 + random.nextInt(90));
-            event.setEventType(eventType);
-            event.setTeamSide(teamSide);
-            event.setIconUrl(iconUrl);
-            event.setPlayerId(playerId(scorer));
-            event.setPlayerName(playerFullName(scorer, homeTeam ? "Home player" : "Away player"));
+    private void addSubstitutionPlans(List<PlannedEvent> events, int substitutions, PlannedEventType type) {
+        for (int i = 0; i < substitutions; i++) {
+            events.add(new PlannedEvent(generateSubstitutionMinute(), type));
+        }
+    }
 
-            if (eventType.equals("GOAL") && random.nextInt(100) < 75) {
-                GeneratedPlayer assistant =
-                        randomDifferentAvailablePlayerWithoutGoalkeeper(startingPlayers, scorer, match.getId());
+    private int eventPriority(PlannedEventType type) {
+        return switch (type) {
+            case HOME_RED, AWAY_RED -> 1;
+            case HOME_YELLOW, AWAY_YELLOW -> 2;
+            case INJURY -> 3;
+            case HOME_SUBSTITUTION, AWAY_SUBSTITUTION -> 4;
+            case HOME_PENALTY_MISSED, AWAY_PENALTY_MISSED -> 5;
+            case HOME_GOAL, AWAY_GOAL -> 6;
+        };
+    }
 
+    private void handlePlannedEvent(Match match,
+                                    PlannedEvent event,
+                                    TeamMatchState homeState,
+                                    TeamMatchState awayState) {
+        switch (event.type()) {
+            case HOME_GOAL -> handleGoal(match, event.minute(), homeState, awayState);
+            case AWAY_GOAL -> handleGoal(match, event.minute(), awayState, homeState);
+            case HOME_YELLOW -> handleYellowCard(match, event.minute(), homeState);
+            case AWAY_YELLOW -> handleYellowCard(match, event.minute(), awayState);
+            case HOME_RED -> handleRedCard(match, event.minute(), homeState);
+            case AWAY_RED -> handleRedCard(match, event.minute(), awayState);
+            case HOME_SUBSTITUTION -> handleTacticalSubstitution(match, event.minute(), homeState);
+            case AWAY_SUBSTITUTION -> handleTacticalSubstitution(match, event.minute(), awayState);
+            case HOME_PENALTY_MISSED -> handlePenaltyMissed(match, event.minute(), homeState);
+            case AWAY_PENALTY_MISSED -> handlePenaltyMissed(match, event.minute(), awayState);
+            case INJURY -> handleInjury(match, event.minute(), random.nextBoolean() ? homeState : awayState);
+        }
+    }
+
+    private void handleGoal(Match match, int minute, TeamMatchState scoringState, TeamMatchState opponentState) {
+        int roll = random.nextInt(100);
+
+        String eventType;
+        String description;
+        String iconUrl;
+        GeneratedPlayer scorer;
+
+        if (roll < 8) {
+            eventType = "PENALTY_GOAL";
+            description = "Penalty scored";
+            iconUrl = "/Images/match_events/penalty.png";
+            scorer = randomFieldPlayerOnPitch(scoringState);
+        } else if (roll < 12) {
+            /*
+             * OWN_GOAL jest golem dla scoringState, ale zawodnikiem zapisanym przy evencie
+             * musi być gracz przeciwnika. Dzięki temu suma bramek z timeline'u zgadza się
+             * z wynikiem meczu: samobój HOME liczy się dla AWAY i odwrotnie.
+             */
+            eventType = "OWN_GOAL";
+            description = "Own goal";
+            iconUrl = "/Images/match_events/own_goal.png";
+            scorer = randomFieldPlayerOnPitch(opponentState);
+        } else {
+            eventType = "GOAL";
+            description = "Goal";
+            iconUrl = "/Images/match_events/goal.png";
+            scorer = randomFieldPlayerOnPitch(scoringState);
+        }
+
+        if (scorer == null) {
+            return;
+        }
+
+        MatchEvent event = new MatchEvent();
+        event.setMatchId(match.getId());
+        event.setEventMinute(minute);
+        event.setEventType(eventType);
+        event.setTeamSide(scoringState.teamSide);
+        event.setIconUrl(iconUrl);
+        event.setPlayerId(playerId(scorer));
+        event.setPlayerName(playerFullName(scorer, eventType.equals("OWN_GOAL")
+                ? (opponentState.homeTeam ? "Home player" : "Away player")
+                : (scoringState.homeTeam ? "Home player" : "Away player")));
+
+        if (eventType.equals("GOAL") && random.nextInt(100) < 75) {
+            GeneratedPlayer assistant = randomDifferentFieldPlayerOnPitch(scoringState, scorer);
+
+            if (assistant != null) {
                 event.setRelatedPlayerId(playerId(assistant));
-                event.setRelatedPlayerName(playerFullName(assistant, homeTeam ? "Home assistant" : "Away assistant"));
+                event.setRelatedPlayerName(playerFullName(assistant, scoringState.homeTeam ? "Home assistant" : "Away assistant"));
                 event.setDescription("Goal, assist");
             } else {
                 event.setDescription(description);
             }
-
-            matchEventRepository.save(event);
+        } else {
+            event.setDescription(description);
         }
 
-        for (int i = 0; i < yellowCards; i++) {
-            GeneratedPlayer bookedPlayer = randomAvailablePlayer(startingPlayers, match.getId());
-
-            saveEvent(
-                    match,
-                    generateCardMinute(),
-                    "YELLOW_CARD",
-                    playerId(bookedPlayer),
-                    playerFullName(bookedPlayer, homeTeam ? "Home player" : "Away player"),
-                    null,
-                    null,
-                    "Yellow card",
-                    "/Images/match_events/yellow_card.png",
-                    teamSide
-            );
-        }
-
-        for (int i = 0; i < redCards; i++) {
-            boolean secondYellow = random.nextInt(100) < 20; // red card after second yellow
-
-            GeneratedPlayer sentOffPlayer =
-                    randomPlayerWithoutInjury(startingPlayers, match.getId(), homeTeam);
-
-            if (sentOffPlayer == null || isSentOff(match.getId(), sentOffPlayer)) {
-                continue;
-            }
-
-            if (secondYellow) {
-                MatchEvent secondYellowEvent = new MatchEvent();
-                secondYellowEvent.setMatchId(match.getId());
-                secondYellowEvent.setEventMinute(generateCardMinute());
-                secondYellowEvent.setEventType("SECOND_YELLOW_RED_CARD");
-                secondYellowEvent.setTeamSide(teamSide);
-                secondYellowEvent.setIconUrl("/Images/match_events/two_yellows_to_red_card.png");
-                secondYellowEvent.setPlayerId(playerId(sentOffPlayer));
-                secondYellowEvent.setPlayerName(playerFullName(sentOffPlayer, homeTeam ? "Home player" : "Away player"));
-                secondYellowEvent.setDescription("Second yellow card");
-
-                matchEventRepository.save(secondYellowEvent);
-                markPlayerSentOff(match.getId(), sentOffPlayer);
-                suspendPlayer(sentOffPlayer);
-                continue;
-            }
-
-            saveEvent(
-                    match,
-                    generateCardMinute(),
-                    "RED_CARD",
-                    playerId(sentOffPlayer),
-                    playerFullName(sentOffPlayer, homeTeam ? "Home player" : "Away player"),
-                    null,
-                    null,
-                    "Red card",
-                    "/Images/match_events/red_card.png",
-                    teamSide
-            );
-
-            markPlayerSentOff(match.getId(), sentOffPlayer);
-            suspendPlayer(sentOffPlayer);
-        }
+        matchEventRepository.save(event);
     }
 
-    private void generateInjuryEvents(Match match) {
-        int injuries = random.nextInt(100) < 18 ? 1 : 0;
+    private void handleYellowCard(Match match, int minute, TeamMatchState state) {
+        /*
+         * Najpierw szukamy zawodnika bez żółtej kartki.
+         * Dopiero gdy każdy dostępny zawodnik ma już żółtą, losujemy gracza z jedną żółtą
+         * i robimy SECOND_YELLOW_RED_CARD. Dzięki temu zwykłe YELLOW_CARD nie zapisze się
+         * drugi raz dla tego samego PLAYER_ID w jednym meczu.
+         */
+        GeneratedPlayer player = randomPlayerOnPitchWithoutYellow(state);
 
-        for (int i = 0; i < injuries; i++) {
-            boolean homeTeam = random.nextBoolean();
-            String teamSide = homeTeam ? "HOME" : "AWAY";
-
-            List<GeneratedPlayer> teamPlayers = getTeamPlayers(match, homeTeam);
-            List<GeneratedPlayer> startingPlayers = getStartingPlayers(
-                    teamPlayers,
-                    homeTeam ? match.getHomeFormation() : match.getAwayFormation()
-            );
-
-            GeneratedPlayer injuredPlayer = randomAvailablePlayer(startingPlayers, match.getId());
-
-            if (injuredPlayer == null) {
-                continue;
-            }
-
-            int injuryMinute = 1 + random.nextInt(90);
-
-            MatchEvent event = new MatchEvent();
-
-            event.setMatchId(match.getId());
-            event.setEventMinute(injuryMinute);
-            event.setEventType("INJURY");
-            event.setTeamSide(teamSide);
-            event.setIconUrl("/Images/match_events/injury.png");
-            event.setPlayerId(playerId(injuredPlayer));
-            event.setPlayerName(playerFullName(injuredPlayer, homeTeam ? "Home injured player" : "Away injured player"));
-            event.setDescription("Injury: " + getRandomInjuryType());
-
-            matchEventRepository.save(event);
-
-            int injuredForMatches = 1 + random.nextInt(4);
-            injuredPlayer.setInjuredMatches(injuredForMatches);
-            generatedPlayerRepository.save(injuredPlayer);
-
-            InjuredPlayerInfo injuredPlayerInfo =
-                    new InjuredPlayerInfo(
-                            playerId(injuredPlayer),
-                            playerFullName(injuredPlayer, homeTeam ? "Home injured player" : "Away injured player"),
-                            injuryMinute
-                    );
-
-            if (homeTeam) {
-                injuredHomePlayers.put(match.getId(), injuredPlayerInfo);
-            } else {
-                injuredAwayPlayers.put(match.getId(), injuredPlayerInfo);
-            }
+        if (player == null) {
+            player = randomPlayerOnPitchWithOneYellow(state);
         }
-    }
 
-    private void generateSubstitutionEvents(Match match, boolean homeTeam) {
-        String teamSide = homeTeam ? "HOME" : "AWAY";
+        if (player == null || player.getId() == null) {
+            return;
+        }
 
-        List<GeneratedPlayer> teamPlayers = getTeamPlayers(match, homeTeam);
-        List<GeneratedPlayer> startingPlayers = getStartingPlayers(
-                teamPlayers,
-                homeTeam ? match.getHomeFormation() : match.getAwayFormation()
+        int currentYellowCards = state.yellowCards.getOrDefault(player.getId(), 0);
+
+        if (currentYellowCards >= 1) {
+            handleSecondYellow(match, minute, state, player);
+            return;
+        }
+
+        state.yellowCards.put(player.getId(), 1);
+
+        saveEvent(
+                match,
+                minute,
+                "YELLOW_CARD",
+                playerId(player),
+                playerFullName(player, state.homeTeam ? "Home player" : "Away player"),
+                null,
+                null,
+                "Yellow card",
+                "/Images/match_events/yellow_card.png",
+                state.teamSide
         );
-        List<GeneratedPlayer> benchPlayers = getBenchPlayers(teamPlayers, startingPlayers);
+    }
 
-        InjuredPlayerInfo injuredPlayerInfo = homeTeam
-                ? injuredHomePlayers.remove(match.getId())
-                : injuredAwayPlayers.remove(match.getId());
+    private void handleSecondYellow(Match match, int minute, TeamMatchState state, GeneratedPlayer player) {
+        saveEvent(
+                match,
+                minute,
+                "SECOND_YELLOW_RED_CARD",
+                playerId(player),
+                playerFullName(player, state.homeTeam ? "Home player" : "Away player"),
+                null,
+                null,
+                "Second yellow card",
+                "/Images/match_events/two_yellows_to_red_card.png",
+                state.teamSide
+        );
 
-        int substitutions = generateSubstitutionsCount();
+        state.statuses.put(player.getId(), PlayerMatchStatus.SENT_OFF);
+        suspendPlayer(player);
 
-        if (injuredPlayerInfo != null && substitutions == 0) {
-            substitutions = 1;
-        }
-
-        Set<Long> usedPlayersIn = new HashSet<>();
-        Set<Long> usedPlayersOut = new HashSet<>();
-
-        for (int i = 0; i < substitutions; i++) {
-            boolean forcedInjurySubstitution = i == 0 && injuredPlayerInfo != null;
-
-            GeneratedPlayer playerIn;
-
-            if (forcedInjurySubstitution) {
-                boolean injuredWasGoalkeeper = startingPlayers.stream()
-                        .filter(player -> player.getId() != null && player.getId().equals(injuredPlayerInfo.playerId()))
-                        .findFirst()
-                        .map(player -> matchesPosition(player, "goalkeeper"))
-                        .orElse(false);
-
-                if (injuredWasGoalkeeper) {
-                    playerIn = randomUnusedPlayer(
-                            benchPlayers.stream()
-                                    .filter(player -> matchesPosition(player, "goalkeeper"))
-                                    .filter(player -> !isSentOff(match.getId(), player))
-                                    .toList(),
-                            usedPlayersIn
-                    );
-                } else {
-                    playerIn = randomUnusedPlayer(
-                            benchPlayers.stream()
-                                    .filter(player -> !isSentOff(match.getId(), player))
-                                    .toList(),
-                            usedPlayersIn
-                    );
-                }
-            } else {
-                playerIn = randomUnusedPlayer(
-                        benchPlayers.stream()
-                                .filter(player -> !isSentOff(match.getId(), player))
-                                .toList(),
-                        usedPlayersIn
-                );
-            }
-
-            GeneratedPlayer playerOut = forcedInjurySubstitution
-                    ? null
-                    : randomUnusedPlayer(
-                    startingPlayers.stream()
-                            .filter(player -> !isSentOff(match.getId(), player))
-                            .filter(player -> !matchesPosition(player, "goalkeeper"))
-                            .toList(),
-                    usedPlayersOut
-            );
-
-            Long playerOutId;
-            String playerOutName;
-
-            if (forcedInjurySubstitution) {
-                playerOutId = injuredPlayerInfo.playerId();
-                playerOutName = injuredPlayerInfo.playerName();
-
-                if (playerOutId != null) {
-                    usedPlayersOut.add(playerOutId);
-                }
-            } else {
-                playerOutId = playerId(playerOut);
-                playerOutName = playerFullName(playerOut, homeTeam ? "Home player out" : "Away player out");
-            }
-
-            MatchEvent event = new MatchEvent();
-
-            event.setMatchId(match.getId());
-
-            if (forcedInjurySubstitution) {
-                event.setEventMinute(Math.min(injuredPlayerInfo.injuryMinute() + 1, 90));
-            } else {
-                event.setEventMinute(generateSubstitutionMinute());
-            }
-
-            event.setEventType("SUBSTITUTION");
-            event.setTeamSide(teamSide);
-            event.setIconUrl("/Images/match_events/change.png");
-
-            event.setPlayerId(playerId(playerIn));
-            event.setPlayerName(playerFullName(playerIn, homeTeam ? "Home player in" : "Away player in"));
-
-            event.setRelatedPlayerId(playerOutId);
-            event.setRelatedPlayerName(playerOutName);
-
-            event.setDescription(
-                    forcedInjurySubstitution
-                            ? "Substitution due to injury"
-                            : "Substitution"
-            );
-
-            matchEventRepository.save(event);
+        if (matchesPosition(player, "goalkeeper")) {
+            handleGoalkeeperProblem(match, minute, state, "Goalkeeper sent off");
         }
     }
 
-    private void generatePenaltyMissEvents(Match match) {
-        int penaltiesMissed = random.nextInt(100) < 15 ? 1 : 0;
+    private void handleRedCard(Match match, int minute, TeamMatchState state) {
+        GeneratedPlayer player = randomPlayerOnPitch(state);
 
-        for (int i = 0; i < penaltiesMissed; i++) {
-            boolean homeTeam = random.nextBoolean();
-
-            List<GeneratedPlayer> teamPlayers = getStartingPlayers(
-                    getTeamPlayers(match, homeTeam),
-                    homeTeam ? match.getHomeFormation() : match.getAwayFormation()
-            );
-
-            GeneratedPlayer penaltyTaker = randomAvailablePlayerWithoutGoalkeepers(teamPlayers, match.getId());
-
-            saveEvent(
-                    match,
-                    1 + random.nextInt(90),
-                    "PENALTY_MISSED",
-                    playerId(penaltyTaker),
-                    playerFullName(penaltyTaker, homeTeam ? "Home player" : "Away player"),
-                    null,
-                    null,
-                    "Penalty missed",
-                    "/Images/match_events/penalty_missed.png",
-                    homeTeam ? "HOME" : "AWAY"
-            );
+        if (player == null || player.getId() == null) {
+            return;
         }
+
+        saveEvent(
+                match,
+                minute,
+                "RED_CARD",
+                playerId(player),
+                playerFullName(player, state.homeTeam ? "Home player" : "Away player"),
+                null,
+                null,
+                "Red card",
+                "/Images/match_events/red_card.png",
+                state.teamSide
+        );
+
+        state.statuses.put(player.getId(), PlayerMatchStatus.SENT_OFF);
+        suspendPlayer(player);
+
+        if (matchesPosition(player, "goalkeeper")) {
+            handleGoalkeeperProblem(match, minute, state, "Goalkeeper sent off");
+        }
+    }
+
+    private void handleInjury(Match match, int minute, TeamMatchState state) {
+        GeneratedPlayer injuredPlayer = randomPlayerOnPitch(state);
+
+        if (injuredPlayer == null || injuredPlayer.getId() == null) {
+            return;
+        }
+
+        saveEvent(
+                match,
+                minute,
+                "INJURY",
+                playerId(injuredPlayer),
+                playerFullName(injuredPlayer, state.homeTeam ? "Home injured player" : "Away injured player"),
+                null,
+                null,
+                "Injury: " + getRandomInjuryType(),
+                "/Images/match_events/injury.png",
+                state.teamSide
+        );
+
+        state.statuses.put(injuredPlayer.getId(), PlayerMatchStatus.INJURED_OFF);
+
+        int injuredForMatches = 1 + random.nextInt(4);
+        injuredPlayer.setInjuredMatches(injuredForMatches);
+        generatedPlayerRepository.save(injuredPlayer);
+
+        if (matchesPosition(injuredPlayer, "goalkeeper")) {
+            handleGoalkeeperProblem(match, minute, state, "Goalkeeper injury");
+        } else {
+            handleForcedInjurySubstitution(match, minute, state, injuredPlayer);
+        }
+    }
+
+    private void handleTacticalSubstitution(Match match, int minute, TeamMatchState state) {
+        if (state.substitutionsUsed >= 5 || state.substitutionWindowsUsed >= 3) {
+            return;
+        }
+
+        GeneratedPlayer playerOut = randomFieldPlayerOnPitch(state);
+        GeneratedPlayer playerIn = randomBenchPlayer(state, false);
+
+        if (playerOut == null || playerIn == null) {
+            return;
+        }
+
+        makeSubstitution(match, minute, state, playerOut, playerIn, "Substitution");
+        state.substitutionWindowsUsed++;
+    }
+
+    private void handleForcedInjurySubstitution(Match match,
+                                                int minute,
+                                                TeamMatchState state,
+                                                GeneratedPlayer injuredPlayer) {
+        if (state.substitutionsUsed >= 5) {
+            return;
+        }
+
+        GeneratedPlayer playerIn = randomBenchPlayer(state, false);
+
+        if (playerIn == null) {
+            return;
+        }
+
+        makeSubstitution(match, Math.min(minute + 1, 90), state, injuredPlayer, playerIn, "Substitution due to injury");
+    }
+
+    private void handleGoalkeeperProblem(Match match, int minute, TeamMatchState state, String reason) {
+        if (state.substitutionsUsed < 5) {
+            GeneratedPlayer benchGoalkeeper = randomBenchPlayer(state, true);
+
+            if (benchGoalkeeper != null) {
+                GeneratedPlayer fieldPlayerOut = randomFieldPlayerOnPitch(state);
+
+                if (fieldPlayerOut != null) {
+                    makeSubstitution(
+                            match,
+                            Math.min(minute + 1, 90),
+                            state,
+                            fieldPlayerOut,
+                            benchGoalkeeper,
+                            reason + " - goalkeeper substitution"
+                    );
+                    return;
+                }
+            }
+        }
+
+        GeneratedPlayer emergencyGoalkeeper = randomFieldPlayerOnPitch(state);
+
+        if (emergencyGoalkeeper == null || emergencyGoalkeeper.getId() == null) {
+            return;
+        }
+
+        state.hasEmergencyGoalkeeper = true;
+
+        saveEvent(
+                match,
+                Math.min(minute + 1, 90),
+                "EMERGENCY_GOALKEEPER",
+                playerId(emergencyGoalkeeper),
+                playerFullName(emergencyGoalkeeper, state.homeTeam ? "Home emergency goalkeeper" : "Away emergency goalkeeper"),
+                null,
+                null,
+                "Emergency goalkeeper after " + reason,
+                "/Images/match_events/change.png",
+                state.teamSide
+        );
+    }
+
+    private void handlePenaltyMissed(Match match, int minute, TeamMatchState state) {
+        GeneratedPlayer penaltyTaker = randomFieldPlayerOnPitch(state);
+
+        if (penaltyTaker == null) {
+            return;
+        }
+
+        saveEvent(
+                match,
+                minute,
+                "PENALTY_MISSED",
+                playerId(penaltyTaker),
+                playerFullName(penaltyTaker, state.homeTeam ? "Home player" : "Away player"),
+                null,
+                null,
+                "Penalty missed",
+                "/Images/match_events/penalty_missed.png",
+                state.teamSide
+        );
+    }
+
+    private void makeSubstitution(Match match,
+                                  int minute,
+                                  TeamMatchState state,
+                                  GeneratedPlayer playerOut,
+                                  GeneratedPlayer playerIn,
+                                  String description) {
+        if (state.substitutionsUsed >= 5) {
+            return;
+        }
+
+        if (playerOut == null || playerIn == null || playerOut.getId() == null || playerIn.getId() == null) {
+            return;
+        }
+
+        if (state.statuses.get(playerIn.getId()) != PlayerMatchStatus.BENCH) {
+            return;
+        }
+
+        PlayerMatchStatus playerOutStatus = state.statuses.get(playerOut.getId());
+
+        if (playerOutStatus != PlayerMatchStatus.ON_PITCH
+                && playerOutStatus != PlayerMatchStatus.INJURED_OFF) {
+            return;
+        }
+
+        if (playerOutStatus == PlayerMatchStatus.ON_PITCH) {
+            state.statuses.put(playerOut.getId(), PlayerMatchStatus.SUBSTITUTED);
+        }
+
+        state.statuses.put(playerIn.getId(), PlayerMatchStatus.ON_PITCH);
+        state.substitutionsUsed++;
+
+        saveEvent(
+                match,
+                minute,
+                "SUBSTITUTION",
+                playerId(playerIn),
+                playerFullName(playerIn, state.homeTeam ? "Home player in" : "Away player in"),
+                playerId(playerOut),
+                playerFullName(playerOut, state.homeTeam ? "Home player out" : "Away player out"),
+                description,
+                "/Images/match_events/change.png",
+                state.teamSide
+        );
+    }
+
+    private List<GeneratedPlayer> playersOnPitch(TeamMatchState state) {
+        return state.statuses.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == PlayerMatchStatus.ON_PITCH)
+                .map(Map.Entry::getKey)
+                .map(id -> findPlayerById(state.startingPlayers, state.benchPlayers, id))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<GeneratedPlayer> fieldPlayersOnPitch(TeamMatchState state) {
+        return playersOnPitch(state)
+                .stream()
+                .filter(player -> !matchesPosition(player, "goalkeeper"))
+                .toList();
+    }
+
+    private GeneratedPlayer randomPlayerOnPitchWithoutYellow(TeamMatchState state) {
+        List<GeneratedPlayer> candidates = playersOnPitch(state)
+                .stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.yellowCards.getOrDefault(player.getId(), 0) == 0)
+                .toList();
+
+        return randomPlayer(candidates);
+    }
+
+    private GeneratedPlayer randomPlayerOnPitchWithOneYellow(TeamMatchState state) {
+        List<GeneratedPlayer> candidates = playersOnPitch(state)
+                .stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.yellowCards.getOrDefault(player.getId(), 0) == 1)
+                .toList();
+
+        return randomPlayer(candidates);
+    }
+
+    private GeneratedPlayer randomPlayerOnPitch(TeamMatchState state) {
+        return randomPlayer(playersOnPitch(state));
+    }
+
+    private GeneratedPlayer randomFieldPlayerOnPitch(TeamMatchState state) {
+        List<GeneratedPlayer> fieldPlayers = fieldPlayersOnPitch(state);
+
+        if (fieldPlayers.isEmpty()) {
+            return randomPlayerOnPitch(state);
+        }
+
+        return randomPlayer(fieldPlayers);
+    }
+
+    private GeneratedPlayer randomDifferentFieldPlayerOnPitch(TeamMatchState state, GeneratedPlayer excluded) {
+        List<GeneratedPlayer> fieldPlayers = fieldPlayersOnPitch(state)
+                .stream()
+                .filter(player -> excluded == null || !Objects.equals(player.getId(), excluded.getId()))
+                .toList();
+
+        return randomPlayer(fieldPlayers);
+    }
+
+    private GeneratedPlayer randomBenchPlayer(TeamMatchState state, boolean goalkeeperOnly) {
+        List<GeneratedPlayer> availableBench = state.benchPlayers.stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.statuses.get(player.getId()) == PlayerMatchStatus.BENCH)
+                .filter(player -> !goalkeeperOnly || matchesPosition(player, "goalkeeper"))
+                .toList();
+
+        return randomPlayer(availableBench);
+    }
+
+    private GeneratedPlayer findPlayerById(List<GeneratedPlayer> startingPlayers,
+                                           List<GeneratedPlayer> benchPlayers,
+                                           Long id) {
+        if (id == null) {
+            return null;
+        }
+
+        return Stream.concat(startingPlayers.stream(), benchPlayers.stream())
+                .filter(player -> id.equals(player.getId()))
+                .findFirst()
+                .orElse(null);
     }
 
     private void reduceInjuriesAndSuspensionsBeforeMatch(Match match) {
@@ -557,26 +745,6 @@ public class MatchGeneratorService {
 
             generatedPlayerRepository.save(player);
         }
-    }
-
-    private void markPlayerSentOff(Long matchId, GeneratedPlayer player) {
-        if (matchId == null || player == null || player.getId() == null) {
-            return;
-        }
-
-        sentOffPlayers
-                .computeIfAbsent(matchId, key -> new HashSet<>())
-                .add(player.getId());
-    }
-
-    private boolean isSentOff(Long matchId, GeneratedPlayer player) {
-        if (matchId == null || player == null || player.getId() == null) {
-            return false;
-        }
-
-        return sentOffPlayers
-                .getOrDefault(matchId, Set.of())
-                .contains(player.getId());
     }
 
     private void suspendPlayer(GeneratedPlayer player) {
@@ -723,105 +891,6 @@ public class MatchGeneratorService {
         }
 
         return players.get(random.nextInt(players.size()));
-    }
-
-    private GeneratedPlayer randomAvailablePlayer(List<GeneratedPlayer> players, Long matchId) {
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        List<GeneratedPlayer> available = players.stream()
-                .filter(player -> !isSentOff(matchId, player))
-                .toList();
-
-        if (available.isEmpty()) {
-            return null;
-        }
-
-        return randomPlayer(available);
-    }
-
-    private GeneratedPlayer randomAvailablePlayerWithoutGoalkeepers(List<GeneratedPlayer> players, Long matchId) {
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        List<GeneratedPlayer> fieldPlayers = players.stream()
-                .filter(player -> !isSentOff(matchId, player))
-                .filter(player -> !matchesPosition(player, "goalkeeper"))
-                .toList();
-
-        if (fieldPlayers.isEmpty()) {
-            return randomAvailablePlayer(players, matchId);
-        }
-
-        return randomPlayer(fieldPlayers);
-    }
-
-    private GeneratedPlayer randomPlayerWithoutInjury(List<GeneratedPlayer> players,
-                                                      Long matchId,
-                                                      boolean homeTeam) {
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        InjuredPlayerInfo injuredPlayerInfo = homeTeam
-                ? injuredHomePlayers.get(matchId)
-                : injuredAwayPlayers.get(matchId);
-
-        List<GeneratedPlayer> available = players.stream()
-                .filter(player -> !isSentOff(matchId, player))
-                .filter(player ->
-                        injuredPlayerInfo == null
-                                || injuredPlayerInfo.playerId() == null
-                                || !injuredPlayerInfo.playerId().equals(player.getId())
-                )
-                .toList();
-
-        if (available.isEmpty()) {
-            return null;
-        }
-
-        return randomPlayer(available);
-    }
-
-    private GeneratedPlayer randomDifferentAvailablePlayerWithoutGoalkeeper(List<GeneratedPlayer> players,
-                                                                            GeneratedPlayer excluded,
-                                                                            Long matchId) {
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        List<GeneratedPlayer> available = players.stream()
-                .filter(player -> !isSentOff(matchId, player))
-                .filter(player -> !matchesPosition(player, "goalkeeper"))
-                .filter(player -> excluded == null || !player.getId().equals(excluded.getId()))
-                .toList();
-
-        if (available.isEmpty()) {
-            return null;
-        }
-
-        return randomPlayer(available);
-    }
-
-    private GeneratedPlayer randomUnusedPlayer(List<GeneratedPlayer> players, Set<Long> usedPlayerIds) {
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        List<GeneratedPlayer> available = players.stream()
-                .filter(player -> player.getId() != null && !usedPlayerIds.contains(player.getId()))
-                .toList();
-
-        if (available.isEmpty()) {
-            return randomPlayer(players);
-        }
-
-        GeneratedPlayer selectedPlayer = available.get(random.nextInt(available.size()));
-        usedPlayerIds.add(selectedPlayer.getId());
-
-        return selectedPlayer;
     }
 
     private Long playerId(GeneratedPlayer player) {
@@ -1181,9 +1250,64 @@ public class MatchGeneratorService {
         }
     }
 
-    private record TeamInfo(String name, String logo) {
+    private enum PlayerMatchStatus {
+        ON_PITCH,
+        BENCH,
+        SUBSTITUTED,
+        SENT_OFF,
+        INJURED_OFF
     }
 
-    private record InjuredPlayerInfo(Long playerId, String playerName, int injuryMinute) {
+    private enum PlannedEventType {
+        HOME_GOAL,
+        AWAY_GOAL,
+        HOME_YELLOW,
+        AWAY_YELLOW,
+        HOME_RED,
+        AWAY_RED,
+        HOME_SUBSTITUTION,
+        AWAY_SUBSTITUTION,
+        HOME_PENALTY_MISSED,
+        AWAY_PENALTY_MISSED,
+        INJURY
+    }
+
+    private record PlannedEvent(int minute, PlannedEventType type) {
+    }
+
+    private static class TeamMatchState {
+        private final boolean homeTeam;
+        private final String teamSide;
+        private final List<GeneratedPlayer> startingPlayers;
+        private final List<GeneratedPlayer> benchPlayers;
+        private final Map<Long, PlayerMatchStatus> statuses = new HashMap<>();
+        private final Map<Long, Integer> yellowCards = new HashMap<>();
+        private int substitutionsUsed = 0;
+        private int substitutionWindowsUsed = 0;
+        private boolean hasEmergencyGoalkeeper = false;
+
+        private TeamMatchState(boolean homeTeam,
+                               List<GeneratedPlayer> startingPlayers,
+                               List<GeneratedPlayer> benchPlayers) {
+            this.homeTeam = homeTeam;
+            this.teamSide = homeTeam ? "HOME" : "AWAY";
+            this.startingPlayers = startingPlayers;
+            this.benchPlayers = benchPlayers;
+
+            for (GeneratedPlayer player : startingPlayers) {
+                if (player.getId() != null) {
+                    statuses.put(player.getId(), PlayerMatchStatus.ON_PITCH);
+                }
+            }
+
+            for (GeneratedPlayer player : benchPlayers) {
+                if (player.getId() != null) {
+                    statuses.put(player.getId(), PlayerMatchStatus.BENCH);
+                }
+            }
+        }
+    }
+
+    private record TeamInfo(String name, String logo) {
     }
 }

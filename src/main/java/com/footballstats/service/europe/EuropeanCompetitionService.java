@@ -592,75 +592,43 @@ public class EuropeanCompetitionService {
 
 
     private List<EuropeanMatchEvent> generateEuropeanMatchEvents(EuropeanMatch match) {
-        Random random = new Random(match.getId());
+        Random random = new Random(match.getId() == null ? System.nanoTime() : match.getId());
+
+        EuropeanTeamMatchState homeState = createEuropeanTeamState(match, true);
+        EuropeanTeamMatchState awayState = createEuropeanTeamState(match, false);
+
+        List<EuropeanPlannedEvent> plannedEvents = new ArrayList<>();
+
+        addEuropeanGoalPlans(plannedEvents, safeInt(match.getHomeGoals()), EuropeanPlannedEventType.HOME_GOAL, random);
+        addEuropeanGoalPlans(plannedEvents, safeInt(match.getAwayGoals()), EuropeanPlannedEventType.AWAY_GOAL, random);
+
+        addEuropeanCardPlans(plannedEvents, safeInt(match.getYellowCardsHome()), EuropeanPlannedEventType.HOME_YELLOW, random);
+        addEuropeanCardPlans(plannedEvents, safeInt(match.getYellowCardsAway()), EuropeanPlannedEventType.AWAY_YELLOW, random);
+
+        addEuropeanCardPlans(plannedEvents, safeInt(match.getRedCardsHome()), EuropeanPlannedEventType.HOME_RED, random);
+        addEuropeanCardPlans(plannedEvents, safeInt(match.getRedCardsAway()), EuropeanPlannedEventType.AWAY_RED, random);
+
+        addEuropeanSubstitutionPlans(plannedEvents, generateEuropeanSubstitutionsCount(random), EuropeanPlannedEventType.HOME_SUBSTITUTION, random);
+        addEuropeanSubstitutionPlans(plannedEvents, generateEuropeanSubstitutionsCount(random), EuropeanPlannedEventType.AWAY_SUBSTITUTION, random);
+
+        if (random.nextInt(100) < 18) {
+            plannedEvents.add(new EuropeanPlannedEvent(1 + random.nextInt(90), EuropeanPlannedEventType.INJURY));
+        }
+
+        if (random.nextInt(100) < 15) {
+            EuropeanPlannedEventType type = random.nextBoolean()
+                    ? EuropeanPlannedEventType.HOME_PENALTY_MISSED
+                    : EuropeanPlannedEventType.AWAY_PENALTY_MISSED;
+            plannedEvents.add(new EuropeanPlannedEvent(1 + random.nextInt(90), type));
+        }
+
+        plannedEvents.sort(Comparator.comparingInt(EuropeanPlannedEvent::minute));
+
         List<EuropeanMatchEvent> events = new ArrayList<>();
 
-        List<GeneratedPlayer> homePlayers = generateLineupForEuropeanMatch(
-                match.getHomeLeagueSlug(),
-                match.getHomeClubSlug(),
-                match.getHomeFormation()
-        );
-
-        List<GeneratedPlayer> awayPlayers = generateLineupForEuropeanMatch(
-                match.getAwayLeagueSlug(),
-                match.getAwayClubSlug(),
-                match.getAwayFormation()
-        );
-
-        for (int i = 0; i < safeInt(match.getHomeGoals()); i++) {
-            events.add(createEuropeanGoalEvent(match, homePlayers, "HOME", random));
+        for (EuropeanPlannedEvent plannedEvent : plannedEvents) {
+            handleEuropeanPlannedEvent(match, plannedEvent, homeState, awayState, events, random);
         }
-
-        for (int i = 0; i < safeInt(match.getAwayGoals()); i++) {
-            events.add(createEuropeanGoalEvent(match, awayPlayers, "AWAY", random));
-        }
-
-        for (int i = 0; i < safeInt(match.getYellowCardsHome()); i++) {
-            events.add(createEuropeanSimpleEvent(match, homePlayers, "HOME", "YELLOW_CARD",
-                    "Yellow card", "/Images/match_events/yellow_card.png", random));
-        }
-
-        for (int i = 0; i < safeInt(match.getYellowCardsAway()); i++) {
-            events.add(createEuropeanSimpleEvent(match, awayPlayers, "AWAY", "YELLOW_CARD",
-                    "Yellow card", "/Images/match_events/yellow_card.png", random));
-        }
-
-        for (int i = 0; i < safeInt(match.getRedCardsHome()); i++) {
-            boolean secondYellow = random.nextInt(100) < 20;
-
-            events.add(createEuropeanSimpleEvent(
-                    match,
-                    homePlayers,
-                    "HOME",
-                    secondYellow ? "SECOND_YELLOW_RED_CARD" : "RED_CARD",
-                    secondYellow ? "Second yellow card" : "Red card",
-                    secondYellow
-                            ? "/Images/match_events/two_yellows_to_red_card.png"
-                            : "/Images/match_events/red_card.png",
-                    random
-            ));
-        }
-
-        for (int i = 0; i < safeInt(match.getRedCardsAway()); i++) {
-            boolean secondYellow = random.nextInt(100) < 20;
-
-            events.add(createEuropeanSimpleEvent(
-                    match,
-                    awayPlayers,
-                    "AWAY",
-                    secondYellow ? "SECOND_YELLOW_RED_CARD" : "RED_CARD",
-                    secondYellow ? "Second yellow card" : "Red card",
-                    secondYellow
-                            ? "/Images/match_events/two_yellows_to_red_card.png"
-                            : "/Images/match_events/red_card.png",
-                    random
-            ));
-        }
-
-        addEuropeanSubstitutions(match, homePlayers, "HOME", events, random);
-        addEuropeanSubstitutions(match, awayPlayers, "AWAY", events, random);
-        addEuropeanPenaltyMiss(match, homePlayers, "HOME", events, random);
-        addEuropeanPenaltyMiss(match, awayPlayers, "AWAY", events, random);
 
         events.sort(Comparator
                 .comparing(EuropeanMatchEvent::getEventMinute)
@@ -669,139 +637,608 @@ public class EuropeanCompetitionService {
         return events;
     }
 
-    private EuropeanMatchEvent createEuropeanGoalEvent(EuropeanMatch match,
-                                                       List<GeneratedPlayer> players,
-                                                       String side,
-                                                       Random random) {
-        EuropeanMatchEvent event = new EuropeanMatchEvent();
+    private EuropeanTeamMatchState createEuropeanTeamState(EuropeanMatch match, boolean homeTeam) {
+        List<GeneratedPlayer> players = generateLineupForEuropeanMatch(
+                homeTeam ? match.getHomeLeagueSlug() : match.getAwayLeagueSlug(),
+                homeTeam ? match.getHomeClubSlug() : match.getAwayClubSlug(),
+                homeTeam ? match.getHomeFormation() : match.getAwayFormation()
+        );
 
-        List<GeneratedPlayer> starters = players.stream().limit(11).toList();
-        GeneratedPlayer scorer = randomPlayer(starters, random);
+        List<GeneratedPlayer> startingPlayers = players.stream().limit(11).toList();
+        List<GeneratedPlayer> benchPlayers = players.stream().skip(11).limit(9).toList();
 
+        return new EuropeanTeamMatchState(homeTeam, startingPlayers, benchPlayers);
+    }
+
+    private void addEuropeanGoalPlans(List<EuropeanPlannedEvent> events,
+                                      int goals,
+                                      EuropeanPlannedEventType type,
+                                      Random random) {
+        for (int i = 0; i < goals; i++) {
+            int minute;
+            int guard = 0;
+
+            do {
+                minute = 1 + random.nextInt(90);
+                guard++;
+            } while (hasEuropeanGoalInSameMinute(events, minute) && guard < 200);
+
+            events.add(new EuropeanPlannedEvent(minute, type));
+        }
+    }
+
+    private boolean hasEuropeanGoalInSameMinute(List<EuropeanPlannedEvent> events, int minute) {
+        return events.stream()
+                .anyMatch(event -> event.minute() == minute
+                        && (event.type() == EuropeanPlannedEventType.HOME_GOAL
+                        || event.type() == EuropeanPlannedEventType.AWAY_GOAL));
+    }
+
+    private void addEuropeanCardPlans(List<EuropeanPlannedEvent> events,
+                                      int cards,
+                                      EuropeanPlannedEventType type,
+                                      Random random) {
+        for (int i = 0; i < cards; i++) {
+            events.add(new EuropeanPlannedEvent(generateEuropeanCardMinute(random), type));
+        }
+    }
+
+    private void addEuropeanSubstitutionPlans(List<EuropeanPlannedEvent> events,
+                                              int substitutions,
+                                              EuropeanPlannedEventType type,
+                                              Random random) {
+        for (int i = 0; i < substitutions; i++) {
+            events.add(new EuropeanPlannedEvent(generateEuropeanSubstitutionMinute(random), type));
+        }
+    }
+
+    private void handleEuropeanPlannedEvent(EuropeanMatch match,
+                                            EuropeanPlannedEvent event,
+                                            EuropeanTeamMatchState homeState,
+                                            EuropeanTeamMatchState awayState,
+                                            List<EuropeanMatchEvent> events,
+                                            Random random) {
+        switch (event.type()) {
+            case HOME_GOAL -> handleEuropeanGoal(match, event.minute(), homeState, awayState, events, random);
+            case AWAY_GOAL -> handleEuropeanGoal(match, event.minute(), awayState, homeState, events, random);
+            case HOME_YELLOW -> handleEuropeanYellowCard(match, event.minute(), homeState, events, random);
+            case AWAY_YELLOW -> handleEuropeanYellowCard(match, event.minute(), awayState, events, random);
+            case HOME_RED -> handleEuropeanRedCard(match, event.minute(), homeState, events, random);
+            case AWAY_RED -> handleEuropeanRedCard(match, event.minute(), awayState, events, random);
+            case HOME_SUBSTITUTION -> handleEuropeanTacticalSubstitution(match, event.minute(), homeState, events, random);
+            case AWAY_SUBSTITUTION -> handleEuropeanTacticalSubstitution(match, event.minute(), awayState, events, random);
+            case HOME_PENALTY_MISSED -> handleEuropeanPenaltyMissed(match, event.minute(), homeState, events, random);
+            case AWAY_PENALTY_MISSED -> handleEuropeanPenaltyMissed(match, event.minute(), awayState, events, random);
+            case INJURY -> handleEuropeanInjury(match, event.minute(), random.nextBoolean() ? homeState : awayState, events, random);
+        }
+    }
+
+    private void handleEuropeanGoal(EuropeanMatch match,
+                                    int minute,
+                                    EuropeanTeamMatchState scoringState,
+                                    EuropeanTeamMatchState opponentState,
+                                    List<EuropeanMatchEvent> events,
+                                    Random random) {
         int roll = random.nextInt(100);
         String eventType;
         String description;
         String iconUrl;
+        GeneratedPlayer scorer;
 
         if (roll < 8) {
             eventType = "PENALTY_GOAL";
             description = "Penalty scored";
             iconUrl = "/Images/match_events/penalty.png";
+            scorer = randomEuropeanFieldPlayerOnPitch(scoringState, random);
         } else if (roll < 12) {
             eventType = "OWN_GOAL";
             description = "Own goal";
             iconUrl = "/Images/match_events/own_goal.png";
+            scorer = randomEuropeanFieldPlayerOnPitch(opponentState, random);
         } else {
             eventType = "GOAL";
             description = "Goal";
             iconUrl = "/Images/match_events/goal.png";
+            scorer = randomEuropeanFieldPlayerOnPitch(scoringState, random);
         }
 
+        if (scorer == null) {
+            return;
+        }
+
+        EuropeanMatchEvent event = new EuropeanMatchEvent();
         event.setMatchId(match.getId());
-        event.setEventMinute(1 + random.nextInt(90));
+        event.setEventMinute(minute);
         event.setEventType(eventType);
-        event.setTeamSide(side);
-        event.setPlayerId(scorer != null ? scorer.getId() : null);
+        event.setTeamSide(scoringState.teamSide);
+        event.setPlayerId(scorer.getId());
         event.setPlayerName(playerName(scorer));
         event.setIconUrl(iconUrl);
 
         if ("GOAL".equals(eventType) && random.nextInt(100) < 75) {
-            GeneratedPlayer assist = randomPlayer(starters, random);
+            GeneratedPlayer assistant = randomEuropeanDifferentFieldPlayerOnPitch(scoringState, scorer, random);
 
-            if (scorer != null && assist != null && scorer.getId().equals(assist.getId())) {
-                assist = null;
+            if (assistant != null) {
+                event.setRelatedPlayerId(assistant.getId());
+                event.setRelatedPlayerName(playerName(assistant));
+                event.setDescription("Goal, assist");
+            } else {
+                event.setDescription(description);
             }
-
-            event.setRelatedPlayerId(assist != null ? assist.getId() : null);
-            event.setRelatedPlayerName(assist != null ? playerName(assist) : null);
-            event.setDescription(assist != null ? "Goal, assist" : description);
         } else {
             event.setDescription(description);
         }
 
-        return event;
+        events.add(event);
     }
 
-    private EuropeanMatchEvent createEuropeanSimpleEvent(EuropeanMatch match,
-                                                         List<GeneratedPlayer> players,
-                                                         String side,
-                                                         String type,
-                                                         String description,
-                                                         String iconUrl,
-                                                         Random random) {
-        EuropeanMatchEvent event = new EuropeanMatchEvent();
-
-        GeneratedPlayer player = randomPlayer(players.stream().limit(11).toList(), random);
-
-        event.setMatchId(match.getId());
-        event.setEventMinute(1 + random.nextInt(90));
-        event.setEventType(type);
-        event.setTeamSide(side);
-        event.setPlayerId(player != null ? player.getId() : null);
-        event.setPlayerName(playerName(player));
-        event.setDescription(description);
-        event.setIconUrl(iconUrl);
-
-        return event;
-    }
-
-    private void addEuropeanSubstitutions(EuropeanMatch match,
-                                          List<GeneratedPlayer> players,
-                                          String side,
+    private void handleEuropeanYellowCard(EuropeanMatch match,
+                                          int minute,
+                                          EuropeanTeamMatchState state,
                                           List<EuropeanMatchEvent> events,
                                           Random random) {
-        if (players.size() < 16) {
+        GeneratedPlayer player = chooseEuropeanPlayerForYellow(state, random);
+
+        if (player == null || player.getId() == null) {
             return;
         }
 
-        int substitutions = 3 + random.nextInt(3);
+        int currentYellowCards = state.yellowCards.getOrDefault(player.getId(), 0);
 
-        List<GeneratedPlayer> starters = new ArrayList<>(players.stream().limit(11).toList());
-        List<GeneratedPlayer> bench = new ArrayList<>(players.stream().skip(11).limit(9).toList());
+        if (currentYellowCards >= 1) {
+            handleEuropeanSecondYellow(match, minute, state, player, events);
+            return;
+        }
 
-        Collections.shuffle(starters, random);
-        Collections.shuffle(bench, random);
+        state.yellowCards.put(player.getId(), 1);
 
-        for (int i = 0; i < substitutions && i < starters.size() && i < bench.size(); i++) {
-            GeneratedPlayer playerIn = bench.get(i);
-            GeneratedPlayer playerOut = starters.get(i);
+        events.add(createEuropeanEvent(
+                match,
+                minute,
+                "YELLOW_CARD",
+                state.teamSide,
+                player,
+                null,
+                "Yellow card",
+                "/Images/match_events/yellow_card.png"
+        ));
+    }
 
-            EuropeanMatchEvent event = new EuropeanMatchEvent();
+    private GeneratedPlayer chooseEuropeanPlayerForYellow(EuropeanTeamMatchState state, Random random) {
+        List<GeneratedPlayer> playersWithOneYellow = europeanPlayersOnPitch(state).stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.yellowCards.getOrDefault(player.getId(), 0) == 1)
+                .toList();
 
-            event.setMatchId(match.getId());
-            event.setEventMinute(55 + random.nextInt(36));
-            event.setEventType("SUBSTITUTION");
-            event.setTeamSide(side);
-            event.setPlayerId(playerIn.getId());
-            event.setPlayerName(playerName(playerIn));
-            event.setRelatedPlayerId(playerOut.getId());
-            event.setRelatedPlayerName(playerName(playerOut));
-            event.setDescription("In: " + playerName(playerIn) + " / Out: " + playerName(playerOut));
-            event.setIconUrl("/Images/match_events/change.png");
+        List<GeneratedPlayer> playersWithoutYellow = europeanPlayersOnPitch(state).stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.yellowCards.getOrDefault(player.getId(), 0) == 0)
+                .toList();
 
-            events.add(event);
+        if (!playersWithOneYellow.isEmpty() && random.nextInt(100) < 25) {
+            return randomPlayer(playersWithOneYellow, random);
+        }
+
+        if (!playersWithoutYellow.isEmpty()) {
+            return randomPlayer(playersWithoutYellow, random);
+        }
+
+        return randomPlayer(playersWithOneYellow, random);
+    }
+
+    private void handleEuropeanSecondYellow(EuropeanMatch match,
+                                            int minute,
+                                            EuropeanTeamMatchState state,
+                                            GeneratedPlayer player,
+                                            List<EuropeanMatchEvent> events) {
+        events.add(createEuropeanEvent(
+                match,
+                minute,
+                "SECOND_YELLOW_RED_CARD",
+                state.teamSide,
+                player,
+                null,
+                "Second yellow card",
+                "/Images/match_events/two_yellows_to_red_card.png"
+        ));
+
+        state.statuses.put(player.getId(), EuropeanPlayerMatchStatus.SENT_OFF);
+
+        if (matchesPosition(player, "goalkeeper")) {
+            handleEuropeanGoalkeeperProblem(match, minute, state, "Goalkeeper sent off", events, new Random(match.getId() + minute));
         }
     }
 
+    private void handleEuropeanRedCard(EuropeanMatch match,
+                                       int minute,
+                                       EuropeanTeamMatchState state,
+                                       List<EuropeanMatchEvent> events,
+                                       Random random) {
+        GeneratedPlayer player = randomEuropeanPlayerOnPitch(state, random);
 
-    private void addEuropeanPenaltyMiss(EuropeanMatch match,
-                                        List<GeneratedPlayer> players,
-                                        String side,
-                                        List<EuropeanMatchEvent> events,
-                                        Random random) {
-        if (random.nextInt(100) >= 15) {
+        if (player == null || player.getId() == null) {
             return;
         }
 
-        events.add(createEuropeanSimpleEvent(
+        events.add(createEuropeanEvent(
                 match,
-                players,
-                side,
-                "PENALTY_MISSED",
-                "Penalty missed",
-                "/Images/match_events/penalty_missed.png",
-                random
+                minute,
+                "RED_CARD",
+                state.teamSide,
+                player,
+                null,
+                "Red card",
+                "/Images/match_events/red_card.png"
         ));
+
+        state.statuses.put(player.getId(), EuropeanPlayerMatchStatus.SENT_OFF);
+
+        if (matchesPosition(player, "goalkeeper")) {
+            handleEuropeanGoalkeeperProblem(match, minute, state, "Goalkeeper sent off", events, random);
+        }
+    }
+
+    private void handleEuropeanInjury(EuropeanMatch match,
+                                      int minute,
+                                      EuropeanTeamMatchState state,
+                                      List<EuropeanMatchEvent> events,
+                                      Random random) {
+        GeneratedPlayer injuredPlayer = randomEuropeanPlayerOnPitch(state, random);
+
+        if (injuredPlayer == null || injuredPlayer.getId() == null) {
+            return;
+        }
+
+        events.add(createEuropeanEvent(
+                match,
+                minute,
+                "INJURY",
+                state.teamSide,
+                injuredPlayer,
+                null,
+                "Injury",
+                "/Images/match_events/injury.png"
+        ));
+
+        state.statuses.put(injuredPlayer.getId(), EuropeanPlayerMatchStatus.INJURED_OFF);
+
+        if (matchesPosition(injuredPlayer, "goalkeeper")) {
+            handleEuropeanGoalkeeperProblem(match, minute, state, "Goalkeeper injury", events, random);
+        } else {
+            handleEuropeanForcedInjurySubstitution(match, minute, state, injuredPlayer, events, random);
+        }
+    }
+
+    private void handleEuropeanTacticalSubstitution(EuropeanMatch match,
+                                                    int minute,
+                                                    EuropeanTeamMatchState state,
+                                                    List<EuropeanMatchEvent> events,
+                                                    Random random) {
+        if (state.substitutionsUsed >= 5) {
+            return;
+        }
+
+        if (!state.tacticalSubstitutionMinutes.contains(minute) && state.tacticalSubstitutionMinutes.size() >= 3) {
+            return;
+        }
+
+        GeneratedPlayer playerOut = randomEuropeanFieldPlayerOnPitch(state, random);
+        GeneratedPlayer playerIn = randomEuropeanBenchPlayer(state, false, random);
+
+        if (playerOut == null || playerIn == null) {
+            return;
+        }
+
+        makeEuropeanSubstitution(match, minute, state, playerOut, playerIn, "Substitution", events, false);
+        state.tacticalSubstitutionMinutes.add(minute);
+    }
+
+    private void handleEuropeanForcedInjurySubstitution(EuropeanMatch match,
+                                                        int minute,
+                                                        EuropeanTeamMatchState state,
+                                                        GeneratedPlayer injuredPlayer,
+                                                        List<EuropeanMatchEvent> events,
+                                                        Random random) {
+        if (state.substitutionsUsed >= 5) {
+            return;
+        }
+
+        GeneratedPlayer playerIn = randomEuropeanBenchPlayer(state, false, random);
+
+        if (playerIn == null) {
+            return;
+        }
+
+        makeEuropeanSubstitution(match, Math.min(minute + 1, 90), state, injuredPlayer, playerIn,
+                "Substitution due to injury", events, true);
+    }
+
+    private void handleEuropeanGoalkeeperProblem(EuropeanMatch match,
+                                                 int minute,
+                                                 EuropeanTeamMatchState state,
+                                                 String reason,
+                                                 List<EuropeanMatchEvent> events,
+                                                 Random random) {
+        if (state.substitutionsUsed < 5) {
+            GeneratedPlayer benchGoalkeeper = randomEuropeanBenchPlayer(state, true, random);
+
+            if (benchGoalkeeper != null) {
+                GeneratedPlayer fieldPlayerOut = randomEuropeanFieldPlayerOnPitch(state, random);
+
+                if (fieldPlayerOut != null) {
+                    makeEuropeanSubstitution(match, Math.min(minute + 1, 90), state, fieldPlayerOut, benchGoalkeeper,
+                            reason + " - goalkeeper substitution", events, false);
+                    return;
+                }
+            }
+        }
+
+        GeneratedPlayer emergencyGoalkeeper = randomEuropeanFieldPlayerOnPitch(state, random);
+
+        if (emergencyGoalkeeper == null || emergencyGoalkeeper.getId() == null) {
+            return;
+        }
+
+        state.hasEmergencyGoalkeeper = true;
+
+        events.add(createEuropeanEvent(
+                match,
+                Math.min(minute + 1, 90),
+                "EMERGENCY_GOALKEEPER",
+                state.teamSide,
+                emergencyGoalkeeper,
+                null,
+                "Emergency goalkeeper after " + reason,
+                "/Images/match_events/change.png"
+        ));
+    }
+
+    private void handleEuropeanPenaltyMissed(EuropeanMatch match,
+                                             int minute,
+                                             EuropeanTeamMatchState state,
+                                             List<EuropeanMatchEvent> events,
+                                             Random random) {
+        GeneratedPlayer player = randomEuropeanFieldPlayerOnPitch(state, random);
+
+        if (player == null) {
+            return;
+        }
+
+        events.add(createEuropeanEvent(
+                match,
+                minute,
+                "PENALTY_MISSED",
+                state.teamSide,
+                player,
+                null,
+                "Penalty missed",
+                "/Images/match_events/penalty_missed.png"
+        ));
+    }
+
+    private void makeEuropeanSubstitution(EuropeanMatch match,
+                                          int minute,
+                                          EuropeanTeamMatchState state,
+                                          GeneratedPlayer playerOut,
+                                          GeneratedPlayer playerIn,
+                                          String description,
+                                          List<EuropeanMatchEvent> events,
+                                          boolean playerOutAlreadyOff) {
+        if (state.substitutionsUsed >= 5) {
+            return;
+        }
+
+        if (playerOut == null || playerIn == null || playerOut.getId() == null || playerIn.getId() == null) {
+            return;
+        }
+
+        if (state.statuses.get(playerIn.getId()) != EuropeanPlayerMatchStatus.BENCH) {
+            return;
+        }
+
+        if (!playerOutAlreadyOff && state.statuses.get(playerOut.getId()) != EuropeanPlayerMatchStatus.ON_PITCH) {
+            return;
+        }
+
+        if (!playerOutAlreadyOff) {
+            state.statuses.put(playerOut.getId(), EuropeanPlayerMatchStatus.SUBSTITUTED);
+        }
+
+        state.statuses.put(playerIn.getId(), EuropeanPlayerMatchStatus.ON_PITCH);
+        state.substitutionsUsed++;
+
+        EuropeanMatchEvent event = createEuropeanEvent(
+                match,
+                minute,
+                "SUBSTITUTION",
+                state.teamSide,
+                playerIn,
+                playerOut,
+                description,
+                "/Images/match_events/change.png"
+        );
+
+        event.setDescription("In: " + playerName(playerIn) + " / Out: " + playerName(playerOut));
+        events.add(event);
+    }
+
+    private EuropeanMatchEvent createEuropeanEvent(EuropeanMatch match,
+                                                   int minute,
+                                                   String eventType,
+                                                   String teamSide,
+                                                   GeneratedPlayer player,
+                                                   GeneratedPlayer relatedPlayer,
+                                                   String description,
+                                                   String iconUrl) {
+        EuropeanMatchEvent event = new EuropeanMatchEvent();
+        event.setMatchId(match.getId());
+        event.setEventMinute(minute);
+        event.setEventType(eventType);
+        event.setTeamSide(teamSide);
+        event.setPlayerId(player != null ? player.getId() : null);
+        event.setPlayerName(playerName(player));
+        event.setRelatedPlayerId(relatedPlayer != null ? relatedPlayer.getId() : null);
+        event.setRelatedPlayerName(relatedPlayer != null ? playerName(relatedPlayer) : null);
+        event.setDescription(description);
+        event.setIconUrl(iconUrl);
+        return event;
+    }
+
+    private List<GeneratedPlayer> europeanPlayersOnPitch(EuropeanTeamMatchState state) {
+        return state.statuses.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == EuropeanPlayerMatchStatus.ON_PITCH)
+                .map(Map.Entry::getKey)
+                .map(id -> findEuropeanPlayerById(state.startingPlayers, state.benchPlayers, id))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<GeneratedPlayer> europeanFieldPlayersOnPitch(EuropeanTeamMatchState state) {
+        return europeanPlayersOnPitch(state)
+                .stream()
+                .filter(player -> !matchesPosition(player, "goalkeeper"))
+                .toList();
+    }
+
+    private GeneratedPlayer randomEuropeanPlayerOnPitch(EuropeanTeamMatchState state, Random random) {
+        return randomPlayer(europeanPlayersOnPitch(state), random);
+    }
+
+    private GeneratedPlayer randomEuropeanFieldPlayerOnPitch(EuropeanTeamMatchState state, Random random) {
+        List<GeneratedPlayer> fieldPlayers = europeanFieldPlayersOnPitch(state);
+
+        if (fieldPlayers.isEmpty()) {
+            return randomEuropeanPlayerOnPitch(state, random);
+        }
+
+        return randomPlayer(fieldPlayers, random);
+    }
+
+    private GeneratedPlayer randomEuropeanDifferentFieldPlayerOnPitch(EuropeanTeamMatchState state,
+                                                                      GeneratedPlayer excluded,
+                                                                      Random random) {
+        List<GeneratedPlayer> fieldPlayers = europeanFieldPlayersOnPitch(state)
+                .stream()
+                .filter(player -> excluded == null || !Objects.equals(player.getId(), excluded.getId()))
+                .toList();
+
+        return randomPlayer(fieldPlayers, random);
+    }
+
+    private GeneratedPlayer randomEuropeanBenchPlayer(EuropeanTeamMatchState state,
+                                                      boolean goalkeeperOnly,
+                                                      Random random) {
+        List<GeneratedPlayer> availableBench = state.benchPlayers.stream()
+                .filter(player -> player.getId() != null)
+                .filter(player -> state.statuses.get(player.getId()) == EuropeanPlayerMatchStatus.BENCH)
+                .filter(player -> !goalkeeperOnly || matchesPosition(player, "goalkeeper"))
+                .toList();
+
+        return randomPlayer(availableBench, random);
+    }
+
+    private GeneratedPlayer findEuropeanPlayerById(List<GeneratedPlayer> startingPlayers,
+                                                   List<GeneratedPlayer> benchPlayers,
+                                                   Long id) {
+        if (id == null) {
+            return null;
+        }
+
+        return java.util.stream.Stream.concat(startingPlayers.stream(), benchPlayers.stream())
+                .filter(player -> id.equals(player.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int generateEuropeanSubstitutionsCount(Random random) {
+        int roll = random.nextInt(100);
+
+        if (roll < 3) return 0;
+        if (roll < 8) return 1;
+        if (roll < 18) return 2;
+        if (roll < 35) return 3;
+        if (roll < 65) return 4;
+
+        return 5;
+    }
+
+    private int generateEuropeanCardMinute(Random random) {
+        int roll = random.nextInt(100);
+
+        if (roll < 8) return 1 + random.nextInt(30);
+        if (roll < 35) return 31 + random.nextInt(30);
+        if (roll < 75) return 61 + random.nextInt(20);
+
+        return 81 + random.nextInt(10);
+    }
+
+    private int generateEuropeanSubstitutionMinute(Random random) {
+        int roll = random.nextInt(100);
+
+        if (roll < 5) return 1 + random.nextInt(45);
+        if (roll < 35) return 46 + random.nextInt(20);
+        if (roll < 75) return 66 + random.nextInt(15);
+
+        return 81 + random.nextInt(10);
+    }
+
+    private enum EuropeanPlayerMatchStatus {
+        ON_PITCH,
+        BENCH,
+        SUBSTITUTED,
+        SENT_OFF,
+        INJURED_OFF
+    }
+
+    private enum EuropeanPlannedEventType {
+        HOME_GOAL,
+        AWAY_GOAL,
+        HOME_YELLOW,
+        AWAY_YELLOW,
+        HOME_RED,
+        AWAY_RED,
+        HOME_SUBSTITUTION,
+        AWAY_SUBSTITUTION,
+        HOME_PENALTY_MISSED,
+        AWAY_PENALTY_MISSED,
+        INJURY
+    }
+
+    private record EuropeanPlannedEvent(int minute, EuropeanPlannedEventType type) {
+    }
+
+    private static class EuropeanTeamMatchState {
+        private final boolean homeTeam;
+        private final String teamSide;
+        private final List<GeneratedPlayer> startingPlayers;
+        private final List<GeneratedPlayer> benchPlayers;
+        private final Map<Long, EuropeanPlayerMatchStatus> statuses = new HashMap<>();
+        private final Map<Long, Integer> yellowCards = new HashMap<>();
+        private final Set<Integer> tacticalSubstitutionMinutes = new HashSet<>();
+        private int substitutionsUsed = 0;
+        private boolean hasEmergencyGoalkeeper = false;
+
+        private EuropeanTeamMatchState(boolean homeTeam,
+                                       List<GeneratedPlayer> startingPlayers,
+                                       List<GeneratedPlayer> benchPlayers) {
+            this.homeTeam = homeTeam;
+            this.teamSide = homeTeam ? "HOME" : "AWAY";
+            this.startingPlayers = startingPlayers;
+            this.benchPlayers = benchPlayers;
+
+            for (GeneratedPlayer player : startingPlayers) {
+                if (player.getId() != null) {
+                    statuses.put(player.getId(), EuropeanPlayerMatchStatus.ON_PITCH);
+                }
+            }
+
+            for (GeneratedPlayer player : benchPlayers) {
+                if (player.getId() != null) {
+                    statuses.put(player.getId(), EuropeanPlayerMatchStatus.BENCH);
+                }
+            }
+        }
     }
 
     private List<GeneratedPlayer> generateLineupForEuropeanMatch(String leagueSlug,
@@ -1333,7 +1770,7 @@ public class EuropeanCompetitionService {
     @Transactional
     public void generateOrRegenerateEuropeanCompetition(String season, String competitionSlug) {
         List<String> missingLeagues = getMissingDomesticLeagues();
-
+// TODO: tutaj jeśli wszystkie ligi krajowe są już wygenerowane → nie rusza lig krajowych, jeśli brakuje choć jednej ligi → generuje wszystkie ligi krajowe od nowa.
         if (!missingLeagues.isEmpty()) {
             for (String league : DOMESTIC_LEAGUES) {
                 matchGeneratorService.generateLeagueSeason(league);
