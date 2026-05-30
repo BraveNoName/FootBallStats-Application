@@ -1,10 +1,11 @@
 package com.footballstats.controller;
 
 import com.footballstats.dto.MatchLineupDto;
-import com.footballstats.model.EuropeanCompetitionParticipant;
-import com.footballstats.model.EuropeanMatch;
-import com.footballstats.model.EuropeanMatchEvent;
-import com.footballstats.model.GeneratedPlayer;
+import com.footballstats.dto.european_knockout.EuropeanBracketHalfView;
+import com.footballstats.dto.european_knockout.EuropeanBracketPairView;
+import com.footballstats.dto.european_knockout.EuropeanBracketQuarterView;
+import com.footballstats.dto.european_knockout.EuropeanBracketTreeView;
+import com.footballstats.model.*;
 import com.footballstats.repository.EuropeanMatchEventRepository;
 import com.footballstats.repository.EuropeanMatchRepository;
 import com.footballstats.repository.GeneratedPlayerRepository;
@@ -128,8 +129,122 @@ public class EuropeanMatchesController {
     }
 
     @GetMapping("/europe/{competition}/knockout")
-    public String knockout(@PathVariable String competition, Model model) {
-        return europeanCompetition(competition, model);
+    public String knockout(@PathVariable String competition,
+                           Model model) {
+
+        String view = europeanCompetition(competition, model);
+
+        if (!europeanCompetitionService.isKnockoutGenerated(SEASON, competition)) {
+            europeanCompetitionService.generateKnockoutStage(SEASON, competition);
+        }
+
+        List<EuropeanKnockoutMatch> knockoutMatches =
+                europeanCompetitionService.getKnockoutMatches(SEASON, competition);
+
+        List<EuropeanKnockoutMatch> playOffMatches = knockoutMatches.stream()
+                .filter(match -> "PLAY_OFF".equals(match.getRound()))
+                .toList();
+
+        List<EuropeanKnockoutMatch> roundOf16Matches = knockoutMatches.stream()
+                .filter(match -> "ROUND_OF_16".equals(match.getRound()))
+                .toList();
+
+        List<EuropeanKnockoutMatch> quarterFinalMatches = knockoutMatches.stream()
+                .filter(match -> "QUARTER_FINAL".equals(match.getRound()))
+                .toList();
+
+        List<EuropeanKnockoutMatch> semiFinalMatches = knockoutMatches.stream()
+                .filter(match -> "SEMI_FINAL".equals(match.getRound()))
+                .toList();
+
+        List<EuropeanKnockoutMatch> finalMatches = knockoutMatches.stream()
+                .filter(match -> "FINAL".equals(match.getRound()))
+                .toList();
+
+        model.addAttribute("activeEuropeanView", "knockout");
+        model.addAttribute("playOffMatches", playOffMatches);
+        model.addAttribute("roundOf16Matches", roundOf16Matches);
+        model.addAttribute("quarterFinalMatches", quarterFinalMatches);
+        model.addAttribute("semiFinalMatches", semiFinalMatches);
+        model.addAttribute("finalMatches", finalMatches);
+        model.addAttribute("bracketTree", buildEuropeanBracketTree(
+                playOffMatches,
+                roundOf16Matches,
+                quarterFinalMatches,
+                semiFinalMatches,
+                finalMatches
+        ));
+
+        return view;
+    }
+
+    private EuropeanBracketTreeView buildEuropeanBracketTree(
+            List<EuropeanKnockoutMatch> playOffMatches,
+            List<EuropeanKnockoutMatch> roundOf16Matches,
+            List<EuropeanKnockoutMatch> quarterFinalMatches,
+            List<EuropeanKnockoutMatch> semiFinalMatches,
+            List<EuropeanKnockoutMatch> finalMatches
+    ) {
+        if (playOffMatches.size() < 8
+                || roundOf16Matches.size() < 8
+                || quarterFinalMatches.size() < 4
+                || semiFinalMatches.size() < 2
+                || finalMatches.isEmpty()) {
+            throw new RuntimeException("Knockout bracket is incomplete.");
+        }
+
+        List<EuropeanBracketPairView> pairs = List.of(
+                new EuropeanBracketPairView(playOffMatches.get(7), roundOf16Matches.get(0)),
+                new EuropeanBracketPairView(playOffMatches.get(6), roundOf16Matches.get(1)),
+                new EuropeanBracketPairView(playOffMatches.get(5), roundOf16Matches.get(2)),
+                new EuropeanBracketPairView(playOffMatches.get(4), roundOf16Matches.get(3)),
+                new EuropeanBracketPairView(playOffMatches.get(3), roundOf16Matches.get(4)),
+                new EuropeanBracketPairView(playOffMatches.get(2), roundOf16Matches.get(5)),
+                new EuropeanBracketPairView(playOffMatches.get(1), roundOf16Matches.get(6)),
+                new EuropeanBracketPairView(playOffMatches.get(0), roundOf16Matches.get(7))
+        );
+
+        EuropeanBracketQuarterView qf1 = new EuropeanBracketQuarterView(
+                pairs.get(0),
+                pairs.get(1),
+                quarterFinalMatches.get(0)
+        );
+
+        EuropeanBracketQuarterView qf2 = new EuropeanBracketQuarterView(
+                pairs.get(2),
+                pairs.get(3),
+                quarterFinalMatches.get(1)
+        );
+
+        EuropeanBracketQuarterView qf3 = new EuropeanBracketQuarterView(
+                pairs.get(4),
+                pairs.get(5),
+                quarterFinalMatches.get(2)
+        );
+
+        EuropeanBracketQuarterView qf4 = new EuropeanBracketQuarterView(
+                pairs.get(6),
+                pairs.get(7),
+                quarterFinalMatches.get(3)
+        );
+
+        EuropeanBracketHalfView leftHalf = new EuropeanBracketHalfView(
+                qf1,
+                qf2,
+                semiFinalMatches.get(0)
+        );
+
+        EuropeanBracketHalfView rightHalf = new EuropeanBracketHalfView(
+                qf3,
+                qf4,
+                semiFinalMatches.get(1)
+        );
+
+        return new EuropeanBracketTreeView(
+                leftHalf,
+                rightHalf,
+                finalMatches.get(0)
+        );
     }
 
     @GetMapping("/europe/{competition}/match/{matchId}")

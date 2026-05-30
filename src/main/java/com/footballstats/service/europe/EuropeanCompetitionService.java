@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.footballstats.model.Referee;
 import com.footballstats.repository.RefereeRepository;
 import java.time.LocalDateTime;
+import com.footballstats.model.EuropeanKnockoutMatch;
+import com.footballstats.repository.EuropeanKnockoutMatchRepository;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,10 +32,16 @@ public class EuropeanCompetitionService {
     private static final String CHAMPIONS_LEAGUE = "champions-league";
     private static final String EUROPA_LEAGUE = "europa-league";
     private static final String CONFERENCE_LEAGUE = "conference-league";
+    private static final String PLAY_OFF = "PLAY_OFF";
+    private static final String ROUND_OF_16 = "ROUND_OF_16";
+    private static final String QUARTER_FINAL = "QUARTER_FINAL";
+    private static final String SEMI_FINAL = "SEMI_FINAL";
+    private static final String FINAL = "FINAL";
 
     private final EuropeanCompetitionParticipantRepository participantRepository;
     private final EuropeanMatchRepository europeanMatchRepository;
     private final EuropeanMatchEventRepository europeanMatchEventRepository;
+    private final EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository;
     private final MatchRepository matchRepository;
     private final LeagueTableService leagueTableService;
     private final GeneratedPlayerRepository generatedPlayerRepository;
@@ -43,6 +51,7 @@ public class EuropeanCompetitionService {
     public EuropeanCompetitionService(
             EuropeanCompetitionParticipantRepository participantRepository,
             EuropeanMatchRepository europeanMatchRepository,
+            EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository,
             MatchRepository matchRepository,
             LeagueTableService leagueTableService,
             GeneratedPlayerRepository generatedPlayerRepository,
@@ -53,6 +62,7 @@ public class EuropeanCompetitionService {
         this.participantRepository = participantRepository;
         this.europeanMatchRepository = europeanMatchRepository;
         this.europeanMatchEventRepository = europeanMatchEventRepository;
+        this.europeanKnockoutMatchRepository = europeanKnockoutMatchRepository;
         this.matchRepository = matchRepository;
         this.leagueTableService = leagueTableService;
         this.generatedPlayerRepository = generatedPlayerRepository;
@@ -845,7 +855,16 @@ public class EuropeanCompetitionService {
         state.statuses.put(player.getId(), EuropeanPlayerMatchStatus.SENT_OFF);
 
         if (matchesPosition(player, "goalkeeper")) {
-            handleEuropeanGoalkeeperProblem(match, minute, state, "Goalkeeper sent off", events, new Random(match.getId() + minute));
+            long seed = match.getId() == null ? System.nanoTime() : match.getId();
+
+            handleEuropeanGoalkeeperProblem(
+                    match,
+                    minute,
+                    state,
+                    "Goalkeeper sent off",
+                    events,
+                    new Random(seed + minute)
+            );
         }
     }
 
@@ -1800,5 +1819,384 @@ public class EuropeanCompetitionService {
         }
 
         europeanMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
+    }
+
+
+    public boolean isKnockoutGenerated(String season,
+                                       String competitionSlug) {
+
+        return europeanKnockoutMatchRepository
+                .existsBySeasonAndCompetitionSlug(
+                        season,
+                        competitionSlug
+                );
+    }
+
+    public List<EuropeanKnockoutMatch> getKnockoutMatches(
+            String season,
+            String competitionSlug
+    ) {
+        return europeanKnockoutMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundOrderAscBracketOrderAsc(
+                        season,
+                        competitionSlug
+                );
+    }
+
+    private void deleteKnockoutStage(String season, String competitionSlug) {
+        List<Long> knockoutMatchIds = europeanKnockoutMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundOrderAscBracketOrderAsc(season, competitionSlug)
+                .stream()
+                .map(EuropeanKnockoutMatch::getId)
+                .toList();
+
+        if (!knockoutMatchIds.isEmpty()) {
+            europeanMatchEventRepository.deleteByKnockoutMatchIdIn(knockoutMatchIds);
+        }
+
+        europeanKnockoutMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
+    }
+
+    @Transactional
+    public void generateKnockoutStage(String season, String competitionSlug) {
+
+        if (isKnockoutGenerated(season, competitionSlug)) {
+            return;
+        }
+
+        List<EuropeanLeagueTableRow> table =
+                calculateLeaguePhaseTable(season, competitionSlug);
+
+        if (table.size() < 24) {
+            throw new RuntimeException("League phase table must contain at least 24 teams.");
+        }
+
+        List<EuropeanLeagueTableRow> teams = table.subList(0, 24);
+
+        List<EuropeanKnockoutMatch> playoffs = List.of(
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 1, teams.get(8), teams.get(23), 9, 24),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 2, teams.get(9), teams.get(22), 10, 23),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 3, teams.get(10), teams.get(21), 11, 22),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 4, teams.get(11), teams.get(20), 12, 21),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 5, teams.get(12), teams.get(19), 13, 20),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 6, teams.get(13), teams.get(18), 14, 19),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 7, teams.get(14), teams.get(17), 15, 18),
+                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 8, teams.get(15), teams.get(16), 16, 17)
+        );
+
+        playoffs.forEach(this::simulateTwoLeggedTie);
+        playoffs = europeanKnockoutMatchRepository.saveAll(playoffs);
+        generateKnockoutEvents(playoffs);
+
+        List<EuropeanKnockoutMatch> roundOf16 = List.of(
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 1, teams.get(0), playoffs.get(7), 1),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 2, teams.get(1), playoffs.get(6), 2),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 3, teams.get(2), playoffs.get(5), 3),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 4, teams.get(3), playoffs.get(4), 4),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 5, teams.get(4), playoffs.get(3), 5),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 6, teams.get(5), playoffs.get(2), 6),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 7, teams.get(6), playoffs.get(1), 7),
+                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 8, teams.get(7), playoffs.get(0), 8)
+        );
+
+        roundOf16.forEach(this::simulateTwoLeggedTie);
+        roundOf16 = europeanKnockoutMatchRepository.saveAll(roundOf16);
+        generateKnockoutEvents(roundOf16);
+
+        List<EuropeanKnockoutMatch> quarterFinals =
+                createNextRound(season, competitionSlug, QUARTER_FINAL, 3, roundOf16);
+
+        quarterFinals.forEach(this::simulateTwoLeggedTie);
+        quarterFinals = europeanKnockoutMatchRepository.saveAll(quarterFinals);
+        generateKnockoutEvents(quarterFinals);
+
+        List<EuropeanKnockoutMatch> semiFinals =
+                createNextRound(season, competitionSlug, SEMI_FINAL, 4, quarterFinals);
+
+        semiFinals.forEach(this::simulateTwoLeggedTie);
+        semiFinals = europeanKnockoutMatchRepository.saveAll(semiFinals);
+        generateKnockoutEvents(semiFinals);
+
+        List<EuropeanKnockoutMatch> finalMatch =
+                createNextRound(season, competitionSlug, FINAL, 5, semiFinals);
+
+        finalMatch.forEach(this::simulateFinalMatch);
+        finalMatch = europeanKnockoutMatchRepository.saveAll(finalMatch);
+        generateKnockoutEvents(finalMatch);
+    }
+
+    private void generateKnockoutEvents(List<EuropeanKnockoutMatch> matches) {
+        for (EuropeanKnockoutMatch knockoutMatch : matches) {
+            if (FINAL.equals(knockoutMatch.getRound())) {
+                EuropeanMatch finalAsEuropeanMatch = buildEuropeanMatchFromKnockout(
+                        knockoutMatch,
+                        knockoutMatch.getHomeGoals(),
+                        knockoutMatch.getAwayGoals()
+                );
+
+                List<EuropeanMatchEvent> events = generateEuropeanMatchEvents(finalAsEuropeanMatch);
+
+                for (EuropeanMatchEvent event : events) {
+                    event.setKnockoutMatchId(knockoutMatch.getId());
+                    event.setKnockoutLeg("FINAL");
+                }
+
+                europeanMatchEventRepository.saveAll(events);
+            } else {
+                EuropeanMatch firstLeg = buildEuropeanMatchFromKnockout(
+                        knockoutMatch,
+                        knockoutMatch.getFirstLegHomeGoals(),
+                        knockoutMatch.getFirstLegAwayGoals()
+                );
+
+                List<EuropeanMatchEvent> firstLegEvents = generateEuropeanMatchEvents(firstLeg);
+
+                for (EuropeanMatchEvent event : firstLegEvents) {
+                    event.setKnockoutMatchId(knockoutMatch.getId());
+                    event.setKnockoutLeg("FIRST_LEG");
+                }
+
+                EuropeanMatch secondLeg = buildEuropeanMatchFromKnockout(
+                        knockoutMatch,
+                        knockoutMatch.getSecondLegHomeGoals(),
+                        knockoutMatch.getSecondLegAwayGoals()
+                );
+
+                List<EuropeanMatchEvent> secondLegEvents = generateEuropeanMatchEvents(secondLeg);
+
+                for (EuropeanMatchEvent event : secondLegEvents) {
+                    event.setKnockoutMatchId(knockoutMatch.getId());
+                    event.setKnockoutLeg("SECOND_LEG");
+                }
+
+                europeanMatchEventRepository.saveAll(firstLegEvents);
+                europeanMatchEventRepository.saveAll(secondLegEvents);
+            }
+        }
+    }
+
+    private EuropeanMatch buildEuropeanMatchFromKnockout(EuropeanKnockoutMatch knockoutMatch,
+                                                         Integer homeGoals,
+                                                         Integer awayGoals) {
+        Random random = new Random();
+
+        List<String> formations = List.of(
+                "4-4-2", "4-3-3", "4-2-3-1", "4-1-2-1-2",
+                "3-5-2", "3-4-3", "3-4-2-1",
+                "5-3-2", "5-4-1"
+        );
+
+        EuropeanMatch match = new EuropeanMatch();
+
+        match.setSeason(knockoutMatch.getSeason());
+        match.setCompetitionSlug(knockoutMatch.getCompetitionSlug());
+
+        match.setHomeTeam(knockoutMatch.getHomeTeam());
+        match.setAwayTeam(knockoutMatch.getAwayTeam());
+
+        match.setHomeClubSlug(knockoutMatch.getHomeClubSlug());
+        match.setAwayClubSlug(knockoutMatch.getAwayClubSlug());
+
+        match.setHomeLeagueSlug(knockoutMatch.getHomeLeagueSlug());
+        match.setAwayLeagueSlug(knockoutMatch.getAwayLeagueSlug());
+
+        match.setHomeGoals(homeGoals == null ? 0 : homeGoals);
+        match.setAwayGoals(awayGoals == null ? 0 : awayGoals);
+
+        match.setYellowCardsHome(random.nextInt(5));
+        match.setYellowCardsAway(random.nextInt(5));
+
+        match.setRedCardsHome(random.nextInt(20) == 0 ? 1 : 0);
+        match.setRedCardsAway(random.nextInt(20) == 0 ? 1 : 0);
+
+        match.setHomeFormation(formations.get(random.nextInt(formations.size())));
+        match.setAwayFormation(formations.get(random.nextInt(formations.size())));
+
+        return match;
+    }
+
+    private EuropeanKnockoutMatch createKnockoutMatch(String season,
+                                                      String competitionSlug,
+                                                      String round,
+                                                      int roundOrder,
+                                                      int bracketOrder,
+                                                      EuropeanLeagueTableRow home,
+                                                      EuropeanLeagueTableRow away,
+                                                      int homeSeed,
+                                                      int awaySeed) {
+        EuropeanKnockoutMatch match = new EuropeanKnockoutMatch();
+
+        match.setSeason(season);
+        match.setCompetitionSlug(competitionSlug);
+        match.setRound(round);
+        match.setRoundOrder(roundOrder);
+        match.setBracketOrder(bracketOrder);
+
+        match.setHomeSeed(homeSeed);
+        match.setAwaySeed(awaySeed);
+
+        match.setHomeTeam(home.getTeam());
+        match.setAwayTeam(away.getTeam());
+
+        match.setHomeLeagueSlug(home.getLeagueSlug());
+        match.setAwayLeagueSlug(away.getLeagueSlug());
+
+        match.setHomeClubSlug(createSlug(home.getTeam()));
+        match.setAwayClubSlug(createSlug(away.getTeam()));
+
+        match.setMatchDate(LocalDateTime.now().plusDays(bracketOrder));
+        match.setStatus("FINISHED");
+
+        return match;
+    }
+
+    private EuropeanKnockoutMatch createKnockoutMatchFromWinner(String season,
+                                                                String competitionSlug,
+                                                                String round,
+                                                                int roundOrder,
+                                                                int bracketOrder,
+                                                                EuropeanLeagueTableRow seededTeam,
+                                                                EuropeanKnockoutMatch previousMatch,
+                                                                int seededTeamSeed) {
+        EuropeanKnockoutMatch match = new EuropeanKnockoutMatch();
+
+        match.setSeason(season);
+        match.setCompetitionSlug(competitionSlug);
+        match.setRound(round);
+        match.setRoundOrder(roundOrder);
+        match.setBracketOrder(bracketOrder);
+
+        match.setHomeSeed(seededTeamSeed);
+        match.setAwaySeed(null);
+
+        match.setSourceMatchOneId(previousMatch.getId());
+        match.setSourceMatchTwoId(null);
+
+        match.setHomeTeam(seededTeam.getTeam());
+        match.setHomeLeagueSlug(seededTeam.getLeagueSlug());
+        match.setHomeClubSlug(createSlug(seededTeam.getTeam()));
+
+        match.setAwayTeam(previousMatch.getWinnerTeam());
+        match.setAwayLeagueSlug(previousMatch.getWinnerLeagueSlug());
+        match.setAwayClubSlug(previousMatch.getWinnerClubSlug());
+
+        match.setMatchDate(LocalDateTime.now().plusDays(8 + bracketOrder));
+        match.setStatus("FINISHED");
+
+        return match;
+    }
+
+    private List<EuropeanKnockoutMatch> createNextRound(String season,
+                                                        String competitionSlug,
+                                                        String round,
+                                                        int roundOrder,
+                                                        List<EuropeanKnockoutMatch> previousRound) {
+        List<EuropeanKnockoutMatch> result = new ArrayList<>();
+
+        for (int i = 0; i < previousRound.size(); i += 2) {
+            EuropeanKnockoutMatch first = previousRound.get(i);
+            EuropeanKnockoutMatch second = previousRound.get(i + 1);
+
+            EuropeanKnockoutMatch match = new EuropeanKnockoutMatch();
+
+            match.setSeason(season);
+            match.setCompetitionSlug(competitionSlug);
+            match.setRound(round);
+            match.setRoundOrder(roundOrder);
+            match.setBracketOrder((i / 2) + 1);
+
+            match.setSourceMatchOneId(first.getId());
+            match.setSourceMatchTwoId(second.getId());
+
+            match.setHomeTeam(first.getWinnerTeam());
+            match.setHomeClubSlug(first.getWinnerClubSlug());
+            match.setHomeLeagueSlug(first.getWinnerLeagueSlug());
+
+            match.setAwayTeam(second.getWinnerTeam());
+            match.setAwayClubSlug(second.getWinnerClubSlug());
+            match.setAwayLeagueSlug(second.getWinnerLeagueSlug());
+
+            match.setMatchDate(LocalDateTime.now().plusDays(16 + roundOrder + i));
+            match.setStatus("FINISHED");
+
+            result.add(match);
+        }
+
+        return result;
+    }
+
+    private void simulateTwoLeggedTie(EuropeanKnockoutMatch match) {
+        Random random = new Random();
+
+        int firstLegHomeGoals = random.nextInt(5);
+        int firstLegAwayGoals = random.nextInt(5);
+
+        int secondLegHomeGoals = random.nextInt(5);
+        int secondLegAwayGoals = random.nextInt(5);
+
+        int aggregateHomeGoals = firstLegHomeGoals + secondLegAwayGoals;
+        int aggregateAwayGoals = firstLegAwayGoals + secondLegHomeGoals;
+
+        while (aggregateHomeGoals == aggregateAwayGoals) {
+            secondLegHomeGoals = random.nextInt(5);
+            secondLegAwayGoals = random.nextInt(5);
+
+            aggregateHomeGoals = firstLegHomeGoals + secondLegAwayGoals;
+            aggregateAwayGoals = firstLegAwayGoals + secondLegHomeGoals;
+        }
+
+        match.setFirstLegHomeGoals(firstLegHomeGoals);
+        match.setFirstLegAwayGoals(firstLegAwayGoals);
+        match.setSecondLegHomeGoals(secondLegHomeGoals);
+        match.setSecondLegAwayGoals(secondLegAwayGoals);
+
+        match.setHomeGoals(aggregateHomeGoals);
+        match.setAwayGoals(aggregateAwayGoals);
+
+        match.setAggregateHomeGoals(aggregateHomeGoals);
+        match.setAggregateAwayGoals(aggregateAwayGoals);
+
+        if (aggregateHomeGoals > aggregateAwayGoals) {
+            match.setWinnerTeam(match.getHomeTeam());
+            match.setWinnerClubSlug(match.getHomeClubSlug());
+            match.setWinnerLeagueSlug(match.getHomeLeagueSlug());
+        } else {
+            match.setWinnerTeam(match.getAwayTeam());
+            match.setWinnerClubSlug(match.getAwayClubSlug());
+            match.setWinnerLeagueSlug(match.getAwayLeagueSlug());
+        }
+    }
+
+    private void simulateFinalMatch(EuropeanKnockoutMatch match) {
+        Random random = new Random();
+
+        int homeGoals = random.nextInt(5);
+        int awayGoals = random.nextInt(5);
+
+        while (homeGoals == awayGoals) {
+            homeGoals = random.nextInt(5);
+            awayGoals = random.nextInt(5);
+        }
+
+        match.setHomeGoals(homeGoals);
+        match.setAwayGoals(awayGoals);
+
+        match.setAggregateHomeGoals(homeGoals);
+        match.setAggregateAwayGoals(awayGoals);
+
+        match.setFirstLegHomeGoals(null);
+        match.setFirstLegAwayGoals(null);
+        match.setSecondLegHomeGoals(null);
+        match.setSecondLegAwayGoals(null);
+
+        if (homeGoals > awayGoals) {
+            match.setWinnerTeam(match.getHomeTeam());
+            match.setWinnerClubSlug(match.getHomeClubSlug());
+            match.setWinnerLeagueSlug(match.getHomeLeagueSlug());
+        } else {
+            match.setWinnerTeam(match.getAwayTeam());
+            match.setWinnerClubSlug(match.getAwayClubSlug());
+            match.setWinnerLeagueSlug(match.getAwayLeagueSlug());
+        }
     }
 }

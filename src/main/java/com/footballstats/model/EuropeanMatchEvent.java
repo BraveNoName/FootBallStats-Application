@@ -20,9 +20,13 @@ public class EuropeanMatchEvent {
     private Long relatedPlayerId;
     private String relatedPlayerName;
 
+
     private String description;
     private String iconUrl;
     private String teamSide;
+
+    private Long knockoutMatchId;
+    private String knockoutLeg;
 
     public Long getId() {
         return id;
@@ -106,5 +110,21 @@ public class EuropeanMatchEvent {
 
     public void setTeamSide(String teamSide) {
         this.teamSide = teamSide;
+    }
+
+    public Long getKnockoutMatchId() {
+        return knockoutMatchId;
+    }
+
+    public void setKnockoutMatchId(Long knockoutMatchId) {
+        this.knockoutMatchId = knockoutMatchId;
+    }
+
+    public String getKnockoutLeg() {
+        return knockoutLeg;
+    }
+
+    public void setKnockoutLeg(String knockoutLeg) {
+        this.knockoutLeg = knockoutLeg;
     }
 }

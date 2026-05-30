@@ -1751,3 +1751,21 @@ body.uecl-theme .lineup-number {
     background: var(--theme-accent);
     color: #020617;
 }
+
+.tree-legs {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.68rem;
+    opacity: 0.75;
+}
+
+.tree-legs span {
+    line-height: 1.2;
+}
+
+.tree-empty-match {
+    opacity: 0.55;
+    font-style: italic;
+}
