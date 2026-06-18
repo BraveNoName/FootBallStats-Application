@@ -335,7 +335,7 @@
     </section>
 
     <section id="knockout-stage"
-             class="europe-table-section knockout-section"
+             class="europe-table-section knockout-section uefa-bracket-section"
              th:if="${activeEuropeanView == 'knockout'}">
 
         <div class="round-center-title knockout-title">
@@ -343,151 +343,186 @@
             <strong>Tournament Bracket</strong>
         </div>
 
-        <div class="tree-bracket" th:if="${bracketTree != null}">
+        <div class="uefa-bracket" th:if="${bracketTree != null}">
 
-            <div class="tree-side tree-left">
-                <div class="tree-quarter">
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.upperQuarter.upperPair.playOffMatch}, 'Play-off')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.upperQuarter.upperPair.roundOf16Match}, 'Round of 16')}"></div>
-                    </div>
+            <div class="bracket-bg-title">
+                <span>ROAD TO</span>
+                <strong>FINAL</strong>
+            </div>
 
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.upperQuarter.lowerPair.playOffMatch}, 'Play-off')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.upperQuarter.lowerPair.roundOf16Match}, 'Round of 16')}"></div>
-                    </div>
-
-                    <div class="tree-match tree-qf" th:with="match=${bracketTree.leftHalf.upperQuarter.quarterFinalMatch}">
-                        <small>Quarter-final</small>
-                        <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                        <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                        <div class="tree-legs" th:if="${match.round != 'FINAL'}">
-                            <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
-                            <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
-                        </div>
-                    </div>
+            <!-- LEFT PLAY-OFF -->
+            <div class="bracket-column col-playoff-left">
+                <div class="bracket-slot slot-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.upperQuarter.upperPair.playOffMatch}, 'Play-off', 'left')}" ></div>
                 </div>
-
-                <div class="tree-quarter">
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.lowerQuarter.upperPair.playOffMatch}, 'Play-off')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.lowerQuarter.upperPair.roundOf16Match}, 'Round of 16')}"></div>
-                    </div>
-
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.lowerQuarter.lowerPair.playOffMatch}, 'Play-off')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.leftHalf.lowerQuarter.lowerPair.roundOf16Match}, 'Round of 16')}"></div>
-                    </div>
-
-                    <div class="tree-match tree-qf" th:with="match=${bracketTree.leftHalf.lowerQuarter.quarterFinalMatch}">
-                        <small>Quarter-final</small>
-                        <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                        <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                        <div class="tree-legs" th:if="${match.round != 'FINAL'}">
-                            <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
-                            <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
-                        </div>
-                    </div>
+                <div class="bracket-slot slot-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.upperQuarter.lowerPair.playOffMatch}, 'Play-off', 'left')}" ></div>
                 </div>
-
-                <div class="tree-match tree-sf" th:with="match=${bracketTree.leftHalf.semiFinalMatch}">
-                    <small>Semi-final</small>
-                    <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                    <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
+                <div class="bracket-slot slot-3">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.lowerQuarter.upperPair.playOffMatch}, 'Play-off', 'left')}" ></div>
+                </div>
+                <div class="bracket-slot slot-4">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.lowerQuarter.lowerPair.playOffMatch}, 'Play-off', 'left')}" ></div>
                 </div>
             </div>
 
-            <div class="tree-final">
-                <div class="tree-final-label">Final</div>
-                <div class="tree-match tree-final-card" th:with="match=${bracketTree.finalMatch}">
+            <!-- LEFT ROUND OF 16 -->
+            <div class="bracket-column col-r16-left">
+                <div class="bracket-slot slot-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.upperQuarter.upperPair.roundOf16Match}, 'Round of 16', 'left')}" ></div>
+                </div>
+                <div class="bracket-slot slot-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.upperQuarter.lowerPair.roundOf16Match}, 'Round of 16', 'left')}" ></div>
+                </div>
+                <div class="bracket-slot slot-3">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.lowerQuarter.upperPair.roundOf16Match}, 'Round of 16', 'left')}" ></div>
+                </div>
+                <div class="bracket-slot slot-4">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.lowerQuarter.lowerPair.roundOf16Match}, 'Round of 16', 'left')}" ></div>
+                </div>
+            </div>
+
+            <!-- LEFT QUARTER-FINALS -->
+            <div class="bracket-column col-qf-left">
+                <div class="bracket-slot slot-qf-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.upperQuarter.quarterFinalMatch}, 'Quarter-final', 'left')}" ></div>
+                </div>
+                <div class="bracket-slot slot-qf-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.lowerQuarter.quarterFinalMatch}, 'Quarter-final', 'left')}" ></div>
+                </div>
+            </div>
+
+            <!-- LEFT SEMI-FINAL -->
+            <div class="bracket-column col-sf-left">
+                <div class="bracket-slot slot-sf">
+                    <div th:replace="~{::bracketMatch(${bracketTree.leftHalf.semiFinalMatch}, 'Semi-final', 'left')}" ></div>
+                </div>
+            </div>
+
+            <!-- FINAL -->
+            <div class="bracket-final-center">
+                <div class="bracket-cup">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+
+                <a class="bracket-match final-card"
+                   th:with="match=${bracketTree.finalMatch}"
+                   th:if="${match != null}"
+                   th:href="@{'/europe/' + ${competition} + '/knockout/match/' + ${match.id} + '#knockout-match-details'}">
+
                     <small>Final</small>
-                    <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                    <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                    <div class="tree-champion">Champion: <span th:text="${match.winnerTeam}">Champion</span></div>
-                </div>
-            </div>
 
-            <div class="tree-side tree-right">
-                <div class="tree-quarter">
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.upperQuarter.upperPair.roundOf16Match}, 'Round of 16')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.upperQuarter.upperPair.playOffMatch}, 'Play-off')}"></div>
-                    </div>
-
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.upperQuarter.lowerPair.roundOf16Match}, 'Round of 16')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.upperQuarter.lowerPair.playOffMatch}, 'Play-off')}"></div>
-                    </div>
-
-                    <div class="tree-match tree-qf" th:with="match=${bracketTree.rightHalf.upperQuarter.quarterFinalMatch}">
-                        <small>Quarter-final</small>
-                        <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                        <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                        <div class="tree-legs" th:if="${match.round != 'FINAL'}">
-                            <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
-                            <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tree-quarter">
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.lowerQuarter.upperPair.roundOf16Match}, 'Round of 16')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.lowerQuarter.upperPair.playOffMatch}, 'Play-off')}"></div>
-                    </div>
-
-                    <div class="tree-pair">
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.lowerQuarter.lowerPair.roundOf16Match}, 'Round of 16')}"></div>
-                        <div th:replace="~{::treeMatch(${bracketTree.rightHalf.lowerQuarter.lowerPair.playOffMatch}, 'Play-off')}"></div>
-                    </div>
-
-                    <div class="tree-match tree-qf" th:with="match=${bracketTree.rightHalf.lowerQuarter.quarterFinalMatch}">
-                        <small>Quarter-final</small>
-                        <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                        <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                        <div class="tree-legs" th:if="${match.round != 'FINAL'}">
-                            <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
-                            <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tree-match tree-sf" th:with="match=${bracketTree.rightHalf.semiFinalMatch}">
-                    <small>Semi-final</small>
-                    <div class="tree-team"><span th:text="${match.homeTeam}">Home</span><b th:text="${match.aggregateHomeGoals}">0</b></div>
-                    <div class="tree-team"><span th:text="${match.awayTeam}">Away</span><b th:text="${match.aggregateAwayGoals}">0</b></div>
-                </div>
-            </div>
-        </div>
-
-        <th:block th:fragment="treeMatch(match, label)">
-            <div class="tree-match" th:if="${match != null}">
-
-                <small th:text="${label}">Round</small>
-
-                <div th:if="${match != null}">
-                    <div class="tree-team">
-                        <span th:text="${match.homeTeam}">Home</span>
+                    <div class="bracket-team">
+                        <span class="team-name">
+                            <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
+                                 onerror="this.style.display='none'"
+                                 alt="home crest">
+                            <span th:text="${match.homeTeam}">Home</span>
+                        </span>
                         <b th:text="${match.aggregateHomeGoals}">0</b>
                     </div>
 
-                    <div class="tree-team">
-                        <span th:text="${match.awayTeam}">Away</span>
+                    <div class="bracket-team">
+                        <span class="team-name">
+                            <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
+                                 onerror="this.style.display='none'"
+                                 alt="away crest">
+                            <span th:text="${match.awayTeam}">Away</span>
+                        </span>
                         <b th:text="${match.aggregateAwayGoals}">0</b>
                     </div>
 
-                    <div class="tree-legs" th:if="${match.round != 'FINAL'}">
-                <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">
-                    1st: 0 - 0
-                </span>
-                        <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">
-                    2nd: 0 - 0
-                </span>
+                    <div class="bracket-champion">
+                        Champion:
+                        <span th:text="${match.winnerTeam}">Champion</span>
                     </div>
+                </a>
+            </div>
+
+            <!-- RIGHT SEMI-FINAL -->
+            <div class="bracket-column col-sf-right">
+                <div class="bracket-slot slot-sf">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.semiFinalMatch}, 'Semi-final', 'right')}" ></div>
+                </div>
+            </div>
+
+            <!-- RIGHT QUARTER-FINALS -->
+            <div class="bracket-column col-qf-right">
+                <div class="bracket-slot slot-qf-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.upperQuarter.quarterFinalMatch}, 'Quarter-final', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-qf-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.lowerQuarter.quarterFinalMatch}, 'Quarter-final', 'right')}" ></div>
+                </div>
+            </div>
+
+            <!-- RIGHT ROUND OF 16 -->
+            <div class="bracket-column col-r16-right">
+                <div class="bracket-slot slot-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.upperQuarter.upperPair.roundOf16Match}, 'Round of 16', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.upperQuarter.lowerPair.roundOf16Match}, 'Round of 16', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-3">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.lowerQuarter.upperPair.roundOf16Match}, 'Round of 16', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-4">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.lowerQuarter.lowerPair.roundOf16Match}, 'Round of 16', 'right')}" ></div>
+                </div>
+            </div>
+
+            <!-- RIGHT PLAY-OFF -->
+            <div class="bracket-column col-playoff-right">
+                <div class="bracket-slot slot-1">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.upperQuarter.upperPair.playOffMatch}, 'Play-off', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-2">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.upperQuarter.lowerPair.playOffMatch}, 'Play-off', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-3">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.lowerQuarter.upperPair.playOffMatch}, 'Play-off', 'right')}" ></div>
+                </div>
+                <div class="bracket-slot slot-4">
+                    <div th:replace="~{::bracketMatch(${bracketTree.rightHalf.lowerQuarter.lowerPair.playOffMatch}, 'Play-off', 'right')}" ></div>
+                </div>
+            </div>
+
+        </div>
+
+        <th:block th:fragment="bracketMatch(match, label, side)">
+            <a class="bracket-match"
+               th:if="${match != null}"
+               th:classappend="${side == 'right'} ? ' right-card' : ' left-card'"
+               th:href="@{'/europe/' + ${competition} + '/knockout/match/' + ${match.id} + '#knockout-match-details'}">
+
+                <small th:text="${label}">Round</small>
+
+                <div class="bracket-team">
+                    <span class="team-name">
+                        <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
+                             onerror="this.style.display='none'"
+                             alt="home crest">
+                        <span th:text="${match.homeTeam}">Home</span>
+                    </span>
+                    <b th:text="${match.aggregateHomeGoals}">0</b>
                 </div>
 
+                <div class="bracket-team">
+                    <span class="team-name">
+                        <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
+                             onerror="this.style.display='none'"
+                             alt="away crest">
+                        <span th:text="${match.awayTeam}">Away</span>
+                    </span>
+                    <b th:text="${match.aggregateAwayGoals}">0</b>
+                </div>
 
-            </div>
+                <div class="bracket-legs" th:if="${match.round != 'FINAL'}">
+                    <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
+                    <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
+                </div>
+            </a>
         </th:block>
 
     </section>
@@ -739,6 +774,83 @@
             <div th:unless="${nextMatchId != null}"
                  class="match-side-arrow right-arrow disabled">
                 <i class="fa-solid fa-chevron-right"></i>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section id="knockout-match-details"
+             class="europe-table-section"
+             th:if="${activeEuropeanView == 'knockout-match-details'}">
+
+        <div class="round-topbar">
+            <a th:href="@{'/europe/' + ${competition} + '/knockout#knockout-stage'}"
+               class="round-nav-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Knockout Stage
+            </a>
+
+            <div class="round-center-title">
+                <span th:text="${competitionName}">Competition</span>
+                <strong th:text="${selectedKnockoutMatch.round}">Knockout</strong>
+            </div>
+        </div>
+
+        <div class="match-card european-match-details-card active">
+
+            <div class="match-content">
+
+                <div class="team">
+                    <img class="team-logo"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedKnockoutMatch.homeLeagueSlug]} + '/' + ${selectedKnockoutMatch.homeTeam} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="Home logo">
+                    <span th:text="${selectedKnockoutMatch.homeTeam}">Home</span>
+                </div>
+
+                <div class="match-center">
+                    <div class="match-date"
+                         th:if="${selectedKnockoutMatch.matchDate != null}"
+                         th:text="${#temporals.format(selectedKnockoutMatch.matchDate, 'dd.MM.yyyy HH:mm')}">
+                    </div>
+
+                    <div class="match-score"
+                         th:text="${selectedKnockoutMatch.aggregateHomeGoals + ' - ' + selectedKnockoutMatch.aggregateAwayGoals}">
+                        0 - 0
+                    </div>
+
+                    <div class="match-status"
+                         th:text="${selectedKnockoutMatch.status}">
+                        FINISHED
+                    </div>
+                </div>
+
+                <div class="team">
+                    <img class="team-logo"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedKnockoutMatch.awayLeagueSlug]} + '/' + ${selectedKnockoutMatch.awayTeam} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="Away logo">
+                    <span th:text="${selectedKnockoutMatch.awayTeam}">Away</span>
+                </div>
+
+            </div>
+
+            <div class="match-details">
+                <p>
+                    <strong>First leg:</strong>
+                    <span th:text="${selectedKnockoutMatch.firstLegHomeGoals + ' - ' + selectedKnockoutMatch.firstLegAwayGoals}">0 - 0</span>
+                </p>
+
+                <p th:if="${selectedKnockoutMatch.round != 'FINAL'}">
+                    <strong>Second leg:</strong>
+                    <span th:text="${selectedKnockoutMatch.secondLegHomeGoals + ' - ' + selectedKnockoutMatch.secondLegAwayGoals}">0 - 0</span>
+                </p>
+
+                <p>
+                    <strong>Winner:</strong>
+                    <span th:text="${selectedKnockoutMatch.winnerTeam}">Winner</span>
+                </p>
             </div>
 
         </div>

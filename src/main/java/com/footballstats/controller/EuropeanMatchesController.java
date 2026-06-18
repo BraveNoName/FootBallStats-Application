@@ -6,6 +6,7 @@ import com.footballstats.dto.european_knockout.EuropeanBracketPairView;
 import com.footballstats.dto.european_knockout.EuropeanBracketQuarterView;
 import com.footballstats.dto.european_knockout.EuropeanBracketTreeView;
 import com.footballstats.model.*;
+import com.footballstats.repository.EuropeanKnockoutMatchRepository;
 import com.footballstats.repository.EuropeanMatchEventRepository;
 import com.footballstats.repository.EuropeanMatchRepository;
 import com.footballstats.repository.GeneratedPlayerRepository;
@@ -31,15 +32,18 @@ public class EuropeanMatchesController {
     private final EuropeanMatchRepository europeanMatchRepository;
     private final EuropeanMatchEventRepository europeanMatchEventRepository;
     private final GeneratedPlayerRepository generatedPlayerRepository;
+    private final EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository;
 
     public EuropeanMatchesController(EuropeanCompetitionService europeanCompetitionService,
                                      EuropeanMatchRepository europeanMatchRepository,
                                      EuropeanMatchEventRepository europeanMatchEventRepository,
-                                     GeneratedPlayerRepository generatedPlayerRepository) {
+                                     GeneratedPlayerRepository generatedPlayerRepository,
+                                     EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository) {
         this.europeanCompetitionService = europeanCompetitionService;
         this.europeanMatchRepository = europeanMatchRepository;
         this.europeanMatchEventRepository = europeanMatchEventRepository;
         this.generatedPlayerRepository = generatedPlayerRepository;
+        this.europeanKnockoutMatchRepository = europeanKnockoutMatchRepository;
     }
 
     @GetMapping("/matches/europe/{competition}")
@@ -559,5 +563,25 @@ public class EuropeanMatchesController {
                 Map.entry("czech-republic", "Czech Republic - Chance Liga"),
                 Map.entry("israel", "Israel - Ligat ha'Al")
         );
+    }
+
+    @GetMapping("/europe/{competition}/knockout/match/{matchId}")
+    public String europeanKnockoutMatchDetails(@PathVariable String competition,
+                                               @PathVariable Long matchId,
+                                               Model model) {
+
+        EuropeanKnockoutMatch match = europeanKnockoutMatchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Knockout match not found: " + matchId));
+
+        if (!SEASON.equals(match.getSeason()) || !competition.equals(match.getCompetitionSlug())) {
+            throw new RuntimeException("Match does not belong to this competition: " + matchId);
+        }
+
+        europeanCompetition(competition, model);
+
+        model.addAttribute("activeEuropeanView", "knockout-match-details");
+        model.addAttribute("selectedKnockoutMatch", match);
+
+        return "european_matches";
     }
 }
