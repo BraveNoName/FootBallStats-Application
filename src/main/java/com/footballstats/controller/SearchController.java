@@ -134,9 +134,9 @@ public class SearchController {
                 ),
 
                 new SearchResult(
-                        "Chance Liga",
+                        "Czech Chance Liga",
                         "League",
-                        "/leagues/czecha",
+                        "/leagues/czech-republic",
                         "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png"
                 ),
 
@@ -201,6 +201,28 @@ public class SearchController {
                         "League",
                         "/leagues/russia",
                         "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg"
+                )
+                ,
+
+                new SearchResult(
+                        "UEFA Champions League",
+                        "European Competition",
+                        "/matches/europe/champions-league",
+                        "/Images/european_leagues/UCL.png"
+                ),
+
+                new SearchResult(
+                        "UEFA Europa League",
+                        "European Competition",
+                        "/matches/europe/europa-league",
+                        "/Images/european_leagues/UEL.png"
+                ),
+
+                new SearchResult(
+                        "UEFA Conference League",
+                        "European Competition",
+                        "/matches/europe/conference-league",
+                        "/Images/european_leagues/UECL.png"
                 )
         );
     }

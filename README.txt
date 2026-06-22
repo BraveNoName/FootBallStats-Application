@@ -184,7 +184,5 @@ Assign UEFA pots.
 
 IMPORTANT: EUROPEAN COMPETITIONS USE NEW FORMAT SINCE SEASON 2024/2025
 
-TODO: 1. drzewo turniejowe, https://jsfiddle.net/fernandowobeto/68dfz9xm/
-TODO: 2. search nav bar - dac ze do ligi krajowej/eurpoejskich - tych generowanych,
+
 TODO: 3. sile klubow zeby barcelony itd bylo wiecej zespolow z topu bo  za duzo jaskow jest.
-TODO: 4. Naprawa geneorwanie meczów, dni:(lm - wtr,sr) le i lk - czw, i godzin"16:30","18:00","18:45","21:00"
