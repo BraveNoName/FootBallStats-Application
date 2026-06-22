@@ -77,10 +77,6 @@ public class EuropeanCompetitionService {
 
     public void generateParticipantsFromDomesticTables(String season) {
 
-        if (participantRepository.findAll().stream().anyMatch(p -> season.equals(p.getSeason()))) {
-            return;
-        }
-
         List<String> domesticLeagues = List.of(
                 "england", "spain", "italy", "germany", "france", "netherlands",
                 "portugal", "belgium", "turkiye", "scotland", "austria",
@@ -600,6 +596,81 @@ public class EuropeanCompetitionService {
         }
     }
 
+    @Transactional
+    public List<EuropeanMatchEvent> getOrGenerateLeaguePhaseMatchEvents(EuropeanMatch match) {
+        List<EuropeanMatchEvent> events = europeanMatchEventRepository
+                .findByMatchIdOrderByEventMinuteAsc(match.getId());
+
+        if (!events.isEmpty()) {
+            return events;
+        }
+
+        List<EuropeanMatchEvent> generatedEvents = generateEuropeanMatchEvents(match);
+
+        if (generatedEvents.isEmpty()) {
+            return generatedEvents;
+        }
+
+        europeanMatchEventRepository.saveAll(generatedEvents);
+
+        return europeanMatchEventRepository.findByMatchIdOrderByEventMinuteAsc(match.getId());
+    }
+
+    @Transactional
+    public List<EuropeanMatchEvent> getOrGenerateKnockoutMatchEvents(EuropeanKnockoutMatch knockoutMatch,
+                                                                     String legKey) {
+        List<EuropeanMatchEvent> events = europeanMatchEventRepository
+                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(knockoutMatch.getId(), legKey);
+
+        if (!events.isEmpty()) {
+            return events;
+        }
+
+        EuropeanMatch matchForLeg = buildEuropeanMatchForKnockoutLeg(knockoutMatch, legKey);
+        List<EuropeanMatchEvent> generatedEvents = generateEuropeanMatchEvents(matchForLeg);
+
+        for (EuropeanMatchEvent event : generatedEvents) {
+            event.setKnockoutMatchId(knockoutMatch.getId());
+            event.setKnockoutLeg(legKey);
+        }
+
+        if (generatedEvents.isEmpty()) {
+            return generatedEvents;
+        }
+
+        europeanMatchEventRepository.saveAll(generatedEvents);
+
+        return europeanMatchEventRepository
+                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(knockoutMatch.getId(), legKey);
+    }
+
+    private EuropeanMatch buildEuropeanMatchForKnockoutLeg(EuropeanKnockoutMatch knockoutMatch, String legKey) {
+        if (FINAL.equals(knockoutMatch.getRound()) || "FINAL".equals(legKey)) {
+            return buildEuropeanMatchFromKnockout(
+                    knockoutMatch,
+                    knockoutMatch.getHomeGoals(),
+                    knockoutMatch.getAwayGoals()
+            );
+        }
+
+        if ("FIRST_LEG".equals(legKey)) {
+            return buildEuropeanMatchFromKnockout(
+                    knockoutMatch,
+                    knockoutMatch.getFirstLegHomeGoals(),
+                    knockoutMatch.getFirstLegAwayGoals()
+            );
+        }
+
+        if ("SECOND_LEG".equals(legKey)) {
+            return buildEuropeanSecondLegMatchFromKnockout(
+                    knockoutMatch,
+                    knockoutMatch.getSecondLegHomeGoals(),
+                    knockoutMatch.getSecondLegAwayGoals()
+            );
+        }
+
+        throw new RuntimeException("Knockout leg not found: " + legKey);
+    }
 
     private List<EuropeanMatchEvent> generateEuropeanMatchEvents(EuropeanMatch match) {
         Random random = new Random(match.getId() == null ? System.nanoTime() : match.getId());
@@ -1263,10 +1334,24 @@ public class EuropeanCompetitionService {
     private List<GeneratedPlayer> generateLineupForEuropeanMatch(String leagueSlug,
                                                                  String clubSlug,
                                                                  String formation) {
-        List<GeneratedPlayer> players =
-                generatedPlayerRepository.findByLeagueSlugAndClubSlug(leagueSlug, clubSlug);
+        List<GeneratedPlayer> players = findGeneratedPlayersForEuropeanTeam(leagueSlug, clubSlug);
 
         return generateLineup(players, formation);
+    }
+
+    private List<GeneratedPlayer> findGeneratedPlayersForEuropeanTeam(String leagueSlug, String clubSlug) {
+        List<GeneratedPlayer> players = generatedPlayerRepository
+                .findByLeagueSlugAndClubSlug(leagueSlug, clubSlug);
+
+        if (!players.isEmpty()) {
+            return players;
+        }
+
+        if (clubSlug != null && !clubSlug.isBlank()) {
+            return generatedPlayerRepository.findByClubSlug(clubSlug);
+        }
+
+        return List.of();
     }
 
     private List<GeneratedPlayer> generateLineup(List<GeneratedPlayer> players,
@@ -1788,26 +1873,19 @@ public class EuropeanCompetitionService {
 
     @Transactional
     public void generateOrRegenerateEuropeanCompetition(String season, String competitionSlug) {
-        List<String> missingLeagues = getMissingDomesticLeagues();
-// TODO: tutaj jeśli wszystkie ligi krajowe są już wygenerowane → nie rusza lig krajowych, jeśli brakuje choć jednej ligi → generuje wszystkie ligi krajowe od nowa.
-        if (!missingLeagues.isEmpty()) {
-            for (String league : DOMESTIC_LEAGUES) {
-                matchGeneratorService.generateLeagueSeason(league);
-            }
 
-            participantRepository.deleteBySeason(season);
+        for (String league : DOMESTIC_LEAGUES) {
+            matchGeneratorService.generateLeagueSeason(league);
         }
 
-        if (!participantRepository.existsBySeasonAndCompetitionSlug(season, competitionSlug)) {
-            participantRepository.deleteBySeason(season);
-            generateParticipantsFromDomesticTables(season);
-        }
-
-        deleteEuropeanCompetitionData(season, competitionSlug);
+        deleteEuropeanSeasonData(season);
+        generateParticipantsFromDomesticTables(season);
         generateLeaguePhaseMatches(season, competitionSlug);
     }
 
     private void deleteEuropeanCompetitionData(String season, String competitionSlug) {
+        deleteKnockoutStage(season, competitionSlug);
+
         List<Long> matchIds = europeanMatchRepository
                 .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(season, competitionSlug)
                 .stream()
@@ -1819,6 +1897,14 @@ public class EuropeanCompetitionService {
         }
 
         europeanMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
+    }
+
+    @Transactional
+    public void deleteEuropeanSeasonData(String season) {
+        deleteEuropeanCompetitionData(season, CHAMPIONS_LEAGUE);
+        deleteEuropeanCompetitionData(season, EUROPA_LEAGUE);
+        deleteEuropeanCompetitionData(season, CONFERENCE_LEAGUE);
+        participantRepository.deleteBySeason(season);
     }
 
 

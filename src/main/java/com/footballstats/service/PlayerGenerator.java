@@ -12,10 +12,19 @@ public class PlayerGenerator {
 
     private final Faker faker = new Faker();
     private final Random random = new Random();
-    private final List<String> feet = List.of("Right", "Left", "Both");
+
+    private String randomPreferredFoot() {
+
+        int chance = random.nextInt(100);
+
+        if (chance < 77) return "Right"; //77%
+        if (chance < 95) return "Left"; // 18%
+
+        return "Both"; // 5%
+    }
 
     public List<GeneratedPlayer> generateSquadForTeam(RealTeam team) {
-        int squadSize = random.nextInt(20, 34);
+        int squadSize = random.nextInt(26, 34);
         List<String> positions = buildPositionList(squadSize);
         Collections.shuffle(positions);
 
@@ -36,7 +45,7 @@ public class PlayerGenerator {
 
         GeneratedPlayer player = new GeneratedPlayer();
 
-        player.setFirstName(faker.name().firstName());
+        player.setFirstName(faker.name().maleFirstName());
         player.setLastName(faker.name().lastName());
 
         player.setBirthDate(LocalDate.now().minusYears(age).minusDays(random.nextInt(365)));
@@ -47,7 +56,7 @@ public class PlayerGenerator {
         player.setCountryCode(country.code());
 
         player.setPosition(position);
-        player.setPreferredFoot(feet.get(random.nextInt(feet.size())));
+        player.setPreferredFoot(randomPreferredFoot());
         player.setShirtNumber(shirtNumber);
 
         player.setCurrentClub(team.getApiTeamName());
@@ -96,12 +105,37 @@ public class PlayerGenerator {
     }
 
     private int randomHeightByPosition(String position) {
+
+        int chance = random.nextInt(100);
+
         return switch (position) {
-            case "Goalkeeper" -> random.nextInt(188, 201);
-            case "Defender" -> random.nextInt(180, 194);
-            case "Midfielder" -> random.nextInt(170, 186);
-            case "Forward" -> random.nextInt(173, 190);
-            default -> random.nextInt(170, 195);
+
+            case "Goalkeeper" -> {
+
+                if (chance < 85) yield random.nextInt(188, 197);
+                yield random.nextBoolean()
+                        ? random.nextInt(183, 188)
+                        : random.nextInt(197, 201);
+            }
+
+            case "Defender" -> {
+                if (chance < 70) yield random.nextInt(184, 192);
+                if (chance < 90) yield random.nextInt(175, 184);
+                yield random.nextInt(192, 194);
+            }
+
+            case "Midfielder" -> {
+                if (chance < 75) yield random.nextInt(174, 185);
+                if (chance < 90) yield random.nextInt(170, 174);
+                yield random.nextInt(185, 192);
+            }
+
+            case "Forward" -> {
+                if (chance < 70) yield random.nextInt(175, 188);
+                if (chance < 85) yield random.nextInt(170, 175);
+                yield random.nextInt(188, 195);
+            }
+            default -> random.nextInt(170, 196);
         };
     }
 

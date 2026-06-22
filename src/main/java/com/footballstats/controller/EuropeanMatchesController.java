@@ -389,7 +389,7 @@ public class EuropeanMatchesController {
         EuropeanMatch match = europeanMatchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("European match not found: " + matchId));
 
-        return europeanMatchEventRepository.findByMatchIdOrderByEventMinuteAsc(match.getId());
+        return europeanCompetitionService.getOrGenerateLeaguePhaseMatchEvents(match);
     }
 
     @GetMapping("/europe/match/{matchId}/lineups")
@@ -399,7 +399,7 @@ public class EuropeanMatchesController {
                 .orElseThrow(() -> new RuntimeException("European match not found: " + matchId));
 
         List<EuropeanMatchEvent> events =
-                europeanMatchEventRepository.findByMatchIdOrderByEventMinuteAsc(match.getId());
+                europeanCompetitionService.getOrGenerateLeaguePhaseMatchEvents(match);
 
         List<MatchLineupDto.PlayerDto> homePlayers =
                 getEuropeanPlayersForTeam(
@@ -431,6 +431,10 @@ public class EuropeanMatchesController {
                                                                      List<EuropeanMatchEvent> events) {
         List<GeneratedPlayer> players =
                 generatedPlayerRepository.findByLeagueSlugAndClubSlug(leagueSlug, clubSlug);
+
+        if (players.isEmpty() && clubSlug != null && !clubSlug.isBlank()) {
+            players = generatedPlayerRepository.findByClubSlug(clubSlug);
+        }
 
         return generateLineup(players, formation)
                 .stream()
@@ -511,12 +515,12 @@ public class EuropeanMatchesController {
     private boolean isEuropeanLineupVisibleEvent(String eventType) {
         return List.of(
                 "GOAL",
-                "PENALTY GOAL",
-                "PENALTY MISSED",
-                "OWN GOAL",
-                "YELLOW CARD",
-                "RED CARD",
-                "SECOND YELLOW = RED CARD",
+                "PENALTY_GOAL",
+                "PENALTY_MISSED",
+                "OWN_GOAL",
+                "YELLOW_CARD",
+                "RED_CARD",
+                "SECOND_YELLOW_RED_CARD",
                 "INJURY",
                 "SUBSTITUTION"
         ).contains(eventType);
@@ -673,8 +677,7 @@ public class EuropeanMatchesController {
         EuropeanKnockoutMatch match = europeanKnockoutMatchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Knockout match not found: " + matchId));
 
-        return europeanMatchEventRepository
-                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(match.getId(), leg);
+        return europeanCompetitionService.getOrGenerateKnockoutMatchEvents(match, leg);
     }
 
     @GetMapping("/europe/knockout/match/{matchId}/lineups")
@@ -690,8 +693,8 @@ public class EuropeanMatchesController {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Knockout leg not found: " + leg));
 
-        List<EuropeanMatchEvent> events = europeanMatchEventRepository
-                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(match.getId(), leg);
+        List<EuropeanMatchEvent> events =
+                europeanCompetitionService.getOrGenerateKnockoutMatchEvents(match, leg);
 
         List<MatchLineupDto.PlayerDto> homePlayers = getEuropeanPlayersForTeam(
                 legDetails.getHomeLeagueSlug(),
@@ -844,10 +847,24 @@ public class EuropeanMatchesController {
             String clubName,
             Long value
     ) {}
-    private EuropeanPlayerStatView buildPlayerStat(Long playerId, String fallbackName, Long value) {
-        GeneratedPlayer player = playerId == null
-                ? null
-                : generatedPlayerRepository.findById(playerId).orElse(null);
+
+    private EuropeanPlayerStatView buildPlayerStat(Long playerId,
+                                                   String fallbackName,
+                                                   Long value) {
+
+        GeneratedPlayer player = null;
+
+        if (playerId != null) {
+            player = generatedPlayerRepository.findById(playerId).orElse(null);
+        }
+
+        if (player == null) {
+            player = generatedPlayerRepository.findAll()
+                    .stream()
+                    .filter(p -> playerName(p).equalsIgnoreCase(fallbackName))
+                    .findFirst()
+                    .orElse(null);
+        }
 
         if (player == null) {
             return new EuropeanPlayerStatView(
@@ -869,7 +886,6 @@ public class EuropeanMatchesController {
                 value
         );
     }
-
 
     private List<EuropeanPlayerStatView> buildEventPlayerStats(
             List<EuropeanMatchEvent> events,

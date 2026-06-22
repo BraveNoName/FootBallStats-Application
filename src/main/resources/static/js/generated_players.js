@@ -76,6 +76,7 @@ if (confirmBtn) {
         const text = overlay.querySelector("p");
 
         confirmBtn.disabled = true;
+        confirmBtn.style.display = "none";
         closeBtn.style.display = "none";
 
         let dots = 0;

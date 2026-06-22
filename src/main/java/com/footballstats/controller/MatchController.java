@@ -10,6 +10,7 @@ import com.footballstats.repository.MatchEventRepository;
 import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import com.footballstats.service.MatchGeneratorService;
+import com.footballstats.service.europe.EuropeanCompetitionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,7 @@ public class MatchController {
     private final GeneratedPlayerRepository generatedPlayerRepository;
     private final LeaguePlayerStatsService leaguePlayerStatsService;
     private final CompetitionRepository competitionRepository;
+    private final EuropeanCompetitionService europeanCompetitionService;
 
     public MatchController(MatchRepository matchRepository,
                            MatchGeneratorService matchGeneratorService,
@@ -38,7 +40,8 @@ public class MatchController {
                            MatchEventRepository matchEventRepository,
                            GeneratedPlayerRepository generatedPlayerRepository,
                            LeaguePlayerStatsService leaguePlayerStatsService,
-                           CompetitionRepository competitionRepository)  {
+                           CompetitionRepository competitionRepository,
+                           EuropeanCompetitionService europeanCompetitionService)  {
 
         this.matchRepository = matchRepository;
         this.matchGeneratorService = matchGeneratorService;
@@ -47,6 +50,7 @@ public class MatchController {
         this.generatedPlayerRepository = generatedPlayerRepository;
         this.leaguePlayerStatsService = leaguePlayerStatsService;
         this.competitionRepository = competitionRepository;
+        this.europeanCompetitionService = europeanCompetitionService;
     }
 
     @GetMapping
@@ -240,6 +244,7 @@ public class MatchController {
     @PostMapping("/generate")
     public String generateSeason(@RequestParam String league) {
         matchGeneratorService.generateLeagueSeason(league);
+        europeanCompetitionService.deleteEuropeanSeasonData("2025/2026");
         return "redirect:/matches?league=" + league;
     }
 

@@ -176,7 +176,18 @@ async function toggleEuropeanMatchEvents(matchId) {
     button.textContent = "Click to return to match statistics";
 
     const response = await fetch(`/europe/match/${matchId}/events`);
+
+    if (!response.ok) {
+        eventsContainer.innerHTML = `<p class="empty-lineup">Could not load match events.</p>`;
+        return;
+    }
+
     const events = await response.json();
+
+    if (!events || events.length === 0) {
+        eventsContainer.innerHTML = `<p class="empty-lineup">No events generated for this match.</p>`;
+        return;
+    }
 
     events.sort((a, b) => {
         if (a.eventMinute !== b.eventMinute) {
@@ -262,6 +273,12 @@ async function toggleEuropeanMatchLineups(matchId) {
     button.textContent = "Click to return to match statistics";
 
     const response = await fetch(`/europe/match/${matchId}/lineups`);
+
+    if (!response.ok) {
+        lineupsContainer.innerHTML = `<p class="empty-lineup">Could not load lineups.</p>`;
+        return;
+    }
+
     const lineups = await response.json();
 
     lineupsContainer.innerHTML = `
@@ -352,19 +369,48 @@ function renderEuropeanEvent(event) {
 
             <div class="event-text">
                 <strong>${event.playerName ?? ""}</strong>
-                <small>${event.description ?? ""}</small>
+                <small>${buildEuropeanEventDescription(event)}</small>
             </div>
 
         </div>
     `;
 }
 
+function buildEuropeanEventDescription(event) {
+    if (event.eventType === "GOAL" && event.relatedPlayerName) {
+        return "Assist: " + event.relatedPlayerName;
+    }
+
+    if (event.eventType === "SUBSTITUTION") {
+        return "In: " + (event.playerName ?? "")
+            + " / Out: " + (event.relatedPlayerName ?? "");
+    }
+
+    const names = {
+        PENALTY_GOAL: "Penalty scored",
+        PENALTY_MISSED: "Penalty missed",
+        OWN_GOAL: "Own goal",
+        YELLOW_CARD: "Yellow card",
+        RED_CARD: "Red card",
+        SECOND_YELLOW_RED_CARD: "Second yellow card",
+        INJURY: "Injury"
+    };
+
+    return names[event.eventType] ?? event.description ?? "";
+}
+
 function formatEuropeanLineupEventTitle(event) {
     const names = {
         GOAL: "Goal",
         ASSIST: "Assist",
+        PENALTY_GOAL: "Penalty scored",
+        PENALTY_MISSED: "Penalty missed",
+        OWN_GOAL: "Own goal",
         YELLOW_CARD: "Yellow card",
-        RED_CARD: "Red card"
+        RED_CARD: "Red card",
+        SECOND_YELLOW_RED_CARD: "Second yellow card",
+        INJURY: "Injury",
+        SUBSTITUTION: "Substitution"
     };
 
     const eventName = names[event.eventType] ?? event.eventType;
@@ -468,6 +514,12 @@ async function toggleEuropeanKnockoutLegEvents(matchId, legKey) {
     button.textContent = "Click to return to match statistics";
 
     const response = await fetch(`/europe/knockout/match/${matchId}/events?leg=${encodeURIComponent(legKey)}`);
+
+    if (!response.ok) {
+        eventsContainer.innerHTML = `<p class="empty-lineup">Could not load match events.</p>`;
+        return;
+    }
+
     const events = await response.json();
 
     events.sort((a, b) => {
@@ -553,6 +605,12 @@ async function toggleEuropeanKnockoutLegLineups(matchId, legKey) {
     button.textContent = "Click to return to match statistics";
 
     const response = await fetch(`/europe/knockout/match/${matchId}/lineups?leg=${encodeURIComponent(legKey)}`);
+
+    if (!response.ok) {
+        lineupsContainer.innerHTML = `<p class="empty-lineup">Could not load lineups.</p>`;
+        return;
+    }
+
     const lineups = await response.json();
 
     lineupsContainer.innerHTML = `
