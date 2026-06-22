@@ -95,7 +95,7 @@
         <div class="hero-content">
             <div class="hero-left">
                 <span class="hero-label">European Competition</span>
-                <h1 th:text="${competitionName}">UEFA Champions League</h1>
+                <h1 th:text="${competitionName}">UEFA Champions League 2025/2026</h1>
 
                 <p>
                     Generate European competition participants and league phase matches
@@ -153,25 +153,130 @@
             <p>Playoffs, round of 16, quarter-finals, semi-finals and final bracket.</p>
         </a>
 
+        <a th:href="@{'/europe/' + ${competition} + '/statistics'}"
+           class="action-card stats-card">
+            <i class="fa-solid fa-chart-line"></i>
+            <h3>Statistics</h3>
+            <p>Top scorers, assists, cards and season summary.</p>
+        </a>
+
     </section>
 
-    <section class="europe-info-panel">
-        <div>
-            <span class="panel-kicker">Season</span>
-            <h2 th:text="${season}">2025/2026</h2>
 
-            <p>
-                Participants:
-                <strong th:text="${participantsCount}">0</strong>
-                |
-                League phase matches:
-                <strong th:text="${matchesCount}">0</strong>
-            </p>
+    <section id="season-statistics"
+             class="europe-table-section europe-stats-panel stats-page-view"
+             th:if="${activeEuropeanView == 'statistics'}">
+
+        <div class="round-topbar stats-topbar">
+            <a th:href="@{'/matches/europe/' + ${competition}}"
+               class="round-nav-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+            </a>
+
+            <div class="round-center-title">
+                <span th:text="${competitionName}">Competition</span>
+                <strong>Season Statistics</strong>
+            </div>
         </div>
 
-        <div class="panel-badge">
-            <i class="fa-solid fa-trophy"></i>
-            <span th:text="${competitionName}">Competition</span>
+        <div class="europe-stats-grid stats-awards-grid">
+
+            <div class="stats-box stat-award-card">
+                <i class="fa-solid fa-futbol"></i>
+                <h3>Top Scorers</h3>
+
+                <div class="stats-row" th:each="row, stat : ${europeTopScorers}">
+                <span class="stat-player">
+                    <span th:text="${stat.index + 1} + '.'">1.</span>
+                    <span th:if="${row.countryCode != null}"
+                          th:class="${'fi fi-' + #strings.toLowerCase(row.countryCode)}"></span>
+                    <img th:if="${row.leagueSlug != null && row.clubName != null}"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.clubName} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="club">
+                    <span th:text="${row.playerName}">Player</span>
+                </span>
+                    <b th:text="${row.value}">0</b>
+                </div>
+            </div>
+
+            <div class="stats-box stat-award-card">
+                <i class="fa-solid fa-handshake-angle"></i>
+                <h3>Assists</h3>
+
+                <div class="stats-row" th:each="row, stat : ${europeTopAssists}">
+                <span class="stat-player">
+                    <span th:text="${stat.index + 1} + '.'">1.</span>
+                    <span th:if="${row.countryCode != null}"
+                          th:class="${'fi fi-' + #strings.toLowerCase(row.countryCode)}"></span>
+                    <img th:if="${row.leagueSlug != null && row.clubName != null}"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.clubName} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="club">
+                    <span th:text="${row.playerName}">Player</span>
+                </span>
+                    <b th:text="${row.value}">0</b>
+                </div>
+            </div>
+
+            <div class="stats-box stat-award-card">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h3>Clean Sheets</h3>
+
+                <div class="stats-row" th:each="row, stat : ${europeCleanSheets}">
+                <span class="stat-player">
+                    <span th:text="${stat.index + 1} + '.'">1.</span>
+                    <span th:if="${row.countryCode != null}"
+                          th:class="${'fi fi-' + #strings.toLowerCase(row.countryCode)}"></span>
+                    <img th:if="${row.leagueSlug != null && row.clubName != null}"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.clubName} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="club">
+                    <span th:text="${row.playerName}">Player</span>
+                </span>
+                    <b th:text="${row.value}">0</b>
+                </div>
+            </div>
+
+            <div class="stats-box stat-award-card">
+                <i class="fa-solid fa-square yellow-icon"></i>
+                <h3>Yellow Cards</h3>
+
+                <div class="stats-row" th:each="row, stat : ${europeYellowCards}">
+                <span class="stat-player">
+                    <span th:text="${stat.index + 1} + '.'">1.</span>
+                    <span th:if="${row.countryCode != null}"
+                          th:class="${'fi fi-' + #strings.toLowerCase(row.countryCode)}"></span>
+                    <img th:if="${row.leagueSlug != null && row.clubName != null}"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.clubName} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="club">
+                    <span th:text="${row.playerName}">Player</span>
+                </span>
+                    <b th:text="${row.value}">0</b>
+                </div>
+            </div>
+
+            <div class="stats-box stat-award-card">
+                <i class="fa-solid fa-square red-icon"></i>
+                <h3>Red Cards</h3>
+
+                <div class="stats-row" th:each="row, stat : ${europeRedCards}">
+                <span class="stat-player">
+                    <span th:text="${stat.index + 1} + '.'">1.</span>
+                    <span th:if="${row.countryCode != null}"
+                          th:class="${'fi fi-' + #strings.toLowerCase(row.countryCode)}"></span>
+                    <img th:if="${row.leagueSlug != null && row.clubName != null}"
+                         th:src="@{'/Images/leagues/' + ${leagueFolders[row.leagueSlug]} + '/' + ${row.clubName} + '.png'}"
+                         onerror="this.style.display='none'"
+                         alt="club">
+                    <span th:text="${row.playerName}">Player</span>
+                </span>
+                    <b th:text="${row.value}">0</b>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -347,7 +452,7 @@
 
             <div class="bracket-bg-title">
                 <span>ROAD TO</span>
-                <strong>FINAL</strong>
+                <strong>CHAPIONS LEAGUE FINAL</strong>
             </div>
 
             <!-- LEFT PLAY-OFF -->
@@ -400,42 +505,55 @@
             </div>
 
             <!-- FINAL -->
-            <div class="bracket-final-center">
-                <div class="bracket-cup">
-                    <i class="fa-solid fa-trophy"></i>
-                </div>
+            <div class="bracket-final-center"
+                 th:if="${bracketTree.finalMatch != null}"
+                 th:with="match=${bracketTree.finalMatch}">
 
-                <a class="bracket-match final-card"
-                   th:with="match=${bracketTree.finalMatch}"
-                   th:if="${match != null}"
+                <a class="final-showcase"
+
                    th:href="@{'/europe/' + ${competition} + '/knockout/match/' + ${match.id} + '#knockout-match-details'}">
 
-                    <small>Final</small>
+                    <div class="final-cup-ring">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
 
-                    <div class="bracket-team">
-                        <span class="team-name">
+                    <div class="final-showcase-label">Grand Final</div>
+
+                    <div class="final-fireworks">
+                        <span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <div class="final-showcase-score final-score-with-crests">
+
+                        <div class="final-team-side">
                             <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
                                  onerror="this.style.display='none'"
                                  alt="home crest">
                             <span th:text="${match.homeTeam}">Home</span>
-                        </span>
-                        <b th:text="${match.aggregateHomeGoals}">0</b>
-                    </div>
+                        </div>
 
-                    <div class="bracket-team">
-                        <span class="team-name">
+                        <strong th:text="${match.homeGoals + ' - ' + match.awayGoals}">0 - 0</strong>
+
+                        <div class="final-team-side">
                             <img th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
                                  onerror="this.style.display='none'"
                                  alt="away crest">
                             <span th:text="${match.awayTeam}">Away</span>
-                        </span>
-                        <b th:text="${match.aggregateAwayGoals}">0</b>
+                        </div>
+
                     </div>
 
-                    <div class="bracket-champion">
-                        Champion:
-                        <span th:text="${match.winnerTeam}">Champion</span>
+                    <div class="final-winner-pill golden-winner">
+                        Winner:
+                        <b th:text="${match.winnerTeam}">Winner</b>
                     </div>
+
+                    <div class="pyro">
+                        <div class="before"></div>
+                        <div class="after"></div>
+                    </div>
+
                 </a>
             </div>
 
@@ -519,8 +637,8 @@
                 </div>
 
                 <div class="bracket-legs" th:if="${match.round != 'FINAL'}">
-                    <span th:text="'1st: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
-                    <span th:text="'2nd: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
+                    <span th:text="'M1: ' + ${match.firstLegHomeGoals} + ' - ' + ${match.firstLegAwayGoals}">1st: 0 - 0</span>
+                    <span th:text="'M2: ' + ${match.secondLegHomeGoals} + ' - ' + ${match.secondLegAwayGoals}">2nd: 0 - 0</span>
                 </div>
             </a>
         </th:block>
@@ -610,7 +728,7 @@
                 <div class="match-details">
 
                     <p th:if="${selectedMatch.stadium != null}">
-                        <strong>Venue:</strong>
+                        <strong>Stadium:</strong>
                         <span th:text="${selectedMatch.stadium}">Stadium</span>
                     </p>
 
@@ -797,60 +915,143 @@
             </div>
         </div>
 
-        <div class="match-card european-match-details-card active">
+        <div class="knockout-tie-summary">
+            <span>Aggregate</span>
+            <strong th:text="${selectedKnockoutMatch.homeTeam + ' ' + selectedKnockoutMatch.aggregateHomeGoals + ' - ' + selectedKnockoutMatch.aggregateAwayGoals + ' ' + selectedKnockoutMatch.awayTeam}">
+                Home 0 - 0 Away
+            </strong>
+            <small>
+                Winner:
+                <b th:text="${selectedKnockoutMatch.winnerTeam}">Winner</b>
+            </small>
+        </div>
 
-            <div class="match-content">
+        <div class="knockout-leg-list">
 
-                <div class="team">
-                    <img class="team-logo"
-                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedKnockoutMatch.homeLeagueSlug]} + '/' + ${selectedKnockoutMatch.homeTeam} + '.png'}"
-                         onerror="this.style.display='none'"
-                         alt="Home logo">
-                    <span th:text="${selectedKnockoutMatch.homeTeam}">Home</span>
+            <div class="match-card european-match-details-card active knockout-leg-card"
+                 th:each="leg : ${knockoutLegs}">
+
+                <div class="knockout-leg-heading">
+                    <span th:text="${leg.label}">First Match</span>
                 </div>
 
-                <div class="match-center">
-                    <div class="match-date"
-                         th:if="${selectedKnockoutMatch.matchDate != null}"
-                         th:text="${#temporals.format(selectedKnockoutMatch.matchDate, 'dd.MM.yyyy HH:mm')}">
+                <div class="match-content">
+
+                    <div class="team">
+                        <img class="team-logo"
+                             th:src="@{'/Images/leagues/' + ${leagueFolders[leg.homeLeagueSlug]} + '/' + ${leg.homeTeam} + '.png'}"
+                             onerror="this.style.display='none'"
+                             alt="Home logo">
+                        <span th:text="${leg.homeTeam}">Home</span>
                     </div>
 
-                    <div class="match-score"
-                         th:text="${selectedKnockoutMatch.aggregateHomeGoals + ' - ' + selectedKnockoutMatch.aggregateAwayGoals}">
-                        0 - 0
+                    <div class="match-center">
+                        <div class="match-score"
+                             th:text="${leg.homeGoals + ' - ' + leg.awayGoals}">0 - 0</div>
+
+                        <div class="match-status" th:text="${leg.status}">FINISHED</div>
                     </div>
 
-                    <div class="match-status"
-                         th:text="${selectedKnockoutMatch.status}">
-                        FINISHED
+                    <div class="team">
+                        <img class="team-logo"
+                             th:src="@{'/Images/leagues/' + ${leagueFolders[leg.awayLeagueSlug]} + '/' + ${leg.awayTeam} + '.png'}"
+                             onerror="this.style.display='none'"
+                             alt="Away logo">
+                        <span th:text="${leg.awayTeam}">Away</span>
                     </div>
+
                 </div>
 
-                <div class="team">
-                    <img class="team-logo"
-                         th:src="@{'/Images/leagues/' + ${leagueFolders[selectedKnockoutMatch.awayLeagueSlug]} + '/' + ${selectedKnockoutMatch.awayTeam} + '.png'}"
-                         onerror="this.style.display='none'"
-                         alt="Away logo">
-                    <span th:text="${selectedKnockoutMatch.awayTeam}">Away</span>
+                <div class="match-details">
+
+                    <p>
+                        <strong>Date:</strong>
+                        <span th:text="${#temporals.format(leg.matchDate, 'dd.MM.yyyy HH:mm')}">
+                            18.06.2026 20:45
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>Stadium:</strong>
+                        <span th:text="${leg.stadium}">Stadium</span>
+                    </p>
+                    <p>
+                        <strong>Referee:</strong>
+                        <span th:text="${leg.referee}">Referee</span>
+                    </p>
+                    <p>
+                        <strong>Formations:</strong>
+                        <span th:text="${leg.homeFormation + ' / ' + leg.awayFormation}">4-3-3 / 4-4-2</span>
+                    </p>
                 </div>
 
-            </div>
+                <div class="match-events-section">
+                    <div class="match-action-buttons">
+                        <button class="show-events-btn"
+                                type="button"
+                                th:attr="onclick=|toggleEuropeanKnockoutLegEvents(${leg.matchId}, '${leg.legKey}')|">
+                            Match events
+                        </button>
 
-            <div class="match-details">
-                <p>
-                    <strong>First leg:</strong>
-                    <span th:text="${selectedKnockoutMatch.firstLegHomeGoals + ' - ' + selectedKnockoutMatch.firstLegAwayGoals}">0 - 0</span>
-                </p>
+                        <button class="show-lineups-btn"
+                                type="button"
+                                th:attr="onclick=|toggleEuropeanKnockoutLegLineups(${leg.matchId}, '${leg.legKey}')|">
+                            Lineups
+                        </button>
+                    </div>
 
-                <p th:if="${selectedKnockoutMatch.round != 'FINAL'}">
-                    <strong>Second leg:</strong>
-                    <span th:text="${selectedKnockoutMatch.secondLegHomeGoals + ' - ' + selectedKnockoutMatch.secondLegAwayGoals}">0 - 0</span>
-                </p>
+                    <div class="match-events-container"
+                         th:id="${'knockout-events-' + leg.matchId + '-' + leg.legKey}"></div>
 
-                <p>
-                    <strong>Winner:</strong>
-                    <span th:text="${selectedKnockoutMatch.winnerTeam}">Winner</span>
-                </p>
+                    <div class="match-lineups-container"
+                         th:id="${'knockout-lineups-' + leg.matchId + '-' + leg.legKey}"></div>
+                </div>
+
+                <div class="stats-grid"
+                     th:id="${'knockout-stats-' + leg.matchId + '-' + leg.legKey}">
+
+                    <div class="stat-row" th:attr="data-home=${leg.possessionHome}, data-away=${leg.possessionAway}">
+                        <div class="stat-values"><span th:text="${leg.possessionHome + '%'}">50%</span><strong>Possession</strong><span th:text="${leg.possessionAway + '%'}">50%</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.shotsHome}, data-away=${leg.shotsAway}">
+                        <div class="stat-values"><span th:text="${leg.shotsHome}">0</span><strong>Shots</strong><span th:text="${leg.shotsAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.shotsOnTargetHome}, data-away=${leg.shotsOnTargetAway}">
+                        <div class="stat-values"><span th:text="${leg.shotsOnTargetHome}">0</span><strong>Shots on target</strong><span th:text="${leg.shotsOnTargetAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.cornersHome}, data-away=${leg.cornersAway}">
+                        <div class="stat-values"><span th:text="${leg.cornersHome}">0</span><strong>Corners</strong><span th:text="${leg.cornersAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.foulsHome}, data-away=${leg.foulsAway}">
+                        <div class="stat-values"><span th:text="${leg.foulsHome}">0</span><strong>Fouls</strong><span th:text="${leg.foulsAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.yellowCardsHome}, data-away=${leg.yellowCardsAway}">
+                        <div class="stat-values"><span th:text="${leg.yellowCardsHome}">0</span><strong>Yellow cards</strong><span th:text="${leg.yellowCardsAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.redCardsHome}, data-away=${leg.redCardsAway}">
+                        <div class="stat-values"><span th:text="${leg.redCardsHome}">0</span><strong>Red cards</strong><span th:text="${leg.redCardsAway}">0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                    <div class="stat-row" th:attr="data-home=${leg.xgHome}, data-away=${leg.xgAway}">
+                        <div class="stat-values"><span th:text="${leg.xgHome}">0.0</span><strong>xG</strong><span th:text="${leg.xgAway}">0.0</span></div>
+                        <div class="stat-meter"><div class="stat-fill home-fill"></div><div class="stat-fill away-fill"></div></div>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>

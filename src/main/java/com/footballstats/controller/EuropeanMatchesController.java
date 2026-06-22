@@ -1,6 +1,7 @@
 package com.footballstats.controller;
 
 import com.footballstats.dto.MatchLineupDto;
+import com.footballstats.dto.KnockoutLegDetailsView;
 import com.footballstats.dto.european_knockout.EuropeanBracketHalfView;
 import com.footballstats.dto.european_knockout.EuropeanBracketPairView;
 import com.footballstats.dto.european_knockout.EuropeanBracketQuarterView;
@@ -13,6 +14,7 @@ import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.service.europe.EuropeanCompetitionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import com.footballstats.model.Referee;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +24,9 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Random;
+import com.footballstats.repository.RefereeRepository;
+import java.time.LocalDateTime;
 
 @Controller
 public class EuropeanMatchesController {
@@ -33,17 +38,20 @@ public class EuropeanMatchesController {
     private final EuropeanMatchEventRepository europeanMatchEventRepository;
     private final GeneratedPlayerRepository generatedPlayerRepository;
     private final EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository;
+    private final RefereeRepository refereeRepository;
 
     public EuropeanMatchesController(EuropeanCompetitionService europeanCompetitionService,
                                      EuropeanMatchRepository europeanMatchRepository,
                                      EuropeanMatchEventRepository europeanMatchEventRepository,
                                      GeneratedPlayerRepository generatedPlayerRepository,
-                                     EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository) {
+                                     EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository,
+                                     RefereeRepository refereeRepository) {
         this.europeanCompetitionService = europeanCompetitionService;
         this.europeanMatchRepository = europeanMatchRepository;
         this.europeanMatchEventRepository = europeanMatchEventRepository;
         this.generatedPlayerRepository = generatedPlayerRepository;
         this.europeanKnockoutMatchRepository = europeanKnockoutMatchRepository;
+        this.refereeRepository = refereeRepository;
     }
 
     @GetMapping("/matches/europe/{competition}")
@@ -84,6 +92,66 @@ public class EuropeanMatchesController {
                 europeanCompetitionService.calculateLeaguePhaseTable(SEASON, competition));
         model.addAttribute("activeEuropeanView", "overview");
         model.addAttribute("leagueFolders", getLeagueFolders());
+
+        model.addAttribute("europeTopScorers",
+                europeanMatchEventRepository.findAll().stream()
+                        .filter(e -> "GOAL".equals(e.getEventType()) || "PENALTY_GOAL".equals(e.getEventType()))
+                        .filter(e -> e.getPlayerId() != null)
+                        .collect(java.util.stream.Collectors.groupingBy(
+                                EuropeanMatchEvent::getPlayerId,
+                                java.util.stream.Collectors.counting()
+                        ))
+                        .entrySet().stream()
+                        .map(entry -> {
+                            EuropeanMatchEvent sample = europeanMatchEventRepository.findAll().stream()
+                                    .filter(e -> entry.getKey().equals(e.getPlayerId()))
+                                    .findFirst()
+                                    .orElse(null);
+
+                            return buildPlayerStat(
+                                    entry.getKey(),
+                                    sample == null ? "Unknown player" : sample.getPlayerName(),
+                                    entry.getValue()
+                            );
+                        })
+                        .sorted(java.util.Comparator.comparing(EuropeanPlayerStatView::value).reversed())
+                        .limit(10)
+                        .toList()
+        );
+
+        model.addAttribute("europeTopAssists",
+                buildEventPlayerStats(
+                        europeanMatchEventRepository.findAll(),
+                        List.of("GOAL", "PENALTY_GOAL"),
+                        true
+                )
+        );
+
+        model.addAttribute("europeYellowCards",
+                buildEventPlayerStats(
+                        europeanMatchEventRepository.findAll(),
+                        List.of("YELLOW_CARD"),
+                        false
+                )
+        );
+
+        model.addAttribute("europeRedCards",
+                buildEventPlayerStats(
+                        europeanMatchEventRepository.findAll(),
+                        List.of("RED_CARD", "SECOND_YELLOW_RED_CARD"),
+                        false
+                )
+        );
+
+        model.addAttribute("europeCleanSheets",
+                calculateEuropeanCleanSheets(
+                        europeanMatchRepository
+                                .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(
+                                        SEASON,
+                                        competition
+                                )
+                )
+        );
 
         return "european_matches";
     }
@@ -132,6 +200,15 @@ public class EuropeanMatchesController {
         return view;
     }
 
+    @GetMapping("/europe/{competition}/statistics")
+    public String statistics(@PathVariable String competition, Model model) {
+        String view = europeanCompetition(competition, model);
+
+        model.addAttribute("activeEuropeanView", "statistics");
+
+        return view;
+    }
+
     @GetMapping("/europe/{competition}/knockout")
     public String knockout(@PathVariable String competition,
                            Model model) {
@@ -146,19 +223,19 @@ public class EuropeanMatchesController {
                 europeanCompetitionService.getKnockoutMatches(SEASON, competition);
 
         List<EuropeanKnockoutMatch> playOffMatches = knockoutMatches.stream()
-                .filter(match -> "PLAY_OFF".equals(match.getRound()))
+                .filter(match -> "PLAY-OFF".equals(match.getRound()))
                 .toList();
 
         List<EuropeanKnockoutMatch> roundOf16Matches = knockoutMatches.stream()
-                .filter(match -> "ROUND_OF_16".equals(match.getRound()))
+                .filter(match -> "ROUND-OF-16".equals(match.getRound()))
                 .toList();
 
         List<EuropeanKnockoutMatch> quarterFinalMatches = knockoutMatches.stream()
-                .filter(match -> "QUARTER_FINAL".equals(match.getRound()))
+                .filter(match -> "QUARTER-FINAL".equals(match.getRound()))
                 .toList();
 
         List<EuropeanKnockoutMatch> semiFinalMatches = knockoutMatches.stream()
-                .filter(match -> "SEMI_FINAL".equals(match.getRound()))
+                .filter(match -> "SEMI-FINAL".equals(match.getRound()))
                 .toList();
 
         List<EuropeanKnockoutMatch> finalMatches = knockoutMatches.stream()
@@ -192,10 +269,13 @@ public class EuropeanMatchesController {
         if (playOffMatches.size() < 8
                 || roundOf16Matches.size() < 8
                 || quarterFinalMatches.size() < 4
-                || semiFinalMatches.size() < 2
-                || finalMatches.isEmpty()) {
+                || semiFinalMatches.size() < 2) {
             throw new RuntimeException("Knockout bracket is incomplete.");
         }
+
+        EuropeanKnockoutMatch finalMatch = finalMatches.isEmpty()
+                ? null
+                : finalMatches.get(0);
 
         List<EuropeanBracketPairView> pairs = List.of(
                 new EuropeanBracketPairView(playOffMatches.get(7), roundOf16Matches.get(0)),
@@ -247,7 +327,7 @@ public class EuropeanMatchesController {
         return new EuropeanBracketTreeView(
                 leftHalf,
                 rightHalf,
-                finalMatches.get(0)
+                finalMatch
         );
     }
 
@@ -431,12 +511,12 @@ public class EuropeanMatchesController {
     private boolean isEuropeanLineupVisibleEvent(String eventType) {
         return List.of(
                 "GOAL",
-                "PENALTY_GOAL",
-                "PENALTY_MISSED",
-                "OWN_GOAL",
-                "YELLOW_CARD",
-                "RED_CARD",
-                "SECOND_YELLOW_RED_CARD",
+                "PENALTY GOAL",
+                "PENALTY MISSED",
+                "OWN GOAL",
+                "YELLOW CARD",
+                "RED CARD",
+                "SECOND YELLOW = RED CARD",
                 "INJURY",
                 "SUBSTITUTION"
         ).contains(eventType);
@@ -581,7 +661,319 @@ public class EuropeanMatchesController {
 
         model.addAttribute("activeEuropeanView", "knockout-match-details");
         model.addAttribute("selectedKnockoutMatch", match);
+        model.addAttribute("knockoutLegs", buildKnockoutLegDetails(match));
 
         return "european_matches";
+    }
+
+    @GetMapping("/europe/knockout/match/{matchId}/events")
+    @ResponseBody
+    public List<EuropeanMatchEvent> getEuropeanKnockoutMatchEvents(@PathVariable Long matchId,
+                                                                   @RequestParam String leg) {
+        EuropeanKnockoutMatch match = europeanKnockoutMatchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Knockout match not found: " + matchId));
+
+        return europeanMatchEventRepository
+                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(match.getId(), leg);
+    }
+
+    @GetMapping("/europe/knockout/match/{matchId}/lineups")
+    @ResponseBody
+    public MatchLineupDto getEuropeanKnockoutMatchLineups(@PathVariable Long matchId,
+                                                          @RequestParam String leg) {
+        EuropeanKnockoutMatch match = europeanKnockoutMatchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Knockout match not found: " + matchId));
+
+        KnockoutLegDetailsView legDetails = buildKnockoutLegDetails(match)
+                .stream()
+                .filter(details -> details.getLegKey().equals(leg))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Knockout leg not found: " + leg));
+
+        List<EuropeanMatchEvent> events = europeanMatchEventRepository
+                .findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(match.getId(), leg);
+
+        List<MatchLineupDto.PlayerDto> homePlayers = getEuropeanPlayersForTeam(
+                legDetails.getHomeLeagueSlug(),
+                legDetails.getHomeClubSlug(),
+                legDetails.getHomeFormation(),
+                events
+        );
+
+        List<MatchLineupDto.PlayerDto> awayPlayers = getEuropeanPlayersForTeam(
+                legDetails.getAwayLeagueSlug(),
+                legDetails.getAwayClubSlug(),
+                legDetails.getAwayFormation(),
+                events
+        );
+
+        return new MatchLineupDto(
+                homePlayers.stream().limit(11).toList(),
+                awayPlayers.stream().limit(11).toList(),
+                homePlayers.stream().skip(11).limit(9).toList(),
+                awayPlayers.stream().skip(11).limit(9).toList()
+        );
+    }
+
+    private List<KnockoutLegDetailsView> buildKnockoutLegDetails(EuropeanKnockoutMatch match) {
+        if ("FINAL".equals(match.getRound())) {
+            return List.of(createKnockoutLegDetails(
+                    match,
+                    "FINAL",
+                    "Final Match",
+                    match.getHomeTeam(),
+                    match.getAwayTeam(),
+                    match.getHomeLeagueSlug(),
+                    match.getAwayLeagueSlug(),
+                    match.getHomeClubSlug(),
+                    match.getAwayClubSlug(),
+                    match.getHomeGoals(),
+                    match.getAwayGoals(),
+                    false
+            ));
+        }
+
+        return List.of(
+                createKnockoutLegDetails(
+                        match,
+                        "FIRST_LEG",
+                        "First Match",
+                        match.getHomeTeam(),
+                        match.getAwayTeam(),
+                        match.getHomeLeagueSlug(),
+                        match.getAwayLeagueSlug(),
+                        match.getHomeClubSlug(),
+                        match.getAwayClubSlug(),
+                        match.getFirstLegHomeGoals(),
+                        match.getFirstLegAwayGoals(),
+                        false
+                ),
+                createKnockoutLegDetails(
+                        match,
+                        "SECOND_LEG",
+                        "Second Match",
+                        match.getAwayTeam(),
+                        match.getHomeTeam(),
+                        match.getAwayLeagueSlug(),
+                        match.getHomeLeagueSlug(),
+                        match.getAwayClubSlug(),
+                        match.getHomeClubSlug(),
+                        match.getSecondLegHomeGoals(),
+                        match.getSecondLegAwayGoals(),
+                        true
+                )
+        );
+    }
+
+    private KnockoutLegDetailsView createKnockoutLegDetails(EuropeanKnockoutMatch match,
+                                                            String legKey,
+                                                            String label,
+                                                            String homeTeam,
+                                                            String awayTeam,
+                                                            String homeLeagueSlug,
+                                                            String awayLeagueSlug,
+                                                            String homeClubSlug,
+                                                            String awayClubSlug,
+                                                            Integer homeGoals,
+                                                            Integer awayGoals,
+                                                            boolean secondLeg) {
+        Random random = new Random((match.getId() == null ? 17L : match.getId()) * 31 + legKey.hashCode());
+
+        int possessionHome = 42 + random.nextInt(17);
+        int possessionAway = 100 - possessionHome;
+        int shotsHome = 6 + random.nextInt(16);
+        int shotsAway = 6 + random.nextInt(16);
+        int yellowHome = random.nextInt(5);
+        int yellowAway = random.nextInt(5);
+        int redHome = random.nextInt(20) == 0 ? 1 : 0;
+        int redAway = random.nextInt(20) == 0 ? 1 : 0;
+        List<String> formations = List.of("4-4-2", "4-3-3", "4-2-3-1", "4-1-2-1-2", "3-5-2", "3-4-3", "3-4-2-1", "5-3-2", "5-4-1");
+
+        return new KnockoutLegDetailsView(
+                match.getId(),
+                legKey,
+                label,
+                homeTeam,
+                awayTeam,
+                homeLeagueSlug,
+                awayLeagueSlug,
+                homeClubSlug,
+                awayClubSlug,
+                safeInteger(homeGoals),
+                safeInteger(awayGoals),
+                match.getStatus(),
+                homeTeam + " Stadium",
+                secondLeg ? match.getSecondLegReferee() : match.getFirstLegReferee(),
+                secondLeg ? match.getSecondLegDate() : match.getFirstLegDate(),
+                possessionHome,
+                possessionAway,
+                shotsHome,
+                shotsAway,
+                Math.min(shotsHome, 2 + random.nextInt(8)),
+                Math.min(shotsAway, 2 + random.nextInt(8)),
+                random.nextInt(9),
+                random.nextInt(9),
+                6 + random.nextInt(13),
+                6 + random.nextInt(13),
+                random.nextInt(5),
+                random.nextInt(5),
+                yellowHome,
+                yellowAway,
+                redHome,
+                redAway,
+                320 + random.nextInt(380),
+                320 + random.nextInt(380),
+                74 + random.nextInt(18),
+                74 + random.nextInt(18),
+                Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0,
+                Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0,
+                formations.get(random.nextInt(formations.size())),
+                formations.get(random.nextInt(formations.size()))
+        );
+    }
+    private Integer safeInteger(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+
+    private record EuropeanPlayerStatView(
+            String playerName,
+            String countryCode,
+            String leagueSlug,
+            String clubSlug,
+            String clubName,
+            Long value
+    ) {}
+    private EuropeanPlayerStatView buildPlayerStat(Long playerId, String fallbackName, Long value) {
+        GeneratedPlayer player = playerId == null
+                ? null
+                : generatedPlayerRepository.findById(playerId).orElse(null);
+
+        if (player == null) {
+            return new EuropeanPlayerStatView(
+                    fallbackName,
+                    null,
+                    null,
+                    null,
+                    null,
+                    value
+            );
+        }
+
+        return new EuropeanPlayerStatView(
+                playerName(player),
+                player.getCountryCode(),
+                player.getLeagueSlug(),
+                player.getClubSlug(),
+                player.getCurrentClub(),
+                value
+        );
+    }
+
+
+    private List<EuropeanPlayerStatView> buildEventPlayerStats(
+            List<EuropeanMatchEvent> events,
+            List<String> eventTypes,
+            boolean useRelatedPlayer
+    ) {
+
+        return events.stream()
+                .filter(e -> eventTypes.contains(e.getEventType()))
+                .filter(e -> useRelatedPlayer
+                        ? e.getRelatedPlayerId() != null
+                        : e.getPlayerId() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        e -> useRelatedPlayer
+                                ? e.getRelatedPlayerId()
+                                : e.getPlayerId(),
+                        java.util.stream.Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(entry -> {
+
+                    EuropeanMatchEvent sample = events.stream()
+                            .filter(e ->
+                                    useRelatedPlayer
+                                            ? entry.getKey().equals(e.getRelatedPlayerId())
+                                            : entry.getKey().equals(e.getPlayerId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    return buildPlayerStat(
+                            entry.getKey(),
+                            sample == null
+                                    ? "Unknown player"
+                                    : (useRelatedPlayer
+                                    ? sample.getRelatedPlayerName()
+                                    : sample.getPlayerName()),
+                            entry.getValue()
+                    );
+                })
+                .sorted(java.util.Comparator.comparing(EuropeanPlayerStatView::value).reversed())
+                .limit(10)
+                .toList();
+    }
+
+
+    private List<EuropeanPlayerStatView> calculateEuropeanCleanSheets(
+            List<EuropeanMatch> matches
+    ) {
+
+        Map<Long, Long> cleanSheets = new HashMap<>();
+
+        for (EuropeanMatch match : matches) {
+
+            if (safeInteger(match.getAwayGoals()) == 0) {
+
+                GeneratedPlayer goalkeeper =
+                        findMainGoalkeeper(
+                                match.getHomeLeagueSlug(),
+                                match.getHomeClubSlug()
+                        );
+
+                if (goalkeeper != null) {
+                    cleanSheets.merge(goalkeeper.getId(), 1L, Long::sum);
+                }
+            }
+
+            if (safeInteger(match.getHomeGoals()) == 0) {
+
+                GeneratedPlayer goalkeeper =
+                        findMainGoalkeeper(
+                                match.getAwayLeagueSlug(),
+                                match.getAwayClubSlug()
+                        );
+
+                if (goalkeeper != null) {
+                    cleanSheets.merge(goalkeeper.getId(), 1L, Long::sum);
+                }
+            }
+        }
+
+        return cleanSheets.entrySet().stream()
+                .map(entry ->
+                        buildPlayerStat(
+                                entry.getKey(),
+                                "Unknown goalkeeper",
+                                entry.getValue()
+                        ))
+                .sorted(Comparator.comparing(EuropeanPlayerStatView::value).reversed())
+                .limit(10)
+                .toList();
+    }
+
+    private GeneratedPlayer findMainGoalkeeper(String leagueSlug,
+                                               String clubSlug) {
+
+        return generatedPlayerRepository
+                .findByLeagueSlugAndClubSlug(leagueSlug, clubSlug)
+                .stream()
+                .filter(player -> matchesPosition(player, "goalkeeper"))
+                .sorted(Comparator.comparing(
+                        GeneratedPlayer::getMarketValue,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .findFirst()
+                .orElse(null);
     }
 }

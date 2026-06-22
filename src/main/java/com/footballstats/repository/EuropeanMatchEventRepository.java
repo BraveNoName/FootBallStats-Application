@@ -14,6 +14,8 @@ public interface EuropeanMatchEventRepository extends JpaRepository<EuropeanMatc
 
     List<EuropeanMatchEvent> findByKnockoutMatchIdOrderByEventMinuteAsc(Long knockoutMatchId);
 
+    List<EuropeanMatchEvent> findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc(Long knockoutMatchId, String knockoutLeg);
+
     void deleteByMatchIdIn(Collection<Long> matchIds);
 
     void deleteByKnockoutMatchIdIn(Collection<Long> knockoutMatchIds);

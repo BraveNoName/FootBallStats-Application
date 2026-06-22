@@ -32,10 +32,10 @@ public class EuropeanCompetitionService {
     private static final String CHAMPIONS_LEAGUE = "champions-league";
     private static final String EUROPA_LEAGUE = "europa-league";
     private static final String CONFERENCE_LEAGUE = "conference-league";
-    private static final String PLAY_OFF = "PLAY_OFF";
-    private static final String ROUND_OF_16 = "ROUND_OF_16";
-    private static final String QUARTER_FINAL = "QUARTER_FINAL";
-    private static final String SEMI_FINAL = "SEMI_FINAL";
+    private static final String PLAY_OFF = "PLAY-OFF";
+    private static final String ROUND_OF_16 = "ROUND-OF-16";
+    private static final String QUARTER_FINAL = "QUARTER-FINAL";
+    private static final String SEMI_FINAL = "SEMI-FINAL";
     private static final String FINAL = "FINAL";
 
     private final EuropeanCompetitionParticipantRepository participantRepository;
@@ -1956,7 +1956,7 @@ public class EuropeanCompetitionService {
                     event.setKnockoutLeg("FIRST_LEG");
                 }
 
-                EuropeanMatch secondLeg = buildEuropeanMatchFromKnockout(
+                EuropeanMatch secondLeg = buildEuropeanSecondLegMatchFromKnockout(
                         knockoutMatch,
                         knockoutMatch.getSecondLegHomeGoals(),
                         knockoutMatch.getSecondLegAwayGoals()
@@ -1973,6 +1973,25 @@ public class EuropeanCompetitionService {
                 europeanMatchEventRepository.saveAll(secondLegEvents);
             }
         }
+    }
+
+    private EuropeanMatch buildEuropeanSecondLegMatchFromKnockout(EuropeanKnockoutMatch knockoutMatch,
+                                                                  Integer homeGoals,
+                                                                  Integer awayGoals) {
+        EuropeanMatch match = buildEuropeanMatchFromKnockout(knockoutMatch, homeGoals, awayGoals);
+
+        match.setHomeTeam(knockoutMatch.getAwayTeam());
+        match.setAwayTeam(knockoutMatch.getHomeTeam());
+
+        match.setHomeClubSlug(knockoutMatch.getAwayClubSlug());
+        match.setAwayClubSlug(knockoutMatch.getHomeClubSlug());
+
+        match.setHomeLeagueSlug(knockoutMatch.getAwayLeagueSlug());
+        match.setAwayLeagueSlug(knockoutMatch.getHomeLeagueSlug());
+
+        match.setStadium(knockoutMatch.getAwayTeam() + " Stadium");
+
+        return match;
     }
 
     private EuropeanMatch buildEuropeanMatchFromKnockout(EuropeanKnockoutMatch knockoutMatch,
@@ -2003,11 +2022,42 @@ public class EuropeanCompetitionService {
         match.setHomeGoals(homeGoals == null ? 0 : homeGoals);
         match.setAwayGoals(awayGoals == null ? 0 : awayGoals);
 
+        match.setHalfTimeHomeGoals(Math.min(match.getHomeGoals(), random.nextInt(match.getHomeGoals() + 1)));
+        match.setHalfTimeAwayGoals(Math.min(match.getAwayGoals(), random.nextInt(match.getAwayGoals() + 1)));
+
+        match.setStatus("FINISHED");
+        match.setStadium(knockoutMatch.getHomeTeam() + " Stadium");
+        match.setReferee("European referee");
+
+        int possessionHome = 42 + random.nextInt(17);
+        match.setPossessionHome(possessionHome);
+        match.setPossessionAway(100 - possessionHome);
+
+        int shotsHome = 6 + random.nextInt(16);
+        int shotsAway = 6 + random.nextInt(16);
+        match.setShotsHome(shotsHome);
+        match.setShotsAway(shotsAway);
+        match.setShotsOnTargetHome(Math.min(shotsHome, 2 + random.nextInt(8)));
+        match.setShotsOnTargetAway(Math.min(shotsAway, 2 + random.nextInt(8)));
+        match.setCornersHome(random.nextInt(9));
+        match.setCornersAway(random.nextInt(9));
+        match.setFoulsHome(6 + random.nextInt(13));
+        match.setFoulsAway(6 + random.nextInt(13));
+        match.setOffsidesHome(random.nextInt(5));
+        match.setOffsidesAway(random.nextInt(5));
+
         match.setYellowCardsHome(random.nextInt(5));
         match.setYellowCardsAway(random.nextInt(5));
 
         match.setRedCardsHome(random.nextInt(20) == 0 ? 1 : 0);
         match.setRedCardsAway(random.nextInt(20) == 0 ? 1 : 0);
+
+        match.setPassesHome(320 + random.nextInt(380));
+        match.setPassesAway(320 + random.nextInt(380));
+        match.setPassAccuracyHome(74 + random.nextInt(18));
+        match.setPassAccuracyAway(74 + random.nextInt(18));
+        match.setXgHome(Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0);
+        match.setXgAway(Math.round((0.4 + random.nextDouble() * 3.2) * 10.0) / 10.0);
 
         match.setHomeFormation(formations.get(random.nextInt(formations.size())));
         match.setAwayFormation(formations.get(random.nextInt(formations.size())));
@@ -2165,6 +2215,7 @@ public class EuropeanCompetitionService {
             match.setWinnerClubSlug(match.getAwayClubSlug());
             match.setWinnerLeagueSlug(match.getAwayLeagueSlug());
         }
+        assignKnockoutDatesAndReferees(match);
     }
 
     private void simulateFinalMatch(EuropeanKnockoutMatch match) {
@@ -2198,5 +2249,85 @@ public class EuropeanCompetitionService {
             match.setWinnerClubSlug(match.getAwayClubSlug());
             match.setWinnerLeagueSlug(match.getAwayLeagueSlug());
         }
+        assignKnockoutDatesAndReferees(match);
     }
+
+    private void assignKnockoutDatesAndReferees(EuropeanKnockoutMatch match) {
+
+        LocalDateTime firstLegDate;
+
+        switch (match.getRound()) {
+
+            case PLAY_OFF -> {
+                firstLegDate = LocalDateTime.of(2026, 2, 17, 18, 45)
+                        .plusDays(match.getBracketOrder() % 2);
+            }
+
+            case ROUND_OF_16 -> {
+                firstLegDate = LocalDateTime.of(2026, 3, 10, 18, 45)
+                        .plusDays(match.getBracketOrder() % 2);
+            }
+
+            case QUARTER_FINAL -> {
+                firstLegDate = LocalDateTime.of(2026, 4, 7, 18, 45)
+                        .plusDays(match.getBracketOrder() % 2);
+            }
+
+            case SEMI_FINAL -> {
+                firstLegDate = LocalDateTime.of(2026, 4, 28, 21, 0)
+                        .plusDays(match.getBracketOrder() % 2);
+            }
+
+            case FINAL -> {
+                firstLegDate = LocalDateTime.of(2026, 5, 30, 21, 0);
+            }
+
+            default -> {
+                firstLegDate = LocalDateTime.of(2026, 2, 17, 21, 0);
+            }
+        }
+
+        if (FINAL.equals(match.getRound())) {
+            firstLegDate = LocalDateTime.of(2026, 5, 30, 21, 0);
+            match.setFirstLegDate(firstLegDate);
+            match.setSecondLegDate(null);
+            match.setFirstLegReferee(pickAvailableKnockoutReferee(firstLegDate));
+            match.setSecondLegReferee(null);
+            match.setMatchDate(firstLegDate);
+            return;
+        }
+
+        LocalDateTime secondLegDate;
+
+        switch (match.getRound()) {
+
+            case PLAY_OFF -> secondLegDate = firstLegDate.plusDays(7);
+
+            case ROUND_OF_16 -> secondLegDate = firstLegDate.plusDays(7);
+
+            case QUARTER_FINAL -> secondLegDate = firstLegDate.plusDays(7);
+
+            case SEMI_FINAL -> secondLegDate = firstLegDate.plusDays(8);
+
+            default -> secondLegDate = firstLegDate.plusDays(7);
+        }
+
+        match.setFirstLegDate(firstLegDate);
+        match.setSecondLegDate(secondLegDate);
+        match.setFirstLegReferee(pickAvailableKnockoutReferee(firstLegDate));
+        match.setSecondLegReferee(pickAvailableKnockoutReferee(secondLegDate));
+        match.setMatchDate(firstLegDate);
+    }
+
+    private String pickAvailableKnockoutReferee(LocalDateTime matchDate) {
+        List<Referee> referees = refereeRepository.findAll();
+
+        if (referees.isEmpty()) {
+            return "European referee";
+        }
+
+        Random random = new Random(matchDate.toLocalDate().hashCode());
+        return referees.get(random.nextInt(referees.size())).getName();
+    }
+
 }

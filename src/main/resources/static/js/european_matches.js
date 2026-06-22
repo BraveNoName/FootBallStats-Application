@@ -439,3 +439,139 @@ document.addEventListener("DOMContentLoaded", () => {
         form.submit();
     });
 });
+async function toggleEuropeanKnockoutLegEvents(matchId, legKey) {
+    const eventsContainer = document.getElementById(`knockout-events-${matchId}-${legKey}`);
+    const lineupsContainer = document.getElementById(`knockout-lineups-${matchId}-${legKey}`);
+    const statsContainer = document.getElementById(`knockout-stats-${matchId}-${legKey}`);
+    const button = document.querySelector(`[onclick="toggleEuropeanKnockoutLegEvents(${matchId}, '${legKey}')"]`);
+    const lineupsButton = document.querySelector(`[onclick="toggleEuropeanKnockoutLegLineups(${matchId}, '${legKey}')"]`);
+
+    if (!eventsContainer || !statsContainer || !button) return;
+
+    if (eventsContainer.innerHTML.trim() !== "") {
+        eventsContainer.innerHTML = "";
+        statsContainer.style.display = "block";
+        button.textContent = "Match events";
+        updateEuropeanStatBars();
+        return;
+    }
+
+    if (lineupsContainer) {
+        lineupsContainer.innerHTML = "";
+    }
+
+    if (lineupsButton) {
+        lineupsButton.textContent = "Lineups";
+    }
+
+    statsContainer.style.display = "none";
+    button.textContent = "Click to return to match statistics";
+
+    const response = await fetch(`/europe/knockout/match/${matchId}/events?leg=${encodeURIComponent(legKey)}`);
+    const events = await response.json();
+
+    events.sort((a, b) => {
+        if (a.eventMinute !== b.eventMinute) {
+            return a.eventMinute - b.eventMinute;
+        }
+
+        return a.id - b.id;
+    });
+
+    if (!events || events.length === 0) {
+        eventsContainer.innerHTML = `<p class="empty-lineup">No events generated for this match.</p>`;
+        return;
+    }
+
+    let html = `
+        <div class="events-timeline">
+            <div class="half-divider">
+                <span>1st half</span>
+            </div>
+    `;
+
+    let secondHalfAdded = false;
+
+    events.forEach(event => {
+        if (!event.teamSide) return;
+
+        if (!secondHalfAdded && event.eventMinute >= 46) {
+            html += `
+                <div class="half-divider">
+                    <span>2nd half</span>
+                </div>
+            `;
+
+            secondHalfAdded = true;
+        }
+
+        html += `
+            <div class="timeline-row">
+                <div class="timeline-cell home-cell">
+                    ${event.teamSide === "HOME" ? renderEuropeanEvent(event) : ""}
+                </div>
+                <div class="timeline-minute">
+                    ${event.eventMinute}'
+                </div>
+                <div class="timeline-cell away-cell">
+                    ${event.teamSide === "AWAY" ? renderEuropeanEvent(event) : ""}
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    eventsContainer.innerHTML = html;
+}
+
+async function toggleEuropeanKnockoutLegLineups(matchId, legKey) {
+    const lineupsContainer = document.getElementById(`knockout-lineups-${matchId}-${legKey}`);
+    const eventsContainer = document.getElementById(`knockout-events-${matchId}-${legKey}`);
+    const statsContainer = document.getElementById(`knockout-stats-${matchId}-${legKey}`);
+    const button = document.querySelector(`[onclick="toggleEuropeanKnockoutLegLineups(${matchId}, '${legKey}')"]`);
+    const eventsButton = document.querySelector(`[onclick="toggleEuropeanKnockoutLegEvents(${matchId}, '${legKey}')"]`);
+
+    if (!lineupsContainer || !statsContainer || !button) return;
+
+    if (lineupsContainer.innerHTML.trim() !== "") {
+        lineupsContainer.innerHTML = "";
+        statsContainer.style.display = "block";
+        button.textContent = "Lineups";
+        updateEuropeanStatBars();
+        return;
+    }
+
+    if (eventsContainer) {
+        eventsContainer.innerHTML = "";
+    }
+
+    if (eventsButton) {
+        eventsButton.textContent = "Match events";
+    }
+
+    statsContainer.style.display = "none";
+    button.textContent = "Click to return to match statistics";
+
+    const response = await fetch(`/europe/knockout/match/${matchId}/lineups?leg=${encodeURIComponent(legKey)}`);
+    const lineups = await response.json();
+
+    lineupsContainer.innerHTML = `
+        <div class="lineups-section-title">
+            Starting lineups
+        </div>
+
+        <div class="lineups-board">
+            ${renderEuropeanTeamLineup(lineups.homeLineup, "home")}
+            ${renderEuropeanTeamLineup(lineups.awayLineup, "away")}
+        </div>
+
+        <div class="lineups-section-title bench-title">
+            Bench
+        </div>
+
+        <div class="lineups-board">
+            ${renderEuropeanTeamLineup(lineups.homeBench, "home")}
+            ${renderEuropeanTeamLineup(lineups.awayBench, "away")}
+        </div>
+    `;
+}

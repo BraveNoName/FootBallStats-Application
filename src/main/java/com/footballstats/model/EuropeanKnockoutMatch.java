@@ -39,6 +39,11 @@ public class EuropeanKnockoutMatch {
     private Integer firstLegAwayGoals;
     private Integer secondLegHomeGoals;
     private Integer secondLegAwayGoals;
+    private LocalDateTime firstLegDate;
+    private LocalDateTime secondLegDate;
+
+    private String firstLegReferee;
+    private String secondLegReferee;
 
     public Long getId() { return id; }
 
@@ -180,4 +185,16 @@ public class EuropeanKnockoutMatch {
     public void setSecondLegAwayGoals(Integer secondLegAwayGoals) {
         this.secondLegAwayGoals = secondLegAwayGoals;
     }
+
+    public LocalDateTime getFirstLegDate() { return firstLegDate; }
+    public void setFirstLegDate(LocalDateTime firstLegDate) { this.firstLegDate = firstLegDate; }
+
+    public LocalDateTime getSecondLegDate() { return secondLegDate; }
+    public void setSecondLegDate(LocalDateTime secondLegDate) { this.secondLegDate = secondLegDate; }
+
+    public String getFirstLegReferee() { return firstLegReferee; }
+    public void setFirstLegReferee(String firstLegReferee) { this.firstLegReferee = firstLegReferee; }
+
+    public String getSecondLegReferee() { return secondLegReferee; }
+    public void setSecondLegReferee(String secondLegReferee) { this.secondLegReferee = secondLegReferee; }
 }
