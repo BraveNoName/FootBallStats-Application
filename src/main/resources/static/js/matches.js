@@ -430,8 +430,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const generateForm = document.getElementById("generateForm");
-    const leagueError = document.getElementById("leagueError");
-
     const seasonConfirmOverlay = document.getElementById("seasonConfirmOverlay");
     const cancelSeasonGenerateBtn = document.getElementById("cancelSeasonGenerateBtn");
     const confirmSeasonGenerateBtn = document.getElementById("confirmSeasonGenerateBtn");
@@ -451,19 +449,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (generateForm && leagueSelect) {
         generateForm.addEventListener("submit", function (e) {
-            if (!leagueSelect.value) {
-                e.preventDefault();
-
-                leagueError.classList.add("show");
-
-                if (leagueDropdownBtn) {
-                    leagueDropdownBtn.style.border = "1px solid rgba(248,113,113,0.8)";
-                }
-
-                return;
-            }
-
-            leagueError.classList.remove("show");
 
             if (leagueDropdownBtn) {
                 leagueDropdownBtn.style.border = "1px solid rgba(255,255,255,0.14)";
@@ -798,18 +783,6 @@ function renderEventContent(event) {
 
         </div>
     `;
-}
-
-function formatRelatedEvent(event) {
-    if (event.eventType === "GOAL") {
-        return "Assist: " + event.relatedPlayerName;
-    }
-
-    if (event.eventType === "SUBSTITUTION") {
-        return "For: " + event.relatedPlayerName;
-    }
-
-    return event.relatedPlayerName;
 }
 
 function buildEventDescription(event) {

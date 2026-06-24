@@ -77,6 +77,10 @@ public class MatchController {
                 "seasonAlreadyGenerated",
                 league != null && !league.isBlank() && matchRepository.existsByLeague(league)
         );
+        model.addAttribute(
+                "domesticSeasonGenerated",
+                europeanCompetitionService.areAllDomesticLeaguesGenerated()
+        );
         model.addAttribute("playerStats", playerStats);
 
         return "matches";
@@ -242,9 +246,25 @@ public class MatchController {
     }
 
     @PostMapping("/generate")
-    public String generateSeason(@RequestParam String league) {
-        matchGeneratorService.generateLeagueSeason(league);
-        europeanCompetitionService.deleteEuropeanSeasonData("2025/2026");
+    public String generateSeason(@RequestParam(required = false) String league) {
+
+        List<String> domesticLeagues = List.of(
+                "england", "spain", "italy", "germany", "france",
+                "netherlands", "portugal", "belgium", "turkiye",
+                "scotland", "austria", "switzerland", "greece",
+                "denmark", "poland", "sweden", "norway",
+                "croatia", "serbia", "romania", "bulgaria",
+                "ukraine", "czech-republic", "israel"
+        );
+
+        for (String leagueSlug : domesticLeagues) {
+            matchGeneratorService.generateLeagueSeason(leagueSlug);
+        }
+
+        if (league == null || league.isBlank()) {
+            return "redirect:/matches";
+        }
+
         return "redirect:/matches?league=" + league;
     }
 

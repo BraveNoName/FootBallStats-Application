@@ -1872,13 +1872,13 @@ public class EuropeanCompetitionService {
     }
 
     @Transactional
-    public void generateOrRegenerateEuropeanCompetition(String season, String competitionSlug) {
+    public void generateOrRegenerateEuropeanCompetition(String season,
+                                                        String competitionSlug) {
 
-        for (String league : DOMESTIC_LEAGUES) {
-            matchGeneratorService.generateLeagueSeason(league);
-        }
+        deleteEuropeanCompetitionData(season, competitionSlug);
 
-        deleteEuropeanSeasonData(season);
+        participantRepository.deleteBySeason(season);
+
         generateParticipantsFromDomesticTables(season);
         generateLeaguePhaseMatches(season, competitionSlug);
     }

@@ -209,7 +209,7 @@
                   method="post"
                   class="generate-form"
                   id="generateForm"
-                  th:attr="data-season-generated=${seasonAlreadyGenerated}">
+                  th:attr="data-season-generated=${domesticSeasonGenerated}">
 
                 <div class="league-select-wrapper">
 
@@ -256,12 +256,12 @@
                         class="generate-season-btn"
                         title="Generate full season simulation">
                     <i class="fa-solid fa-rotate"></i>
-                    Generate season
+                    Generate all domestic leagues
                 </button>
 
-                <p id="leagueError" class="league-error">
-                    Please select a league first.
-                </p>
+<!--                <p id="leagueError" class="league-error">-->
+<!--                    Please select a league first.-->
+<!--                </p>-->
 
             </form>
 
@@ -815,11 +815,12 @@
 
 <div class="season-confirm-overlay" id="seasonConfirmOverlay">
     <div class="season-confirm-modal">
-        <h3>Season already generated</h3>
+        <h3>Domestic seasons already generated</h3>
 
         <p>
-            Matches for this league have already been generated.
-            Generating a new season will delete the current season and all match events.
+            Domestic leagues have already been generated.
+            Generating again will overwrite all domestic league seasons.
+            European competitions will remain unchanged.
         </p>
 
         <div class="season-confirm-actions">
