@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About System</title>
+
+    <link rel="icon" type="image/x-icon" href="/Images/Favicon.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/about_system.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body class="about-system-body">
+
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/">
+            <img src="/Images/TabIcon.png" class="nav-logo" alt="logo">
+        </a>
+    </div>
+
+    <div class="nav-search">
+        <div class="search-box">
+            <input id="globalSearchInput" type="text" th:placeholder="#{search.placeholder}" autocomplete="off">
+            <button type="submit">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <div id="searchSuggestions" class="search-suggestions"></div>
+        </div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="/" th:text="#{nav.home}">Home</a></li>
+        <li><a href="/matches" th:text="#{nav.matches}">Matches</a></li>
+        <li><a href="/leagues" th:text="#{nav.leagues}">Leagues</a></li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.players}">Players</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="/players/real">
+                    <i class="fa-solid fa-user"></i>
+                    Real Players
+                </a>
+
+                <a href="/players/generated">
+                    <i class="fa-solid fa-shuffle"></i>
+                    Generated Players
+                </a>
+            </div>
+        </li>
+
+        <li class="dropdown">
+            <a href="#">
+                <span th:text="#{nav.language}">Language</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </a>
+
+            <div class="dropdown-content">
+                <a href="?lang=en"><span class="fi fi-gb"></span> English</a>
+                <a href="?lang=it"><span class="fi fi-it"></span> Italiano</a>
+                <a href="?lang=es"><span class="fi fi-es"></span> Español</a>
+                <a href="?lang=de"><span class="fi fi-de"></span> Deutsch</a>
+                <a href="?lang=fr"><span class="fi fi-fr"></span> Français</a>
+                <a href="?lang=pl"><span class="fi fi-pl"></span> Polski</a>
+                <a href="?lang=tr"><span class="fi fi-tr"></span> Türkçe</a>
+                <a href="?lang=pt"><span class="fi fi-pt"></span> Português</a>
+            </div>
+        </li>
+
+        <li class="dropdown">
+            <a href="#" id="loginLink"><i class="fa-regular fa-circle-user"></i></a>
+            <div class="dropdown-content">
+                <a href="#"><i class="fa-solid fa-right-to-bracket"></i> <span th:text="#{auth.login}">Log In</span></a>
+                <a href="#"><i class="fa-solid fa-user-plus"></i> <span th:text="#{auth.register}">Create profile</span></a>
+            </div>
+        </li>
+    </ul>
+</nav>
+
+<main class="about-system-page">
+
+    <section class="about-hero">
+        <div class="about-hero-content">
+            <span class="about-kicker">FootballStats System</span>
+            <h1>About System</h1>
+            <p>
+                FootballStats is a football simulation and statistics application focused on domestic leagues,
+                European competitions, clubs, players, match results and detailed match events.
+            </p>
+
+            <div class="about-hero-actions">
+                <a href="#features" class="about-btn">
+                    <i class="fa-solid fa-list-check"></i>
+                    Features
+                </a>
+
+                <a href="#competitions" class="about-btn secondary">
+                    <i class="fa-solid fa-trophy"></i>
+                    Competitions
+                </a>
+
+                <a href="#match-analysis" class="about-btn secondary">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    Match Analysis
+                </a>
+            </div>
+        </div>
+
+        <div class="about-hero-card">
+            <img src="/Images/Favicon.png" alt="FootballStats">
+            <span>Football simulation platform</span>
+        </div>
+    </section>
+
+    <section class="about-metrics">
+        <article>
+            <i class="fa-solid fa-ranking-star"></i>
+            <span>Domestic Leagues</span>
+            <strong>Multiple</strong>
+        </article>
+
+        <article>
+            <i class="fa-solid fa-earth-europe"></i>
+            <span>European Cups</span>
+            <strong>3</strong>
+        </article>
+
+        <article>
+            <i class="fa-solid fa-users"></i>
+            <span>Players</span>
+            <strong>Generated</strong>
+        </article>
+
+        <article>
+            <i class="fa-solid fa-clipboard-list"></i>
+            <span>Matches</span>
+            <strong>Detailed</strong>
+        </article>
+    </section>
+
+    <section class="about-section" id="overview">
+        <div class="section-header">
+            <span>Overview</span>
+            <h2>What does FootballStats do?</h2>
+        </div>
+
+        <div class="about-text-card">
+            <p>
+                FootballStats allows users to generate and browse football competitions.
+                The application includes domestic league seasons, European tournaments,
+                match details, generated squads, player data and competition tables.
+            </p>
+
+            <p>
+                The system focuses on presenting simulated football data in a structured way:
+                fixtures, results, league standings, match statistics, lineups and events are available
+                directly in the application interface.
+            </p>
+        </div>
+    </section>
+
+    <section class="about-section" id="features">
+        <div class="section-header">
+            <span>Main Features</span>
+            <h2>Application Modules</h2>
+        </div>
+
+        <div class="features-grid">
+            <article>
+                <i class="fa-solid fa-ranking-star"></i>
+                <h3>Domestic Leagues</h3>
+                <p>
+                    Users can generate domestic league seasons and view fixtures, results,
+                    match rounds, league tables and player statistics.
+                </p>
+            </article>
+
+            <article>
+                <i class="fa-solid fa-earth-europe"></i>
+                <h3>European Competitions</h3>
+                <p>
+                    The application supports Champions League, Europa League and Conference League
+                    with league phase, standings, knockout rounds and match details.
+                </p>
+            </article>
+
+            <article>
+                <i class="fa-solid fa-users"></i>
+                <h3>Generated Players</h3>
+                <p>
+                    FootballStats can generate squads for clubs. Generated players include basic
+                    football information such as name, nationality, position and market value.
+                </p>
+            </article>
+
+            <article>
+                <i class="fa-solid fa-shirt"></i>
+                <h3>Lineups</h3>
+                <p>
+                    Match pages can display starting lineups and substitutes for both teams,
+                    based on generated players and team formations.
+                </p>
+            </article>
+
+            <article>
+                <i class="fa-solid fa-stopwatch"></i>
+                <h3>Match Events</h3>
+                <p>
+                    Matches contain generated football events such as goals, assists, yellow cards,
+                    red cards, penalties, own goals, injuries and substitutions.
+                </p>
+            </article>
+
+            <article>
+                <i class="fa-solid fa-chart-simple"></i>
+                <h3>Match Statistics</h3>
+                <p>
+                    Match details include statistics such as possession, shots, shots on target,
+                    corners, fouls, offsides, cards and expected goals.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-section" id="competitions">
+        <div class="section-header">
+            <span>Competitions</span>
+            <h2>Supported Football Areas</h2>
+        </div>
+
+        <div class="competition-layout">
+            <article class="competition-card domestic">
+                <h3>Domestic Competitions</h3>
+                <p>
+                    Domestic league pages allow users to browse generated seasons round by round.
+                    Each league includes match cards, results, tables and player rankings.
+                </p>
+
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Season generation</li>
+                    <li><i class="fa-solid fa-check"></i> Match rounds</li>
+                    <li><i class="fa-solid fa-check"></i> League tables</li>
+                    <li><i class="fa-solid fa-check"></i> Player statistics</li>
+                </ul>
+            </article>
+
+            <article class="competition-card european">
+                <h3>European Competitions</h3>
+                <p>
+                    European tournament pages include a modern league phase format and knockout stage.
+                    The system can generate participants, matches, tables and tournament brackets.
+                </p>
+
+                <ul>
+                    <li><i class="fa-solid fa-check"></i> Champions League</li>
+                    <li><i class="fa-solid fa-check"></i> Europa League</li>
+                    <li><i class="fa-solid fa-check"></i> Conference League</li>
+                    <li><i class="fa-solid fa-check"></i> Knockout bracket</li>
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-section" id="match-analysis">
+        <div class="section-header">
+            <span>Match Analysis</span>
+            <h2>What can be viewed in a match?</h2>
+        </div>
+
+        <div class="analysis-grid">
+            <article>
+                <span>01</span>
+                <h3>Result and Details</h3>
+                <p>Final score, match date, stadium, referee and basic match information.</p>
+            </article>
+
+            <article>
+                <span>02</span>
+                <h3>Team Statistics</h3>
+                <p>Possession, shots, shots on target, corners, fouls, offsides, cards and xG.</p>
+            </article>
+
+            <article>
+                <span>03</span>
+                <h3>Events Timeline</h3>
+                <p>Goals, assists, penalties, own goals, cards, injuries and substitutions.</p>
+            </article>
+
+            <article>
+                <span>04</span>
+                <h3>Lineups</h3>
+                <p>Starting elevens and bench players for both teams.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-section" id="navigation">
+        <div class="section-header">
+            <span>Navigation</span>
+            <h2>How users interact with the system</h2>
+        </div>
+
+        <div class="navigation-card">
+            <i class="fa-solid fa-compass"></i>
+
+            <div>
+                <p>
+                    Users can move between the home page, matches, leagues, clubs and player sections.
+                    The application also includes a navigation search bar with suggestions, which helps
+                    quickly open leagues, clubs, players and European competitions.
+                </p>
+
+                <p>
+                    The interface is built around visual cards, tables, sliders, tournament brackets
+                    and match detail panels.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section" id="technologies">
+        <div class="section-header">
+            <span>Technology</span>
+            <h2>Technology stack used by the application</h2>
+        </div>
+
+        <div class="tech-grid">
+            <span>Java</span>
+            <span>Spring Boot</span>
+            <span>Spring MVC</span>
+            <span>Spring Data</span>
+            <span>Hibernate</span>
+            <span>Maven</span>
+            <span>Thymeleaf</span>
+            <span>HTML5</span>
+            <span>CSS3</span>
+            <span>JavaScript</span>
+            <span>Docker</span>
+            <span>Font Awesome</span>
+            <span>Flag Icons</span>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3 class="footer-brand">Football<span>Stats</span></h3>
+            <ul>
+                <li><a href="/about-system"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
+                <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h3 th:text="#{footer.social}">Social</h3>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/" target="_blank" class="facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/" target="_blank" class="instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://x.com/" target="_blank" class="x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.whatsapp.com/" target="_blank" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://www.youtube.com/" target="_blank" class="youtube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/" target="_blank" class="tiktok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.linkedin.com/" target="_blank" class="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+            </div>
+        </div>
+        <div class="footer-section">
+            <h3 th:text="#{footer.apps}">Apps</h3>
+            <ul class="app-links">
+                <li>
+                    <a href="https://play.google.com/" target="_blank" class="google-play">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </li>
+                <li>
+                    <a href="https://apps.apple.com/" target="_blank" class="app-store">
+                        <i class="fa-brands fa-apple"></i>&nbsp;&nbsp;App Store
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 FootballStats System. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="/js/about_system.js"></script>
+<script th:src="@{/js/tab_title.js}"></script>
+<script src="/js/search_nav_bar.js"></script>
+
+<button type="button" id="scrollTopBtn" class="scroll-top-btn" title="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+</button>
+<script src="/js/scroll_top_btn.js"></script>
+
+</body>
+</html>

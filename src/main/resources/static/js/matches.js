@@ -440,9 +440,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    const seasonGenerateTitle =
+        document.getElementById("seasonGenerateTitle");
+
+    const seasonGenerateText =
+        document.getElementById("seasonGenerateText");
+
+    const seasonGenerateActions =
+        document.getElementById("seasonGenerateActions");
+
     if (confirmSeasonGenerateBtn && generateForm) {
+
         confirmSeasonGenerateBtn.addEventListener("click", function () {
+
             generateForm.dataset.confirmed = "true";
+
+            if (seasonGenerateTitle) {
+                seasonGenerateTitle.textContent =
+                    "Generating domestic leagues...";
+            }
+
+            if (seasonGenerateText) {
+                seasonGenerateText.innerHTML =
+                    `
+                    <i class="fa-solid fa-spinner fa-spin"></i><br><br>
+                    Please wait while all domestic leagues are being generated.
+                    `;
+            }
+
+            if (seasonGenerateActions) {
+                seasonGenerateActions.style.display = "none";
+            }
+
             generateForm.submit();
         });
     }

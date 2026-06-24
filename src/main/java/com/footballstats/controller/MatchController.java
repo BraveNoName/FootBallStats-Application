@@ -254,7 +254,7 @@ public class MatchController {
                 "scotland", "austria", "switzerland", "greece",
                 "denmark", "poland", "sweden", "norway",
                 "croatia", "serbia", "romania", "bulgaria",
-                "ukraine", "czech-republic", "israel"
+                "ukraine", "russia","czech-republic", "israel"
         );
 
         for (String leagueSlug : domesticLeagues) {

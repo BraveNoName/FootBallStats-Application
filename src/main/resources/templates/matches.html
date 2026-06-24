@@ -66,7 +66,7 @@
             </div>
         </li>
 
-        <li><a href="/stats" th:text="#{nav.stats}">Stats</a></li>
+
 
         <li class="dropdown">
             <a href="#">
@@ -772,7 +772,7 @@
         <div class="footer-section">
             <h3 class="footer-brand">Football<span>Stats</span></h3>
             <ul>
-                <li><a href="/"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
+                <li><a href="/about-system"><i class="fa-solid fa-futbol"></i> [[#{footer.about}]]</a></li>
                 <li><a href="/"><i class="fa-solid fa-database"></i> [[#{footer.data}]]</a></li>
                 <li><a href="/"><i class="fa-solid fa-shield"></i> [[#{footer.security}]]</a></li>
             </ul>
@@ -815,23 +815,31 @@
 
 <div class="season-confirm-overlay" id="seasonConfirmOverlay">
     <div class="season-confirm-modal">
-        <h3>Domestic seasons already generated</h3>
 
-        <p>
-            Domestic leagues have already been generated.
-            Generating again will overwrite all domestic league seasons.
-            European competitions will remain unchanged.
-        </p>
+        <div id="seasonGenerateContent">
 
-        <div class="season-confirm-actions">
-            <button type="button" id="cancelSeasonGenerateBtn">
-                Cancel
-            </button>
+            <h3 id="seasonGenerateTitle">
+                Domestic seasons already generated
+            </h3>
 
-            <button type="button" id="confirmSeasonGenerateBtn">
-                Generate new season
-            </button>
+            <p id="seasonGenerateText">
+                Domestic leagues have already been generated.
+                Generating again will overwrite all domestic league seasons.
+                European competitions will remain unchanged.
+            </p>
+
+            <div class="season-confirm-actions" id="seasonGenerateActions">
+                <button type="button" id="cancelSeasonGenerateBtn">
+                    Cancel
+                </button>
+
+                <button type="button" id="confirmSeasonGenerateBtn">
+                    Generate new season
+                </button>
+            </div>
+
         </div>
+
     </div>
 </div>
 
