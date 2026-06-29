@@ -1,26 +1,131 @@
 services:
-  mongodb:
-    image: 'mongo:latest'
+  postgres-db:
+    image: postgres:16
+    container_name: footballstats-postgres-db
     environment:
-      - 'MONGO_INITDB_DATABASE=mydatabase'
-      - 'MONGO_INITDB_ROOT_PASSWORD=secret'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
+      POSTGRES_DB: football_stats
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - '27017'
-  mysql:
-    image: 'mysql:latest'
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app-postgres:
+    build: .
+    container_name: footballstats-app-postgres
+    depends_on:
+      - postgres-db
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      SPRING_PROFILES_ACTIVE: postgres
     ports:
-      - '3306'
-  postgres:
-    image: 'postgres:latest'
+      - "8081:8080"
+
+  mysql-db:
+    image: mysql:8.4
+    container_name: footballstats-mysql-db
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      MYSQL_DATABASE: football_stats
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - '5432'
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app-mysql:
+    build: .
+    container_name: footballstats-app-mysql
+    depends_on:
+      - mysql-db
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+    ports:
+      - "8082:8080"
+
+  mssql-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: footballstats-mssql-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1434:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  app-mssql:
+    build: .
+    container_name: footballstats-app-mssql
+    depends_on:
+      - mssql-db
+    environment:
+      SPRING_PROFILES_ACTIVE: mssql
+    ports:
+      - "8083:8080"
+
+  oracle-db:
+    image: gvenzl/oracle-free:23-slim
+    container_name: footballstats-oracle-db
+    environment:
+      ORACLE_PASSWORD: root
+      APP_USER: football_stats
+      APP_USER_PASSWORD: football_stats
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+
+  app-oracle:
+    build: .
+    container_name: footballstats-app-oracle
+    depends_on:
+      - oracle-db
+    environment:
+      SPRING_PROFILES_ACTIVE: oracle
+    ports:
+      - "8084:8080"
+
+  app-mongodb:
+    build: .
+    container_name: footballstats-app-mongodb
+    depends_on:
+      - mongo-db
+    environment:
+      SPRING_PROFILES_ACTIVE: mongodb
+      SPRING_DATA_MONGODB_URI: mongodb://mongo-db:27017/football_stats
+    ports:
+      - "8085:8080"
+
+  mongo-db:
+    image: mongo:7
+    container_name: footballstats-mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  app-redis:
+    build: .
+    container_name: footballstats-app-redis
+    depends_on:
+      - redis-db
+    environment:
+      SPRING_PROFILES_ACTIVE: redis
+    ports:
+      - "8086:8080"
+
+  redis-db:
+    image: redis:7
+    container_name: footballstats-redis-db
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  mysql_data:
+  mssql_data:
+  oracle_data:
+  mongo_data:
+  redis_data:
