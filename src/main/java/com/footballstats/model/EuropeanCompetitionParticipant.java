@@ -8,15 +8,12 @@ public class EuropeanCompetitionParticipant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String season;
     private String competitionSlug;
-
     private String clubName;
     private String clubSlug;
     private String leagueSlug;
     private String countryCode;
-
     private int potNumber;
     private boolean titleHolder;
     private int uefaRankingPoints;

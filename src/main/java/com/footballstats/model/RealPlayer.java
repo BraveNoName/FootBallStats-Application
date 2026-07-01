@@ -1,5 +1,6 @@
 package com.footballstats.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
@@ -12,6 +13,7 @@ public class RealPlayer {
     private String teamName;
     private String leagueSlug;
     private String clubSlug;
+    @Column(name = "shirt_number")
     private Integer number;
     private String name;
     private String position;

@@ -92,6 +92,7 @@ services:
       - mongo-db
     environment:
       SPRING_PROFILES_ACTIVE: mongodb
+      SPRING_MONGODB_URI: mongodb://mongo-db:27017/football_stats
       SPRING_DATA_MONGODB_URI: mongodb://mongo-db:27017/football_stats
     ports:
       - "8085:8080"

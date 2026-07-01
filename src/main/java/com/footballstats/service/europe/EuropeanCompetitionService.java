@@ -11,6 +11,7 @@ import com.footballstats.repository.EuropeanMatchRepository;
 import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import com.footballstats.dto.EuropeanLeagueTableRow;
 import com.footballstats.model.EuropeanMatchEvent;
@@ -27,6 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Profile("!mongodb")
 public class EuropeanCompetitionService {
 
     private static final String CHAMPIONS_LEAGUE = "champions-league";
