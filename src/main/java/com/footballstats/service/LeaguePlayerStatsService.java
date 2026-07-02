@@ -6,11 +6,13 @@ import com.footballstats.model.Match;
 import com.footballstats.model.MatchEvent;
 import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.MatchEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
+@Profile("!mongodb")
 public class LeaguePlayerStatsService {
 
     private final MatchEventRepository matchEventRepository;

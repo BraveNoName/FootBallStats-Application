@@ -11,6 +11,7 @@ import com.footballstats.repository.MatchRepository;
 import com.footballstats.service.LeagueTableService;
 import com.footballstats.service.MatchGeneratorService;
 import com.footballstats.service.europe.EuropeanCompetitionService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.*;
 
 @Controller
 @RequestMapping("/matches")
+@Profile("!mongodb")
 public class MatchController {
 
     private final MatchEventRepository matchEventRepository;

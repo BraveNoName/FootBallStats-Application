@@ -5,8 +5,10 @@ import com.footballstats.model.CompetitionType;
 import com.footballstats.repository.CompetitionRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 
 @Component
+@Profile({"postgres", "mysql", "mssql", "oracle"})
 public class CompetitionDataLoader implements CommandLineRunner {
 
     private final CompetitionRepository competitionRepository;

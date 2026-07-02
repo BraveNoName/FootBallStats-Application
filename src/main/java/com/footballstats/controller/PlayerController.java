@@ -7,6 +7,7 @@ import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.RealPlayerRepository;
 import com.footballstats.repository.RealTeamRepository;
 import com.footballstats.service.PlayerGenerator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Controller
+@Profile("!mongodb")
 public class PlayerController {
 
     private final PlayerGenerator playerGenerator = new PlayerGenerator();

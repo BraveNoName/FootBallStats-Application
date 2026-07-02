@@ -19,8 +19,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.context.annotation.Profile;
 
 @Controller
+@Profile("!mongodb")
 public class LeagueClubController {
 
     private final ApiFootballService apiFootballService;

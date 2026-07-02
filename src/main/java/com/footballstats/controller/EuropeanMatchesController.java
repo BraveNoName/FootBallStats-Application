@@ -27,8 +27,9 @@ import java.util.Set;
 import java.util.Random;
 import com.footballstats.repository.RefereeRepository;
 import java.time.LocalDateTime;
-
+import org.springframework.context.annotation.Profile;
 @Controller
+@Profile("!mongodb")
 public class EuropeanMatchesController {
 
     private static final String SEASON = "2025/2026";

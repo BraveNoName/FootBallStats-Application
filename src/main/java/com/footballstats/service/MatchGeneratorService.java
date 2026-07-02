@@ -6,6 +6,7 @@ import com.footballstats.model.MatchEvent;
 import com.footballstats.repository.GeneratedPlayerRepository;
 import com.footballstats.repository.MatchEventRepository;
 import com.footballstats.repository.MatchRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @Service
+@Profile("!mongodb")
 public class MatchGeneratorService {
 
     private final MatchRepository matchRepository;
