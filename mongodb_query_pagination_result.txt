@@ -1,0 +1,25 @@
+﻿PERFORMANCE TEST SUMMARY
+Test name: MONGODB_QUERY_PAGINATION_MATCHES
+Trials: 10
+
+Last result: 100
+Average result: 100.00
+
+Average duration: 3.60 ms
+Min duration: 3 ms
+Max duration: 4 ms
+Average throughput: 27777.78 records/s
+
+Detailed trials:
+trial=1 | result=100 | durationMs=4
+trial=2 | result=100 | durationMs=4
+trial=3 | result=100 | durationMs=4
+trial=4 | result=100 | durationMs=4
+trial=5 | result=100 | durationMs=4
+trial=6 | result=100 | durationMs=3
+trial=7 | result=100 | durationMs=4
+trial=8 | result=100 | durationMs=3
+trial=9 | result=100 | durationMs=3
+trial=10 | result=100 | durationMs=3
+
+

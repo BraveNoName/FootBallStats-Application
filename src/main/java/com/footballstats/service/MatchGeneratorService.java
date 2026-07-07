@@ -17,7 +17,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @Service
-@Profile("!mongodb")
 public class MatchGeneratorService {
 
     private final MatchRepository matchRepository;

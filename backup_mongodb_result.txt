@@ -1,0 +1,7 @@
+﻿MONGODB BACKUP TEST
+
+Backup database: football_stats
+Backup file: footballstats_mongodb_backup_20260707_214520.archive
+Backup time [ms]: 176.91
+Backup size [MB]: 11.07
+Execution date: 07/07/2026 21:45:24

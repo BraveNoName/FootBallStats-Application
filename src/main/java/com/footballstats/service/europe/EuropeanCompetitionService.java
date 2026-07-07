@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@Profile("!mongodb")
 public class EuropeanCompetitionService {
 
     private static final String CHAMPIONS_LEAGUE = "champions-league";

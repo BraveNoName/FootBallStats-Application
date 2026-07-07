@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-@Profile("!mongodb")
 public class LeaguePlayerStatsService {
 
     private final MatchEventRepository matchEventRepository;

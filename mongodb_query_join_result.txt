@@ -1,0 +1,25 @@
+﻿PERFORMANCE TEST SUMMARY
+Test name: MONGODB_QUERY_COMPLEX_JOIN_MATCHES_EVENTS_PLAYERS
+Trials: 10
+
+Last result: 1000
+Average result: 1000.00
+
+Average duration: 284.40 ms
+Min duration: 265 ms
+Max duration: 332 ms
+Average throughput: 3516.17 records/s
+
+Detailed trials:
+trial=1 | result=1000 | durationMs=332
+trial=2 | result=1000 | durationMs=293
+trial=3 | result=1000 | durationMs=265
+trial=4 | result=1000 | durationMs=281
+trial=5 | result=1000 | durationMs=303
+trial=6 | result=1000 | durationMs=293
+trial=7 | result=1000 | durationMs=272
+trial=8 | result=1000 | durationMs=267
+trial=9 | result=1000 | durationMs=267
+trial=10 | result=1000 | durationMs=271
+
+
