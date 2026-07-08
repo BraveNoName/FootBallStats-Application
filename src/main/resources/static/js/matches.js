@@ -160,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         russia: {
             name: "Premier Liga",
-            logo: "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg"
+            logo: "/Images/leagues/Russia - Premier Liga/russiapremierliga.png"
         },
         hungary: {
             name: "Nemezeti Bajnoksag",

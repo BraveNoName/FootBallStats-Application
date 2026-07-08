@@ -202,7 +202,7 @@ public class SearchController {
                         "Russian Premier Liga",
                         "League",
                         "/leagues/russia",
-                        "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg"
+                        "/Images/leagues/Russia - Premier Liga/russiapremierliga.png"
                 )
                 ,
 

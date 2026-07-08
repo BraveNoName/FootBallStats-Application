@@ -19,7 +19,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Set;
 @Controller
 @Profile("!mongodb")
 public class PlayerController {
@@ -70,6 +79,35 @@ public class PlayerController {
             "ukraine"
     );
 
+    private static final Set<String> LEAGUE_LOGO_SLUGS = Set.of(
+            "premierleague",
+            "laliga",
+            "bundesliga",
+            "seriea",
+            "ligue1",
+            "ligaportugal",
+            "eredivisie",
+            "proleague",
+            "scottishpremiership",
+            "superlig",
+            "pkobpekstraklasa",
+            "austriabundesliga",
+            "supersporthnl",
+            "chanceliga",
+            "superliga",
+            "superleague1",
+            "eliteserien",
+            "allsvenskan",
+            "superleague",
+            "superligaserbije",
+            "romaniasuperliga",
+            "efbetliga",
+            "premierliga",
+            "ligathaai",
+            "nemzetibanjnoksag",
+            "irelandpremierdivision"
+    );
+
     @GetMapping("/players/real")
     public String realPlayers(Model model,
                               @RequestParam(defaultValue = "") String q,
@@ -108,6 +146,8 @@ public class PlayerController {
 
     @GetMapping("/players/generated/generate-for-real-clubs")
     public String generateForRealClubs() {
+        syncRealTeamsFromImages();
+
         List<RealTeam> teams = realTeamRepository.findAll();
 
         for (RealTeam team : teams) {
@@ -123,6 +163,114 @@ public class PlayerController {
         }
 
         return "redirect:/players/generated";
+    }
+
+    private void syncRealTeamsFromImages() {
+        Map<String, String> leagueFolders = new LinkedHashMap<>();
+
+        leagueFolders.put("England - Premier League", "england");
+        leagueFolders.put("Spain - LaLiga", "spain");
+        leagueFolders.put("Germany - Bundesliga", "germany");
+        leagueFolders.put("Italy - Serie A", "italy");
+        leagueFolders.put("France - Ligue 1", "france");
+        leagueFolders.put("Portugal - Liga Portugal", "portugal");
+        leagueFolders.put("Netherlands - Eredivisie", "netherlands");
+        leagueFolders.put("Belgium - Jupiler Pro League", "belgium");
+        leagueFolders.put("Scotland - Scottish Premiership", "scotland");
+        leagueFolders.put("Turkiye - Super Lig", "turkiye");
+        leagueFolders.put("Poland - PKO BP Ekstraklasa", "poland");
+        leagueFolders.put("Austria - Bundesliga", "austria");
+        leagueFolders.put("Croatia - SuperSport HNL", "croatia");
+        leagueFolders.put("Czech Republic - Chance Liga", "czech-republic");
+        leagueFolders.put("Denmark - Superliga", "denmark");
+        leagueFolders.put("Greece - Super League 1", "greece");
+        leagueFolders.put("Norway - Eliteserien", "norway");
+        leagueFolders.put("Sweden - Allsvenskan", "sweden");
+        leagueFolders.put("Switzerland - Super League", "switzerland");
+        leagueFolders.put("Serbia - Super liga Srbije", "serbia");
+        leagueFolders.put("Romania - SuperLiga", "romania");
+        leagueFolders.put("Bulgaria - efbet Liga", "bulgaria");
+        leagueFolders.put("Ukraine - Premier Liga", "ukraine");
+        leagueFolders.put("Russia - Premier Liga", "russia");
+        leagueFolders.put("Israel - Ligat ha Al", "israel");
+        leagueFolders.put("Hungary - Nemezeti Bajnoksag", "hungary");
+        leagueFolders.put("Moldova - Superliga", "moldova");
+        leagueFolders.put("Republic of Ireland - Ireland Premier Division", "republic-of-ireland");
+
+        try {
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources("classpath:/static/Images/leagues/*/*.png");
+
+            for (Resource resource : resources) {
+                String folder = extractLeagueFolder(resource);
+
+                if (folder == null || !leagueFolders.containsKey(folder)) {
+                    continue;
+                }
+
+                String fileName = resource.getFilename();
+
+                if (fileName == null || !fileName.endsWith(".png")) {
+                    continue;
+                }
+
+                String leagueSlug = leagueFolders.get(folder);
+                String clubName = fileName.substring(0, fileName.length() - 4);
+                String clubSlug = slugify(clubName);
+
+                if (LEAGUE_LOGO_SLUGS.contains(clubSlug)) {
+                    continue;
+                }
+
+                if (realTeamRepository.existsByLeagueSlugAndClubSlug(leagueSlug, clubSlug)) {
+                    continue;
+                }
+
+                RealTeam team = new RealTeam();
+                team.setLeagueSlug(leagueSlug);
+                team.setClubSlug(clubSlug);
+                team.setApiTeamName(clubName);
+                team.setApiTeamId(Math.abs((leagueSlug + "-" + clubSlug).hashCode()));
+                team.setApiLogo("/Images/leagues/" + folder + "/" + fileName);
+
+                realTeamRepository.save(team);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot sync real teams from images.", e);
+        }
+    }
+
+    private String extractLeagueFolder(Resource resource) throws IOException {
+        String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+        url = url.replace("\\", "/");
+
+        String marker = "/static/Images/leagues/";
+        int markerIndex = url.indexOf(marker);
+
+        if (markerIndex < 0) {
+            return null;
+        }
+
+        String rest = url.substring(markerIndex + marker.length());
+        int slashIndex = rest.indexOf("/");
+
+        if (slashIndex < 0) {
+            return null;
+        }
+
+        return rest.substring(0, slashIndex);
+    }
+
+    private String slugify(String value) {
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        return normalized
+                .toLowerCase(Locale.ROOT)
+                .replace("&", "and")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+", "")
+                .replaceAll("-+$", "");
     }
 
     @GetMapping("/players/generated/regenerate")

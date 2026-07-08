@@ -63,6 +63,7 @@ public class PlayerGenerator {
         player.setClubSlug(team.getClubSlug());
         player.setLeagueSlug(team.getLeagueSlug());
         player.setTeamId(team.getApiTeamId());
+        player.setClubLogo(team.getApiLogo());
 
         player.setJoinedClubDate(LocalDate.now().minusYears(random.nextInt(1, 7)));
         player.setContractUntil(LocalDate.now().plusYears(random.nextInt(1, 6)));

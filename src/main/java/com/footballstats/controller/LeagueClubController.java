@@ -53,7 +53,7 @@ public class LeagueClubController {
         put("poland", new LeagueView("poland", "PKO BP Ekstraklasa", "Poland - PKO BP Ekstraklasa", "/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png", 106));
         put("portugal", new LeagueView("portugal", "Liga Portugal", "Portugal - Liga Portugal", "/Images/leagues/Portugal - Liga Portugal/ligaportugal.png", 94));
         put("romania", new LeagueView("romania", "SuperLiga", "Romania - SuperLiga", "/Images/leagues/Romania - SuperLiga/romaniasuperliga.png", 283));
-        put("russia", new LeagueView("russia", "Premier Liga", "Russia - Premier Liga", "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg", 235));
+        put("russia", new LeagueView("russia", "Premier Liga", "Russia - Premier Liga", "/Images/leagues/Russia - Premier Liga/russiapremierliga.png", 235));
         put("scotland", new LeagueView("scotland", "Scottish Premiership", "Scotland - Scottish Premiership", "/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png", 179));
         put("serbia", new LeagueView("serbia", "Super liga Srbije", "Serbia - Super liga Srbije", "/Images/leagues/Serbia - Super liga Srbije/superligaserbije.png", 286));
         put("spain", new LeagueView("spain", "LaLiga", "Spain - LaLiga", "/Images/leagues/Spain - LaLiga/laliga.png", 140));

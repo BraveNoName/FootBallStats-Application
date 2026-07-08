@@ -33,6 +33,7 @@ public class GeneratedPlayer {
     private BigDecimal marketValue;
     private boolean active;
     private String imageUrl;
+    private String clubLogo;
 
     @Column(nullable = true)
     private Integer injuredMatches = 0;
@@ -123,4 +124,11 @@ public class GeneratedPlayer {
     public Integer getSuspendedMatches() {return suspendedMatches == null ? 0 : suspendedMatches;}
     public void setSuspendedMatches(Integer suspendedMatches) {this.suspendedMatches = suspendedMatches;}
 
+    public String getClubLogo() {
+        return clubLogo;
+    }
+
+    public void setClubLogo(String clubLogo) {
+        this.clubLogo = clubLogo;
+    }
 }

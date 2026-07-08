@@ -25,6 +25,7 @@ public class PlayerView {
     private LocalDate lastContractExtension;
     private boolean active;
     private String imageUrl;
+    private String clubLogo;
     private Integer teamId;
 
     public static PlayerView fromGenerated(GeneratedPlayer p) {
@@ -48,6 +49,7 @@ public class PlayerView {
         v.lastContractExtension = p.getLastContractExtension();
         v.active = p.isActive();
         v.imageUrl = p.getImageUrl();
+        v.clubLogo = p.getClubLogo();
         v.teamId = p.getTeamId();
         return v;
     }
@@ -170,8 +172,11 @@ public class PlayerView {
     }
 
     public String getClubLogoUrl() {
-        if (teamId == null) return "/Images/default-club.png";
-        return "https://media.api-sports.io/football/teams/" + teamId + ".png";
+        if (clubLogo == null || clubLogo.isBlank()) {
+            return "/Images/default-club.png";
+        }
+
+        return clubLogo;
     }
 
     public String getLeagueLogoUrl() {
@@ -194,7 +199,7 @@ public class PlayerView {
             case "poland" -> "/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png";
             case "portugal" -> "/Images/leagues/Portugal - Liga Portugal/ligaportugal.png";
             case "romania" -> "/Images/leagues/Romania - SuperLiga/romaniasuperliga.png";
-            case "russia" -> "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg";
+            case "russia" -> "/Images/leagues/Russia - Premier Liga/russiapremierliga.png";
             case "scotland" -> "/Images/leagues/Scotland - Scottish Premiership/scottishpremiership.png";
             case "serbia" -> "/Images/leagues/Serbia - Super liga Srbije/superligaserbije.png";
             case "spain" -> "/Images/leagues/Spain - LaLiga/laliga.png";
