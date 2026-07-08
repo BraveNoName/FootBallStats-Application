@@ -631,7 +631,7 @@ public class EuropeanMatchesController {
                 Map.entry("netherlands", "Netherlands - Eredivisie"),
                 Map.entry("portugal", "Portugal - Liga Portugal"),
                 Map.entry("belgium", "Belgium - Jupiler Pro League"),
-                Map.entry("turkiye", "Türkiye - Süper Lig"),
+                Map.entry("turkiye", "Turkiye - Super Lig"),
                 Map.entry("scotland", "Scotland - Scottish Premiership"),
                 Map.entry("austria", "Austria - Bundesliga"),
                 Map.entry("switzerland", "Switzerland - Super League"),
@@ -646,7 +646,7 @@ public class EuropeanMatchesController {
                 Map.entry("bulgaria", "Bulgaria - efbet Liga"),
                 Map.entry("ukraine", "Ukraine - Premier Liga"),
                 Map.entry("czech-republic", "Czech Republic - Chance Liga"),
-                Map.entry("israel", "Israel - Ligat ha'Al")
+                Map.entry("israel", "Israel - Ligat ha Al")
         );
     }
 

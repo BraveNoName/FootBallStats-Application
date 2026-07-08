@@ -124,11 +124,11 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         turkiye: {
             name: "Süper Lig",
-            logo: "/Images/leagues/Türkiye - Süper Lig/superlig.png"
+            logo: "/Images/leagues/Turkiye - Super Lig/superlig.png"
         },
         turkey: {
             name: "Süper Lig",
-            logo: "/Images/leagues/Türkiye - Süper Lig/superlig.png"
+            logo: "/Images/leagues/Turkiye - Super Lig/superlig.png"
         },
         greece: {
             name: "Super League Greece",
@@ -151,8 +151,8 @@ document.addEventListener("DOMContentLoaded", function () {
             logo: "/Images/leagues/Bulgaria - efbet Liga/efbetliga.png"
         },
         israel: {
-            name: "Ligat ha'Al",
-            logo: "/Images/leagues/Israel - Ligat ha'Al/ligathaai.png"
+            name: "Ligat ha Al",
+            logo: "/Images/leagues/Israel - Ligat ha Al/ligathaai.png"
         },
         romania: {
             name: "SuperLiga",
@@ -161,7 +161,19 @@ document.addEventListener("DOMContentLoaded", function () {
         russia: {
             name: "Premier Liga",
             logo: "/Images/leagues/Russia - Premier Liga/russiapremierliga.jpg"
-        }
+        },
+        hungary: {
+            name: "Nemezeti Bajnoksag",
+            logo: "/Images/leagues/Hungary - Nemezeti Bajnoksag/NemzetiBanjnoksag.png"
+        },
+        moldova: {
+            name: "Superliga",
+            logo: "/Images/leagues/Moldova - Superliga/superliga.png"
+        },
+        "republic-of-ireland": {
+            name: "Ireland Premier Division",
+            logo: "/Images/leagues/Republic of Ireland - Ireland Premier Division/irelandpremierdivision.png"
+        },
     };
 
     const leagueSelect = document.getElementById("leagueSelect");

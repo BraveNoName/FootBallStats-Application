@@ -42,15 +42,13 @@ public class LeagueClubController {
         put("belgium", new LeagueView("belgium", "Jupiler Pro League", "Belgium - Jupiler Pro League", "/Images/leagues/Belgium - Jupiler Pro League/proleague.png", 144));
         put("bulgaria", new LeagueView("bulgaria", "Efbet Liga", "Bulgaria - efbet Liga", "/Images/leagues/Bulgaria - efbet Liga/efbetliga.png", 172));
         put("croatia", new LeagueView("croatia", "SuperSport HNL", "Croatia - SuperSport HNL", "/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png", 210));
-        put("czech", new LeagueView("czech", "Chance Liga", "Czech Republic - Chance Liga", "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png", 345));
-        put("denmark", new LeagueView("denmark", "Superliga", "Denmark - Superliga", "/Images/leagues/Denmark - Superliga/superliga.png", 119));
+        put("czech-republic", new LeagueView("czech-republic", "Chance Liga", "Czech Republic - Chance Liga", "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png", 345));        put("denmark", new LeagueView("denmark", "Superliga", "Denmark - Superliga", "/Images/leagues/Denmark - Superliga/superliga.png", 119));
         put("england", new LeagueView("england", "Premier League", "England - Premier League", "/Images/leagues/England - Premier League/premierleague.png", 39));
         put("france", new LeagueView("france", "Ligue 1", "France - Ligue 1", "/Images/leagues/France - Ligue 1/ligue1.png", 61));
         put("germany", new LeagueView("germany", "Bundesliga", "Germany - Bundesliga", "/Images/leagues/Germany - Bundesliga/bundesliga.png", 78));
         put("greece", new LeagueView("greece", "Super League 1", "Greece - Super League 1", "/Images/leagues/Greece - Super League 1/superleague1.png", 197));
         put("italy", new LeagueView("italy", "Serie A", "Italy - Serie A", "/Images/leagues/Italy - Serie A/seriea.png", 135));
-        put("israel", new LeagueView("israel", "Ligat ha'Al", "Israel - Ligat ha'Al", "/Images/leagues/Israel - Ligat ha'Al/ligathaai.png", 325));
-        put("netherlands", new LeagueView("netherlands", "Eredivisie", "Netherlands - Eredivisie", "/Images/leagues/Netherlands - Eredivisie/eredivisie.png", 88));
+        put("israel", new LeagueView("israel", "Ligat ha Al", "Israel - Ligat ha Al", "/Images/leagues/Israel - Ligat ha Al/ligathaai.png", 325));        put("netherlands", new LeagueView("netherlands", "Eredivisie", "Netherlands - Eredivisie", "/Images/leagues/Netherlands - Eredivisie/eredivisie.png", 88));
         put("norway", new LeagueView("norway", "Eliteserien", "Norway - Eliteserien", "/Images/leagues/Norway - Eliteserien/eliteserien.png", 103));
         put("poland", new LeagueView("poland", "PKO BP Ekstraklasa", "Poland - PKO BP Ekstraklasa", "/Images/leagues/Poland - PKO BP Ekstraklasa/pkobpekstraklasa.png", 106));
         put("portugal", new LeagueView("portugal", "Liga Portugal", "Portugal - Liga Portugal", "/Images/leagues/Portugal - Liga Portugal/ligaportugal.png", 94));
@@ -61,8 +59,31 @@ public class LeagueClubController {
         put("spain", new LeagueView("spain", "LaLiga", "Spain - LaLiga", "/Images/leagues/Spain - LaLiga/laliga.png", 140));
         put("sweden", new LeagueView("sweden", "Allsvenskan", "Sweden - Allsvenskan", "/Images/leagues/Sweden - Allsvenskan/allsvenskan.png", 113));
         put("switzerland", new LeagueView("switzerland", "Super League", "Switzerland - Super League", "/Images/leagues/Switzerland - Super League/superleague.png", 207));
-        put("turkiye", new LeagueView("turkiye", "Süper Lig", "Türkiye - Süper Lig", "/Images/leagues/Türkiye - Süper Lig/superlig.png", 203));
+        put("turkiye", new LeagueView("turkiye", "Süper Lig", "Turkiye - Super Lig", "/Images/leagues/Turkiye - Super Lig/superlig.png", 203));
         put("ukraine", new LeagueView("ukraine", "Premier Liga", "Ukraine - Premier Liga", "/Images/leagues/Ukraine - Premier Liga/premierliga.png", 333));
+        put("hungary", new LeagueView(
+                "hungary",
+                "Nemezeti Bajnoksag",
+                "Hungary - Nemezeti Bajnoksag",
+                "/Images/leagues/Hungary - Nemezeti Bajnoksag/NemzetiBanjnoksag.png",
+                0
+        ));
+
+        put("moldova", new LeagueView(
+                "moldova",
+                "Superliga",
+                "Moldova - Superliga",
+                "/Images/leagues/Moldova - Superliga/superliga.png",
+                0
+        ));
+
+        put("republic-of-ireland", new LeagueView(
+                "republic-of-ireland",
+                "Ireland Premier Division",
+                "Republic of Ireland - Ireland Premier Division",
+                "/Images/leagues/Republic of Ireland - Ireland Premier Division/irelandpremierdivision.png",
+                0
+        ));
     }};
 
     @GetMapping("/leagues/{leagueSlug}")

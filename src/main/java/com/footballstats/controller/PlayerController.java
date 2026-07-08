@@ -39,6 +39,37 @@ public class PlayerController {
         this.realTeamRepository = realTeamRepository;
     }
 
+    private static final List<String> ALL_LEAGUES = List.of(
+            "austria",
+            "belgium",
+            "bulgaria",
+            "croatia",
+            "czech-republic",
+            "denmark",
+            "england",
+            "france",
+            "germany",
+            "greece",
+            "hungary",
+            "israel",
+            "italy",
+            "moldova",
+            "netherlands",
+            "norway",
+            "poland",
+            "portugal",
+            "republic-of-ireland",
+            "romania",
+            "russia",
+            "scotland",
+            "serbia",
+            "spain",
+            "sweden",
+            "switzerland",
+            "turkiye",
+            "ukraine"
+    );
+
     @GetMapping("/players/real")
     public String realPlayers(Model model,
                               @RequestParam(defaultValue = "") String q,
@@ -136,10 +167,7 @@ public class PlayerController {
         model.addAttribute("position", position);
         model.addAttribute("nationality", nationality);
         model.addAttribute("sort", sort);
-        model.addAttribute("leagues", distinct(allPlayers.stream()
-                .map(PlayerView::getLeagueSlug)
-                .sorted()
-                .toList()));
+        model.addAttribute("leagues", ALL_LEAGUES);
         model.addAttribute("clubs", distinct(allPlayers.stream()
                 .map(PlayerView::getClubSlug)
                 .sorted()
@@ -161,6 +189,8 @@ public class PlayerController {
         model.addAttribute("clubLeagueMap", clubLeagueMap);
         model.addAttribute("hasGeneratedPlayers", generatedPlayerRepository.count() > 0);
     }
+
+
 
     private Comparator<PlayerView> getComparator(String sort) {
         return switch (sort) {

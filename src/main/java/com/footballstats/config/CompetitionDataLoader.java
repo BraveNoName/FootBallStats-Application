@@ -47,7 +47,10 @@ public class CompetitionDataLoader implements CommandLineRunner {
         addCompetition("efbet Liga", "bulgaria", "2025/2026", CompetitionType.LEAGUE);
         addCompetition("Premier Liga Ukraine", "ukraine", "2025/2026", CompetitionType.LEAGUE);
         addCompetition("Premier Liga Russia", "russia", "2025/2026", CompetitionType.LEAGUE);
-        addCompetition("Ligat HaAl", "israel", "2025/2026", CompetitionType.LEAGUE);
+        addCompetition("Ligat ha Al", "israel", "2025/2026", CompetitionType.LEAGUE);
+        addCompetition("Nemezeti Bajnoksag", "hungary", "2025/2026", CompetitionType.LEAGUE);
+        addCompetition("Moldova Superliga", "moldova", "2025/2026", CompetitionType.LEAGUE);
+        addCompetition("Ireland Premier Division", "republic-of-ireland", "2025/2026", CompetitionType.LEAGUE);
 
         addCompetition("UEFA Champions League", "champions-league", "2025/2026", CompetitionType.CHAMPIONS_LEAGUE);
         addCompetition("UEFA Europa League", "europa-league", "2025/2026", CompetitionType.EUROPA_LEAGUE);

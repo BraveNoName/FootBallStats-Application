@@ -90,7 +90,7 @@ public class SearchController {
                         "Süper Lig",
                         "League",
                         "/leagues/turkiye",
-                        "/Images/leagues/Türkiye - Süper Lig/superlig.png"
+                        "/Images/leagues/Turkiye - Super Lig/superlig.png"
                 ),
 
                 new SearchResult(
@@ -192,10 +192,10 @@ public class SearchController {
                 ),
 
                 new SearchResult(
-                        "Ligat ha'Al",
+                        "Ligat ha Al",
                         "League",
                         "/leagues/israel",
-                        "/Images/leagues/Israel - Ligat ha'Al/ligathaal.png"
+                        "/Images/leagues/Israel - Ligat ha Al/ligathaai.png"
                 ),
 
                 new SearchResult(
@@ -225,6 +225,24 @@ public class SearchController {
                         "European Competition",
                         "/matches/europe/conference-league",
                         "/Images/european_leagues/UECL.png"
+                ),
+                new SearchResult(
+                        "Hungary - Nemezeti Bajnoksag",
+                        "League",
+                        "/leagues/hungary",
+                        "/Images/leagues/Hungary - Nemezeti Bajnoksag/NemzetiBanjnoksag.png"
+                ),
+                new SearchResult(
+                        "Moldova - Superliga",
+                        "League",
+                        "/leagues/moldova",
+                        "/Images/leagues/Moldova - Superliga/superliga.png"
+                ),
+                new SearchResult(
+                        "Republic of Ireland - Ireland Premier Division",
+                        "League",
+                        "/leagues/republic-of-ireland",
+                        "/Images/leagues/Republic of Ireland - Ireland Premier Division/irelandpremierdivision.png"
                 )
         );
     }

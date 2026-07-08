@@ -53,7 +53,8 @@ public class RedisPerformanceTestController {
             "portugal", "netherlands", "belgium", "scotland", "turkiye",
             "poland", "austria", "croatia", "czech-republic", "denmark",
             "greece", "norway", "sweden", "switzerland", "serbia",
-            "romania", "bulgaria", "ukraine", "russia", "israel"
+            "romania", "bulgaria", "ukraine", "russia", "israel",
+            "hungary", "moldova", "republic-of-ireland"
     };
 
     private static final String[] EUROPEAN_COMPETITIONS = {
@@ -84,7 +85,9 @@ public class RedisPerformanceTestController {
             "romaniasuperliga",
             "efbetliga",
             "premierliga",
-            "ligathaai"
+            "ligathaai",
+            "nemzetibajnoksag",
+            "irelandpremierdivision"
     );
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -738,7 +741,7 @@ public class RedisPerformanceTestController {
                 competition(22, "efbet Liga", "bulgaria", "DOMESTIC_LEAGUE"),
                 competition(23, "Premier Liga Ukraine", "ukraine", "DOMESTIC_LEAGUE"),
                 competition(24, "Premier Liga Russia", "russia", "DOMESTIC_LEAGUE"),
-                competition(25, "Ligat HaAl", "israel", "DOMESTIC_LEAGUE"),
+                competition(25, "Ligat ha Al", "israel", "DOMESTIC_LEAGUE"),
                 competition(26, "Champions League", "champions-league", "EUROPEAN_CUP"),
                 competition(27, "Europa League", "europa-league", "EUROPEAN_CUP"),
                 competition(28, "Conference League", "conference-league", "EUROPEAN_CUP")
@@ -781,7 +784,7 @@ public class RedisPerformanceTestController {
         leagueFolders.put("Netherlands - Eredivisie", "netherlands");
         leagueFolders.put("Belgium - Jupiler Pro League", "belgium");
         leagueFolders.put("Scotland - Scottish Premiership", "scotland");
-        leagueFolders.put("Türkiye - Süper Lig", "turkiye");
+        leagueFolders.put("Turkiye - Super Lig", "turkiye");
         leagueFolders.put("Poland - PKO BP Ekstraklasa", "poland");
         leagueFolders.put("Austria - Bundesliga", "austria");
         leagueFolders.put("Croatia - SuperSport HNL", "croatia");
@@ -796,7 +799,10 @@ public class RedisPerformanceTestController {
         leagueFolders.put("Bulgaria - efbet Liga", "bulgaria");
         leagueFolders.put("Ukraine - Premier Liga", "ukraine");
         leagueFolders.put("Russia - Premier Liga", "russia");
-        leagueFolders.put("Israel - Ligat ha'Al", "israel");
+        leagueFolders.put("Israel - Ligat ha Al", "israel");
+        leagueFolders.put("Hungary - Nemezeti Bajnoksag", "hungary");
+        leagueFolders.put("Moldova - Superliga", "moldova");
+        leagueFolders.put("Republic of Ireland - Ireland Premier Division", "republic-of-ireland");
 
         Map<String, String> rows = new LinkedHashMap<>();
         AtomicLong id = new AtomicLong(1);

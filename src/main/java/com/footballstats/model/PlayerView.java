@@ -138,7 +138,7 @@ public class PlayerView {
             case "belgium" -> "Jupiler Pro League";
             case "bulgaria" -> "First Professional League";
             case "croatia" -> "HNL";
-            case "czech" -> "Czech First League";
+            case "czech-republic" -> "Chance Liga";
             case "denmark" -> "Danish Superliga";
             case "england" -> "Premier League";
             case "france" -> "Ligue 1";
@@ -157,6 +157,10 @@ public class PlayerView {
             case "switzerland" -> "Swiss Super League";
             case "turkiye" -> "Süper Lig";
             case "ukraine" -> "Ukrainian Premier League";
+            case "hungary" -> "Nemezeti Bajnoksag";
+            case "moldova" -> "Superliga";
+            case "republic-of-ireland" -> "Ireland Premier Division";
+
             default -> leagueSlug.substring(0, 1).toUpperCase() + leagueSlug.substring(1);
         };
     }
@@ -178,13 +182,12 @@ public class PlayerView {
             case "belgium" -> "/Images/leagues/Belgium - Jupiler Pro League/proleague.png";
             case "bulgaria" -> "/Images/leagues/Bulgaria - efbet Liga/efbetliga.png";
             case "croatia" -> "/Images/leagues/Croatia - SuperSport HNL/supersporthnl.png";
-            case "czech" -> "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png";
-            case "denmark" -> "/Images/leagues/Denmark - Superliga/superliga.png";
+            case "czech-republic" -> "/Images/leagues/Czech Republic - Chance Liga/chanceliga.png";            case "denmark" -> "/Images/leagues/Denmark - Superliga/superliga.png";
             case "england" -> "/Images/leagues/England - Premier League/premierleague.png";
             case "france" -> "/Images/leagues/France - Ligue 1/ligue1.png";
             case "germany" -> "/Images/leagues/Germany - Bundesliga/bundesliga.png";
             case "greece" -> "/Images/leagues/Greece - Super League 1/superleague1.png";
-            case "israel" -> "/Images/leagues/Israel - Ligat ha'Al/ligathaai.png";
+            case "israel" -> "/Images/leagues/Israel - Ligat ha Al/ligathaai.png";
             case "italy" -> "/Images/leagues/Italy - Serie A/seriea.png";
             case "netherlands" -> "/Images/leagues/Netherlands - Eredivisie/eredivisie.png";
             case "norway" -> "/Images/leagues/Norway - Eliteserien/eliteserien.png";
@@ -197,7 +200,7 @@ public class PlayerView {
             case "spain" -> "/Images/leagues/Spain - LaLiga/laliga.png";
             case "sweden" -> "/Images/leagues/Sweden - Allsvenskan/allsvenskan.png";
             case "switzerland" -> "/Images/leagues/Switzerland - Super League/superleague.png";
-            case "turkiye" -> "/Images/leagues/Türkiye - Süper Lig/superlig.png";
+            case "turkiye" -> "/Images/leagues/Turkiye - Super Lig/superlig.png";
             case "ukraine" -> "/Images/leagues/Ukraine - Premier Liga/premierliga.png";
             default -> "/Images/default-league.png";
         };

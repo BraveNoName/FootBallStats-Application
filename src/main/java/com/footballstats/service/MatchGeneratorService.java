@@ -1196,7 +1196,7 @@ public class MatchGeneratorService {
             case "france" -> "France - Ligue 1";
             case "germany" -> "Germany - Bundesliga";
             case "greece" -> "Greece - Super League 1";
-            case "israel" -> "Israel - Ligat ha'Al";
+            case "israel" -> "Israel - Ligat ha Al";
             case "italy" -> "Italy - Serie A";
             case "netherlands" -> "Netherlands - Eredivisie";
             case "norway" -> "Norway - Eliteserien";
@@ -1209,8 +1209,11 @@ public class MatchGeneratorService {
             case "spain" -> "Spain - LaLiga";
             case "sweden" -> "Sweden - Allsvenskan";
             case "switzerland" -> "Switzerland - Super League";
-            case "turkiye" -> "Türkiye - Süper Lig";
+            case "turkiye" -> "Turkiye - Super Lig";
             case "ukraine" -> "Ukraine - Premier Liga";
+            case "hungary" -> "Hungary - Nemezeti Bajnoksag";
+            case "moldova" -> "Moldova - Superliga";
+            case "republic-of-ireland" -> "Republic of Ireland - Ireland Premier Division";
             default -> throw new RuntimeException("Unknown league: " + league);
         };
     }

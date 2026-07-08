@@ -55,7 +55,8 @@ public class MongoPerformanceTestController {
             "portugal", "netherlands", "belgium", "scotland", "turkiye",
             "poland", "austria", "croatia", "czech-republic", "denmark",
             "greece", "norway", "sweden", "switzerland", "serbia",
-            "romania", "bulgaria", "ukraine", "russia", "israel"
+            "romania", "bulgaria", "ukraine", "russia", "israel",
+            "hungary", "moldova", "republic-of-ireland"
     };
 
     private static final String[] EUROPEAN_COMPETITIONS = {
@@ -782,7 +783,7 @@ public class MongoPerformanceTestController {
                 competition(22, "efbet Liga", "bulgaria", "DOMESTIC_LEAGUE"),
                 competition(23, "Premier Liga Ukraine", "ukraine", "DOMESTIC_LEAGUE"),
                 competition(24, "Premier Liga Russia", "russia", "DOMESTIC_LEAGUE"),
-                competition(25, "Ligat HaAl", "israel", "DOMESTIC_LEAGUE"),
+                competition(25, "Ligat ha Al", "israel", "DOMESTIC_LEAGUE"),
                 competition(26, "Champions League", "champions-league", "EUROPEAN_CUP"),
                 competition(27, "Europa League", "europa-league", "EUROPEAN_CUP"),
                 competition(28, "Conference League", "conference-league", "EUROPEAN_CUP")
@@ -817,22 +818,25 @@ public class MongoPerformanceTestController {
         leagueFolders.put("Netherlands - Eredivisie", "netherlands");
         leagueFolders.put("Belgium - Jupiler Pro League", "belgium");
         leagueFolders.put("Scotland - Scottish Premiership", "scotland");
-        leagueFolders.put("Turkey - Super Lig", "turkiye");
-        leagueFolders.put("Poland - Ekstraklasa", "poland");
+        leagueFolders.put("Turkiye - Super Lig", "turkiye");
+        leagueFolders.put("Poland - PKO BP Ekstraklasa", "poland");
         leagueFolders.put("Austria - Bundesliga", "austria");
         leagueFolders.put("Croatia - SuperSport HNL", "croatia");
         leagueFolders.put("Czech Republic - Chance Liga", "czech-republic");
         leagueFolders.put("Denmark - Superliga", "denmark");
-        leagueFolders.put("Greece - Super League Greece", "greece");
+        leagueFolders.put("Greece - Super League 1", "greece");
         leagueFolders.put("Norway - Eliteserien", "norway");
         leagueFolders.put("Sweden - Allsvenskan", "sweden");
         leagueFolders.put("Switzerland - Super League", "switzerland");
-        leagueFolders.put("Serbia - Super Liga Srbije", "serbia");
+        leagueFolders.put("Serbia - Super liga Srbije", "serbia");
         leagueFolders.put("Romania - SuperLiga", "romania");
         leagueFolders.put("Bulgaria - efbet Liga", "bulgaria");
         leagueFolders.put("Ukraine - Premier Liga", "ukraine");
         leagueFolders.put("Russia - Premier Liga", "russia");
-        leagueFolders.put("Israel - Ligat HaAl", "israel");
+        leagueFolders.put("Israel - Ligat ha Al", "israel");
+        leagueFolders.put("Hungary - Nemezeti Bajnoksag", "hungary");
+        leagueFolders.put("Moldova - Superliga", "moldova");
+        leagueFolders.put("Republic of Ireland - Ireland Premier Division", "republic-of-ireland");
 
         List<Document> teams = new ArrayList<>();
         AtomicLong id = new AtomicLong(1);
