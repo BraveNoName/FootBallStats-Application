@@ -1,0 +1,25 @@
+﻿PERFORMANCE TEST SUMMARY
+Test name: REDIS_APP_FLOW_SELECT_ALL_GENERATED_PLAYERS
+Trials: 10
+
+Last result: 11798
+Average result: 11798.00
+
+Average duration: 32.30 ms
+Min duration: 28 ms
+Max duration: 41 ms
+Average throughput: 365263.16 records/s
+
+Detailed trials:
+trial=1 | result=11798 | durationMs=31
+trial=2 | result=11798 | durationMs=38
+trial=3 | result=11798 | durationMs=30
+trial=4 | result=11798 | durationMs=29
+trial=5 | result=11798 | durationMs=28
+trial=6 | result=11798 | durationMs=41
+trial=7 | result=11798 | durationMs=35
+trial=8 | result=11798 | durationMs=32
+trial=9 | result=11798 | durationMs=28
+trial=10 | result=11798 | durationMs=31
+
+

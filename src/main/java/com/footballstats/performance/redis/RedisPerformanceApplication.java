@@ -1,9 +1,12 @@
 package com.footballstats.performance.redis;
 
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.footballstats.performance.redis")
 public class RedisPerformanceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RedisPerformanceApplication.class, args);
+    }
 }

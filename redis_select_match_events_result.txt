@@ -1,0 +1,25 @@
+﻿PERFORMANCE TEST SUMMARY
+Test name: REDIS_APP_FLOW_SELECT_SAMPLE_MATCH_EVENTS
+Trials: 10
+
+Last result: 8
+Average result: 8.00
+
+Average duration: 39.70 ms
+Min duration: 36 ms
+Max duration: 45 ms
+Average throughput: 201.51 records/s
+
+Detailed trials:
+trial=1 | result=8 | durationMs=45
+trial=2 | result=8 | durationMs=42
+trial=3 | result=8 | durationMs=36
+trial=4 | result=8 | durationMs=44
+trial=5 | result=8 | durationMs=36
+trial=6 | result=8 | durationMs=40
+trial=7 | result=8 | durationMs=37
+trial=8 | result=8 | durationMs=36
+trial=9 | result=8 | durationMs=42
+trial=10 | result=8 | durationMs=39
+
+

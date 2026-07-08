@@ -1,0 +1,25 @@
+﻿PERFORMANCE TEST SUMMARY
+Test name: REDIS_APP_FLOW_CALCULATE_ALL_LEAGUE_TABLES
+Trials: 10
+
+Last result: 398
+Average result: 398.00
+
+Average duration: 334.50 ms
+Min duration: 277 ms
+Max duration: 535 ms
+Average throughput: 1189.84 records/s
+
+Detailed trials:
+trial=1 | result=398 | durationMs=277
+trial=2 | result=398 | durationMs=287
+trial=3 | result=398 | durationMs=535
+trial=4 | result=398 | durationMs=339
+trial=5 | result=398 | durationMs=313
+trial=6 | result=398 | durationMs=310
+trial=7 | result=398 | durationMs=317
+trial=8 | result=398 | durationMs=326
+trial=9 | result=398 | durationMs=308
+trial=10 | result=398 | durationMs=333
+
+
