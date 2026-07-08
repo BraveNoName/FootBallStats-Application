@@ -1,146 +1,498 @@
 package com.footballstats.controller;
 
-import com.footballstats.model.PerformanceTestEntity;
-import com.footballstats.repository.CompetitionRepository;
-import com.footballstats.repository.PerformanceTestRepository;
+import com.footballstats.dto.EuropeanLeaguePhaseRoundView;
+import com.footballstats.dto.EuropeanLeagueTableRow;
+import com.footballstats.dto.LeagueTableRow;
+import com.footballstats.model.*;
+import com.footballstats.repository.*;
+import com.footballstats.service.LeagueTableService;
+import com.footballstats.service.MatchGeneratorService;
+import com.footballstats.service.PlayerGenerator;
+import com.footballstats.service.europe.EuropeanCompetitionService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@Profile("!mongodb")
 public class PerformanceTestController {
 
+    private static final String SEASON = "2025/2026";
     private static final int TRIALS = 10;
 
-    private final CompetitionRepository competitionRepository;
-    private final PerformanceTestRepository performanceTestRepository;
+    private static final String[] LEAGUES = {
+            "england", "spain", "germany", "italy", "france",
+            "portugal", "netherlands", "belgium", "scotland", "turkiye",
+            "poland", "austria", "croatia", "czech-republic", "denmark",
+            "greece", "norway", "sweden", "switzerland", "serbia",
+            "romania", "bulgaria", "ukraine", "russia", "israel",
+            "hungary", "moldova", "republic-of-ireland"
+    };
 
-    @GetMapping("/admin/performance/run")
-    public String runSelectTests() {
-        PerformanceResult result = runMeasuredTest("SELECT_COMPETITIONS", () -> competitionRepository.findAll().size());
-        return buildSummary(result);
+    private static final String[] EUROPEAN_COMPETITIONS = {
+            "champions-league",
+            "europa-league",
+            "conference-league"
+    };
+
+    private final MatchGeneratorService matchGeneratorService;
+    private final LeagueTableService leagueTableService;
+    private final EuropeanCompetitionService europeanCompetitionService;
+
+    private final MatchRepository matchRepository;
+    private final MatchEventRepository matchEventRepository;
+    private final GeneratedPlayerRepository generatedPlayerRepository;
+    private final RealTeamRepository realTeamRepository;
+    private final EuropeanMatchRepository europeanMatchRepository;
+    private final EuropeanMatchEventRepository europeanMatchEventRepository;
+    private final EuropeanKnockoutMatchRepository europeanKnockoutMatchRepository;
+    private final RefereeRepository refereeRepository;
+
+    private final PlayerGenerator playerGenerator = new PlayerGenerator();
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    /**
+     * Test aplikacji od czystego stanu danych pomiarowych.
+     * Ten endpoint jest najbezpieczniejszy do porównań między bazami.
+     */
+    @GetMapping("/admin/performance/app-flow-clean")
+    @Transactional
+    public String runCleanApplicationFlowPerformanceTests() {
+        resetPerformanceDataInternal();
+        ensureReferees();
+        ensureRealTeams();
+        return runApplicationFlowPerformanceTestsInternal("FULL CLEAN APP FLOW PERFORMANCE TESTS COMPLETED");
     }
 
-    @GetMapping("/admin/performance/crud")
-    public String runCrudTests(@RequestParam(defaultValue = "1000") int size) {
-        performanceTestRepository.deleteAll();
+    /**
+     * Test aplikacji bez automatycznego resetu.
+     * Zostawiony, żeby nie psuć dotychczasowych skryptów.
+     */
+    @GetMapping("/admin/performance/app-flow")
+    public String runApplicationFlowPerformanceTests() {
+        ensureReferees();
+        ensureRealTeams();
+        return runApplicationFlowPerformanceTestsInternal("FULL APP FLOW PERFORMANCE TESTS COMPLETED");
+    }
 
+    @GetMapping("/admin/performance/setup")
+    public String setupPerformanceData() {
+        ensureReferees();
+        ensureRealTeams();
+
+        return """
+                SETUP PERFORMANCE DATA COMPLETED
+
+                Prepared:
+                - referees
+                - real teams
+
+                Recommended clean endpoint:
+                /admin/performance/app-flow-clean
+
+                Manual endpoints:
+                /admin/performance/reset
+                /admin/performance/counts
+                /admin/performance/generate-players
+                /admin/performance/generate-leagues
+                /admin/performance/calculate-league-tables
+                /admin/performance/select-league-matches
+                /admin/performance/select-match-events
+                /admin/performance/select-players
+                /admin/performance/generate-europe
+                /admin/performance/calculate-europe-tables
+                /admin/performance/build-europe-rounds
+                /admin/performance/generate-europe-knockout
+                /admin/performance/select-europe-events
+                /admin/performance/query-pagination
+                /admin/performance/query-join
+                /admin/performance/query-sort-filter
+                /admin/performance/query-advanced
+                """;
+    }
+
+    /**
+     * Czyści tylko dane generowane podczas testów.
+     * Nie usuwa słowników bazowych: RealTeam i Referee.
+     */
+    @GetMapping("/admin/performance/reset")
+    @Transactional
+    public String resetPerformanceData() {
+        resetPerformanceDataInternal();
+        return """
+                PERFORMANCE DATA RESET COMPLETED
+
+                Deleted generated data:
+                - domestic match events
+                - domestic matches
+                - generated players
+                - European match events
+                - European knockout matches
+                - European league phase matches
+                - European competition participants
+
+                Kept setup data:
+                - real teams
+                - referees
+                """;
+    }
+
+    @GetMapping("/admin/performance/counts")
+    public String performanceDataCounts() {
+        return """
+                PERFORMANCE DATA COUNTS
+
+                Real teams: %d
+                Referees: %d
+                Generated players: %d
+                Domestic matches: %d
+                Domestic match events: %d
+                European matches: %d
+                European knockout matches: %d
+                European match events: %d
+                European participants: %d
+                """.formatted(
+                realTeamRepository.count(),
+                refereeRepository.count(),
+                generatedPlayerRepository.count(),
+                matchRepository.count(),
+                matchEventRepository.count(),
+                europeanMatchRepository.count(),
+                europeanKnockoutMatchRepository.count(),
+                europeanMatchEventRepository.count(),
+                countEuropeanParticipants()
+        );
+    }
+
+    @GetMapping("/admin/performance/generate-players")
+    public String generatePlayersPerformance() {
+        ensureRealTeams();
+        return buildSummary(runGeneratePlayersForAllTeams());
+    }
+
+    @GetMapping("/admin/performance/generate-leagues")
+    public String generateLeaguesPerformance() {
+        ensureReferees();
+        ensureRealTeams();
+        return buildSummary(runGenerateAllLeagueSeasons());
+    }
+
+    @GetMapping("/admin/performance/calculate-league-tables")
+    public String calculateLeagueTablesPerformance() {
+        return buildSummary(runCalculateAllLeagueTables());
+    }
+
+    @GetMapping("/admin/performance/select-league-matches")
+    public String selectLeagueMatchesPerformance() {
+        return buildSummary(runSelectAllLeagueMatches());
+    }
+
+    @GetMapping("/admin/performance/select-match-events")
+    public String selectMatchEventsPerformance() {
+        return buildSummary(runSelectSampleMatchEvents());
+    }
+
+    @GetMapping("/admin/performance/select-players")
+    public String selectPlayersPerformance() {
+        return buildSummary(runSelectAllGeneratedPlayers());
+    }
+
+    @GetMapping("/admin/performance/generate-europe")
+    public String generateEuropePerformance() {
+        ensureReferees();
+        ensureRealTeams();
+        ensureGeneratedPlayersExist();
+        return buildSummary(runGenerateAllEuropeanCompetitions());
+    }
+
+    @GetMapping("/admin/performance/calculate-europe-tables")
+    public String calculateEuropeTablesPerformance() {
+        return buildSummary(runCalculateAllEuropeanTables());
+    }
+
+    @GetMapping("/admin/performance/build-europe-rounds")
+    public String buildEuropeRoundsPerformance() {
+        return buildSummary(runBuildAllEuropeanRoundViews());
+    }
+
+    @GetMapping("/admin/performance/generate-europe-knockout")
+    public String generateEuropeKnockoutPerformance() {
+        return buildSummary(runGenerateAllEuropeanKnockouts());
+    }
+
+    @GetMapping("/admin/performance/select-europe-events")
+    public String selectEuropeEventsPerformance() {
+        return buildSummary(runSelectSampleEuropeanMatchEvents());
+    }
+
+    @GetMapping("/admin/performance/query-pagination")
+    public String queryPaginationPerformance() {
+        return buildSummary(runQueryPaginationMatches());
+    }
+
+    @GetMapping("/admin/performance/query-join")
+    public String queryJoinPerformance() {
+        return buildSummary(runQueryJoinMatchesEventsPlayers());
+    }
+
+    @GetMapping("/admin/performance/query-sort-filter")
+    public String querySortFilterPerformance() {
+        return buildSummary(runQuerySortFilterPlayersByValue());
+    }
+
+    @GetMapping("/admin/performance/query-advanced")
+    public String queryAdvancedPerformance() {
         List<PerformanceResult> results = List.of(
-                runInsertTest(size),
-                runSelectTest(size),
-                runUpdateTest(size),
-                runDeleteTest(size)
+                runQueryPaginationMatches(),
+                runQueryJoinMatchesEventsPlayers(),
+                runQuerySortFilterPlayersByValue()
         );
 
         StringBuilder response = new StringBuilder();
-        response.append("CRUD PERFORMANCE TESTS COMPLETED\n");
-        response.append("Size: ").append(size).append("\n\n");
+        response.append("ADVANCED QUERY PERFORMANCE TESTS COMPLETED\n\n");
 
         for (PerformanceResult result : results) {
-            response.append(buildSummary(result)).append("\n");
+            response.append(buildSummary(result)).append("\n\n");
         }
 
         return response.toString();
     }
 
-    @GetMapping("/admin/performance/crud-all")
-    public String runAllCrudTests() {
-        int[] sizes = {1000, 10000, 100000};
+    private String runApplicationFlowPerformanceTestsInternal(String title) {
+        List<PerformanceResult> results = List.of(
+                runGeneratePlayersForAllTeams(),
+                runGenerateAllLeagueSeasons(),
+                runCalculateAllLeagueTables(),
+                runSelectAllLeagueMatches(),
+                runSelectSampleMatchEvents(),
+                runSelectAllGeneratedPlayers(),
+                runGenerateAllEuropeanCompetitions(),
+                runCalculateAllEuropeanTables(),
+                runBuildAllEuropeanRoundViews(),
+                runGenerateAllEuropeanKnockouts(),
+                runSelectSampleEuropeanMatchEvents(),
+                runQueryPaginationMatches(),
+                runQueryJoinMatchesEventsPlayers(),
+                runQuerySortFilterPlayersByValue()
+        );
 
         StringBuilder response = new StringBuilder();
-        response.append("ALL CRUD TESTS COMPLETED\n\n");
+        response.append(title).append("\n\n");
 
-        for (int size : sizes) {
-            System.out.println();
-            System.out.println("========================================");
-            System.out.println("STARTING CRUD TEST FOR SIZE = " + size);
-            System.out.println("========================================");
-
-            performanceTestRepository.deleteAll();
-
-            response.append("========================================\n");
-            response.append("CRUD TEST SIZE = ").append(size).append("\n");
-            response.append("========================================\n\n");
-
-            List<PerformanceResult> results = List.of(
-                    runInsertTest(size),
-                    runSelectTest(size),
-                    runUpdateTest(size),
-                    runDeleteTest(size)
-            );
-
-            for (PerformanceResult result : results) {
-                response.append(buildSummary(result)).append("\n");
-            }
+        for (PerformanceResult result : results) {
+            response.append(buildSummary(result)).append("\n\n");
         }
 
         return response.toString();
     }
 
-    private PerformanceResult runInsertTest(int size) {
-        return runMeasuredTest("CRUD_INSERT_" + size, () -> {
-            performanceTestRepository.deleteAll();
+    private PerformanceResult runGeneratePlayersForAllTeams() {
+        return runMeasuredTest("APP_FLOW_GENERATE_PLAYERS_ALL", () -> {
+            generatedPlayerRepository.deleteAll();
+            entityManager.flush();
+            entityManager.clear();
 
-            List<PerformanceTestEntity> rows = new ArrayList<>();
+            long insertedPlayers = 0;
+            List<RealTeam> teams = realTeamRepository.findAll();
 
-            for (int i = 1; i <= size; i++) {
-                PerformanceTestEntity entity = new PerformanceTestEntity();
-                entity.setTestName("TEST_" + i);
-                entity.setTestValue(i);
-                rows.add(entity);
+            for (RealTeam team : teams) {
+                List<GeneratedPlayer> squad = playerGenerator.generateSquadForTeam(team);
+                generatedPlayerRepository.saveAll(squad);
+                insertedPlayers += squad.size();
             }
 
-            performanceTestRepository.saveAll(rows);
-            return size;
+            return insertedPlayers;
         });
     }
 
-    private PerformanceResult runSelectTest(int size) {
-        return runMeasuredTest("CRUD_SELECT_" + size, () -> performanceTestRepository.findAll().size());
-    }
+    private PerformanceResult runGenerateAllLeagueSeasons() {
+        return runMeasuredTest("APP_FLOW_GENERATE_ALL_LEAGUE_SEASONS", () -> {
+            deleteDomesticMatchData();
 
-    private PerformanceResult runUpdateTest(int size) {
-        return runMeasuredTest("CRUD_UPDATE_" + size, () -> {
-            List<PerformanceTestEntity> rows = performanceTestRepository.findAll();
-
-            for (PerformanceTestEntity row : rows) {
-                row.setTestValue(row.getTestValue() + 1);
+            for (String league : LEAGUES) {
+                matchGeneratorService.generateLeagueSeason(league);
             }
 
-            performanceTestRepository.saveAll(rows);
+            return matchRepository.count();
+        });
+    }
+
+    private PerformanceResult runCalculateAllLeagueTables() {
+        return runMeasuredTest("APP_FLOW_CALCULATE_ALL_LEAGUE_TABLES", () -> {
+            long totalRows = 0;
+
+            for (String league : LEAGUES) {
+                List<Match> matches = matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(league);
+                List<LeagueTableRow> table = leagueTableService.calculateTable(matches, league);
+                totalRows += table.size();
+            }
+
+            return totalRows;
+        });
+    }
+
+    private PerformanceResult runSelectAllLeagueMatches() {
+        return runMeasuredTest("APP_FLOW_SELECT_ALL_LEAGUE_MATCHES", () -> {
+            long totalMatches = 0;
+
+            for (String league : LEAGUES) {
+                totalMatches += matchRepository.findByLeagueOrderByRoundNumberAscMatchDateAsc(league).size();
+            }
+
+            return totalMatches;
+        });
+    }
+
+    private PerformanceResult runSelectSampleMatchEvents() {
+        return runMeasuredTest("APP_FLOW_SELECT_SAMPLE_MATCH_EVENTS", () -> {
+            Long matchId = getFirstLeagueMatchId();
+
+            if (matchId == null || matchId < 0) {
+                return 0;
+            }
+
+            List<MatchEvent> events = matchEventRepository.findByMatchIdOrderByEventMinuteAsc(matchId);
+            return events.size();
+        });
+    }
+
+    private PerformanceResult runSelectAllGeneratedPlayers() {
+        return runMeasuredTest("APP_FLOW_SELECT_ALL_GENERATED_PLAYERS", () -> {
+            List<GeneratedPlayer> players = generatedPlayerRepository.findAll();
+            return players.size();
+        });
+    }
+
+    private PerformanceResult runGenerateAllEuropeanCompetitions() {
+        return runMeasuredTest("APP_FLOW_GENERATE_ALL_EUROPEAN_COMPETITIONS", () -> {
+            deleteAllEuropeanCompetitionData();
+
+            for (String competition : EUROPEAN_COMPETITIONS) {
+                europeanCompetitionService.generateOrRegenerateEuropeanCompetition(SEASON, competition);
+            }
+
+            return europeanMatchRepository.count();
+        });
+    }
+
+    private PerformanceResult runCalculateAllEuropeanTables() {
+        return runMeasuredTest("APP_FLOW_CALCULATE_ALL_EUROPEAN_TABLES", () -> {
+            long totalRows = 0;
+
+            for (String competition : EUROPEAN_COMPETITIONS) {
+                List<EuropeanLeagueTableRow> table =
+                        europeanCompetitionService.calculateLeaguePhaseTable(SEASON, competition);
+                totalRows += table.size();
+            }
+
+            return totalRows;
+        });
+    }
+
+    private PerformanceResult runBuildAllEuropeanRoundViews() {
+        return runMeasuredTest("APP_FLOW_BUILD_ALL_EUROPEAN_ROUND_VIEWS", () -> {
+            long totalRounds = 0;
+
+            for (String competition : EUROPEAN_COMPETITIONS) {
+                List<EuropeanLeaguePhaseRoundView> rounds =
+                        europeanCompetitionService.buildLeaguePhaseRoundViews(SEASON, competition);
+                totalRounds += rounds.size();
+            }
+
+            return totalRounds;
+        });
+    }
+
+    private PerformanceResult runGenerateAllEuropeanKnockouts() {
+        return runMeasuredTest("APP_FLOW_GENERATE_ALL_EUROPEAN_KNOCKOUTS", () -> {
+            long totalKnockoutMatches = 0;
+
+            for (String competition : EUROPEAN_COMPETITIONS) {
+                deleteEuropeanKnockoutData(SEASON, competition);
+                europeanCompetitionService.generateKnockoutStage(SEASON, competition);
+
+                List<EuropeanKnockoutMatch> knockoutMatches =
+                        europeanCompetitionService.getKnockoutMatches(SEASON, competition);
+
+                totalKnockoutMatches += knockoutMatches.size();
+            }
+
+            return totalKnockoutMatches;
+        });
+    }
+
+    private PerformanceResult runSelectSampleEuropeanMatchEvents() {
+        return runMeasuredTest("APP_FLOW_SELECT_SAMPLE_EUROPEAN_MATCH_EVENTS", () -> {
+            Long europeanMatchId = getFirstEuropeanMatchId();
+
+            if (europeanMatchId == null || europeanMatchId < 0) {
+                return 0;
+            }
+
+            List<EuropeanMatchEvent> events =
+                    europeanMatchEventRepository.findByMatchIdOrderByEventMinuteAsc(europeanMatchId);
+
+            return events.size();
+        });
+    }
+
+    private PerformanceResult runQueryPaginationMatches() {
+        return runMeasuredTest("QUERY_PAGINATION_MATCHES", () -> {
+            Page<Match> page = matchRepository.findAll(PageRequest.of(10, 100));
+            return page.getContent().size();
+        });
+    }
+
+    private PerformanceResult runQueryJoinMatchesEventsPlayers() {
+        return runMeasuredTest("QUERY_COMPLEX_JOIN_MATCHES_EVENTS_PLAYERS", () -> {
+            List<Object[]> rows = entityManager.createQuery(
+                            "SELECT m.id, e.id, p.id " +
+                                    "FROM Match m " +
+                                    "JOIN MatchEvent e ON e.matchId = m.id " +
+                                    "JOIN GeneratedPlayer p ON e.playerId = p.id",
+                            Object[].class
+                    )
+                    .setMaxResults(1000)
+                    .getResultList();
+
             return rows.size();
         });
     }
 
-    private PerformanceResult runDeleteTest(int size) {
-        return runMeasuredTest("CRUD_DELETE_" + size, () -> {
-            prepareRowsForDelete(size);
-            performanceTestRepository.deleteAll();
-            return size;
+    private PerformanceResult runQuerySortFilterPlayersByValue() {
+        return runMeasuredTest("QUERY_SORT_FILTER_PLAYERS_BY_VALUE", () -> {
+            List<GeneratedPlayer> players = entityManager.createQuery(
+                            "SELECT p FROM GeneratedPlayer p " +
+                                    "WHERE p.marketValue IS NOT NULL " +
+                                    "AND p.leagueSlug = :league " +
+                                    "ORDER BY p.marketValue DESC",
+                            GeneratedPlayer.class
+                    )
+                    .setParameter("league", "england")
+                    .setMaxResults(100)
+                    .getResultList();
+
+            return players.size();
         });
-    }
-
-    private void prepareRowsForDelete(int size) {
-        performanceTestRepository.deleteAll();
-
-        List<PerformanceTestEntity> rows = new ArrayList<>();
-
-        for (int i = 1; i <= size; i++) {
-            PerformanceTestEntity entity = new PerformanceTestEntity();
-            entity.setTestName("DELETE_TEST_" + i);
-            entity.setTestValue(i);
-            rows.add(entity);
-        }
-
-        performanceTestRepository.saveAll(rows);
     }
 
     private PerformanceResult runMeasuredTest(String testName, MeasuredOperation operation) {
@@ -154,6 +506,8 @@ public class PerformanceTestController {
         System.out.println("========================================");
 
         for (int trial = 1; trial <= TRIALS; trial++) {
+            entityManager.clear();
+
             long start = System.nanoTime();
             long result = operation.execute();
             long end = System.nanoTime();
@@ -264,6 +618,273 @@ public class PerformanceTestController {
                 + " | avgDurationMs=" + String.format(Locale.US, "%.2f", avgDuration)
                 + " | minDurationMs=" + minDuration
                 + " | maxDurationMs=" + maxDuration;
+    }
+
+    private void resetPerformanceDataInternal() {
+        deleteDomesticMatchData();
+        generatedPlayerRepository.deleteAll();
+        deleteAllEuropeanCompetitionData();
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    private void deleteDomesticMatchData() {
+        matchEventRepository.deleteAll();
+        matchRepository.deleteAll();
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    private void deleteAllEuropeanCompetitionData() {
+        europeanMatchEventRepository.deleteAll();
+        europeanKnockoutMatchRepository.deleteAll();
+        europeanMatchRepository.deleteAll();
+        deleteEuropeanParticipantsBySeason(SEASON);
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    private void deleteEuropeanKnockoutData(String season, String competitionSlug) {
+        List<Long> knockoutMatchIds = europeanKnockoutMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundOrderAscBracketOrderAsc(season, competitionSlug)
+                .stream()
+                .map(EuropeanKnockoutMatch::getId)
+                .toList();
+
+        if (!knockoutMatchIds.isEmpty()) {
+            europeanMatchEventRepository.deleteByKnockoutMatchIdIn(knockoutMatchIds);
+        }
+
+        europeanKnockoutMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    private void deleteEuropeanParticipantsBySeason(String season) {
+        try {
+            entityManager.createQuery(
+                            "DELETE FROM EuropeanCompetitionParticipant p WHERE p.season = :season"
+                    )
+                    .setParameter("season", season)
+                    .executeUpdate();
+        } catch (RuntimeException ignored) {
+            System.out.println("PERFORMANCE_TEST | RESET | EuropeanCompetitionParticipant delete skipped");
+        }
+    }
+
+    private long countEuropeanParticipants() {
+        try {
+            return entityManager.createQuery(
+                            "SELECT COUNT(p) FROM EuropeanCompetitionParticipant p",
+                            Long.class
+                    )
+                    .getSingleResult();
+        } catch (RuntimeException ignored) {
+            return -1;
+        }
+    }
+
+    private void ensureGeneratedPlayersExist() {
+        if (generatedPlayerRepository.count() > 0) {
+            return;
+        }
+
+        generatedPlayerRepository.saveAll(
+                realTeamRepository.findAll()
+                        .stream()
+                        .flatMap(team -> playerGenerator.generateSquadForTeam(team).stream())
+                        .toList()
+        );
+    }
+
+    private Long getFirstLeagueMatchId() {
+        Page<Match> page = matchRepository.findAll(PageRequest.of(0, 1));
+
+        if (page.isEmpty()) {
+            return -1L;
+        }
+
+        return page.getContent().get(0).getId();
+    }
+
+    private Long getFirstEuropeanMatchId() {
+        Page<EuropeanMatch> page = europeanMatchRepository.findAll(PageRequest.of(0, 1));
+
+        if (page.isEmpty()) {
+            return -1L;
+        }
+
+        return page.getContent().get(0).getId();
+    }
+
+    private void ensureRealTeams() {
+        if (realTeamRepository.count() > 0) {
+            return;
+        }
+
+        Map<String, String> leagueFolders = new LinkedHashMap<>();
+        leagueFolders.put("England - Premier League", "england");
+        leagueFolders.put("Spain - LaLiga", "spain");
+        leagueFolders.put("Germany - Bundesliga", "germany");
+        leagueFolders.put("Italy - Serie A", "italy");
+        leagueFolders.put("France - Ligue 1", "france");
+        leagueFolders.put("Portugal - Liga Portugal", "portugal");
+        leagueFolders.put("Netherlands - Eredivisie", "netherlands");
+        leagueFolders.put("Belgium - Jupiler Pro League", "belgium");
+        leagueFolders.put("Scotland - Scottish Premiership", "scotland");
+        leagueFolders.put("Turkiye - Super Lig", "turkiye");
+        leagueFolders.put("Poland - PKO BP Ekstraklasa", "poland");
+        leagueFolders.put("Austria - Bundesliga", "austria");
+        leagueFolders.put("Croatia - SuperSport HNL", "croatia");
+        leagueFolders.put("Czech Republic - Chance Liga", "czech-republic");
+        leagueFolders.put("Denmark - Superliga", "denmark");
+        leagueFolders.put("Greece - Super League 1", "greece");
+        leagueFolders.put("Norway - Eliteserien", "norway");
+        leagueFolders.put("Sweden - Allsvenskan", "sweden");
+        leagueFolders.put("Switzerland - Super League", "switzerland");
+        leagueFolders.put("Serbia - Super liga Srbije", "serbia");
+        leagueFolders.put("Romania - SuperLiga", "romania");
+        leagueFolders.put("Bulgaria - efbet Liga", "bulgaria");
+        leagueFolders.put("Ukraine - Premier Liga", "ukraine");
+        leagueFolders.put("Russia - Premier Liga", "russia");
+        leagueFolders.put("Israel - Ligat ha Al", "israel");
+        leagueFolders.put("Hungary - Nemezeti Bajnoksag", "hungary");
+        leagueFolders.put("Moldova - Superliga", "moldova");
+        leagueFolders.put("Republic of Ireland - Ireland Premier Division", "republic-of-ireland");
+
+        int insertedTeams = 0;
+
+        try {
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources("classpath:/static/Images/leagues/*/*.png");
+
+            for (Resource resource : resources) {
+                String folder = extractLeagueFolder(resource);
+                if (folder == null || !leagueFolders.containsKey(folder)) {
+                    continue;
+                }
+
+                String leagueSlug = leagueFolders.get(folder);
+                String fileName = resource.getFilename();
+
+                if (fileName == null || !fileName.endsWith(".png")) {
+                    continue;
+                }
+
+                String clubName = fileName.substring(0, fileName.length() - 4);
+                String clubSlug = slugify(clubName);
+
+                if (realTeamRepository.existsByLeagueSlugAndClubSlug(leagueSlug, clubSlug)) {
+                    continue;
+                }
+
+                RealTeam team = new RealTeam();
+                team.setLeagueSlug(leagueSlug);
+                team.setClubSlug(clubSlug);
+                team.setApiTeamName(clubName);
+                team.setApiTeamId(Math.abs((leagueSlug + "-" + clubSlug).hashCode()));
+                team.setApiLogo("/Images/leagues/" + folder + "/" + fileName);
+
+                realTeamRepository.save(team);
+                insertedTeams++;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot load league logo resources for RealTeam seed.", e);
+        }
+
+        System.out.println("PERFORMANCE_TEST | SETUP_REAL_TEAMS | count=" + insertedTeams);
+    }
+
+    private String extractLeagueFolder(Resource resource) throws IOException {
+        String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+        url = url.replace("\\", "/");
+
+        String marker = "/static/Images/leagues/";
+        int markerIndex = url.indexOf(marker);
+
+        if (markerIndex < 0) {
+            return null;
+        }
+
+        String rest = url.substring(markerIndex + marker.length());
+        int slashIndex = rest.indexOf("/");
+
+        if (slashIndex < 0) {
+            return null;
+        }
+
+        return rest.substring(0, slashIndex);
+    }
+
+    private String slugify(String value) {
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        return normalized
+                .toLowerCase(Locale.ROOT)
+                .replace("&", "and")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+", "")
+                .replaceAll("-+$", "");
+    }
+
+    private void ensureReferees() {
+        if (refereeRepository.count() > 0) {
+            return;
+        }
+
+        String[] names = {
+                "Szymon Marciniak",
+                "François Letexier",
+                "Clément Turpin",
+                "Benoît Bastien",
+                "Michael Oliver",
+                "Anthony Taylor",
+                "Chris Kavanagh",
+                "Felix Zwayer",
+                "Daniel Siebert",
+                "Tobias Stieler",
+                "Sven Jablonski",
+                "Danny Makkelie",
+                "Serdar Gözübüyük",
+                "Jesús Gil Manzano",
+                "José María Sánchez Martínez",
+                "Alejandro Hernández Hernández",
+                "Davide Massa",
+                "Maurizio Mariani",
+                "Marco Guida",
+                "Slavko Vinčić",
+                "Rade Obrenović",
+                "Glenn Nyberg",
+                "Sandro Schärer",
+                "István Kovács",
+                "Ivan Kružliak",
+                "Espen Eskås",
+                "Irfan Peljto",
+                "João Pinheiro",
+                "Halil Umut Meler",
+                "Orel Grinfeld",
+                "Erik Lambrechts",
+                "Donatas Rumšas",
+                "Nick Walsh",
+                "Damian Sylwestrzak",
+                "Paweł Raczkowski",
+                "Stéphanie Frappart",
+                "Jérôme Brisard",
+                "Ricardo de Burgos Bengoetxea",
+                "Juan Martínez Munuera",
+                "Simone Sozza"
+        };
+
+        for (String name : names) {
+            Referee referee = new Referee();
+            referee.setName(name);
+            referee.setCountryCode("UEFA");
+            referee.setActive(true);
+            refereeRepository.save(referee);
+        }
+
+        System.out.println("PERFORMANCE_TEST | SETUP_REFEREES | count=" + names.length);
     }
 
     private void log(String testName, int trial, long result, long durationMs) {
