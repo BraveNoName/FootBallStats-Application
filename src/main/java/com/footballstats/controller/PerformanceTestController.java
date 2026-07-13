@@ -6,7 +6,6 @@ import com.footballstats.dto.LeagueTableRow;
 import com.footballstats.model.*;
 import com.footballstats.repository.*;
 import com.footballstats.service.LeagueTableService;
-import com.footballstats.service.MatchGeneratorService;
 import com.footballstats.service.PlayerGenerator;
 import com.footballstats.service.europe.EuropeanCompetitionService;
 import jakarta.persistence.EntityManager;
@@ -24,11 +23,17 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Comparator;
+import java.util.Random;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,7 +57,36 @@ public class PerformanceTestController {
             "conference-league"
     };
 
-    private final MatchGeneratorService matchGeneratorService;
+    private static final Set<String> LEAGUE_LOGO_SLUGS = Set.of(
+            "premierleague",
+            "laliga",
+            "bundesliga",
+            "seriea",
+            "ligue1",
+            "ligaportugal",
+            "eredivisie",
+            "proleague",
+            "scottishpremiership",
+            "superlig",
+            "pkobpekstraklasa",
+            "austriabundesliga",
+            "supersporthnl",
+            "chanceliga",
+            "superliga",
+            "superleague1",
+            "eliteserien",
+            "allsvenskan",
+            "superleague",
+            "superligaserbije",
+            "romaniasuperliga",
+            "efbetliga",
+            "premierliga",
+            "ligathaai",
+            "russiapremierliga",
+            "nemzetibanjnoksag",
+            "irelandpremierdivision"
+    );
+
     private final LeagueTableService leagueTableService;
     private final EuropeanCompetitionService europeanCompetitionService;
 
@@ -66,12 +100,13 @@ public class PerformanceTestController {
     private final RefereeRepository refereeRepository;
 
     private final PlayerGenerator playerGenerator = new PlayerGenerator();
+    private final Random random = new Random();
 
     @PersistenceContext
     private EntityManager entityManager;
 
     /**
-     * Test aplikacji od czystego stanu danych pomiarowych.
+     * Pełny test aplikacyjny od czystego stanu danych pomiarowych.
      * Ten endpoint jest najbezpieczniejszy do porównań między bazami.
      */
     @GetMapping("/admin/performance/app-flow-clean")
@@ -84,10 +119,11 @@ public class PerformanceTestController {
     }
 
     /**
-     * Test aplikacji bez automatycznego resetu.
+     * Pełny test aplikacyjny bez automatycznego resetu.
      * Zostawiony, żeby nie psuć dotychczasowych skryptów.
      */
     @GetMapping("/admin/performance/app-flow")
+    @Transactional
     public String runApplicationFlowPerformanceTests() {
         ensureReferees();
         ensureRealTeams();
@@ -217,6 +253,7 @@ public class PerformanceTestController {
     }
 
     @GetMapping("/admin/performance/generate-europe")
+    @Transactional
     public String generateEuropePerformance() {
         ensureReferees();
         ensureRealTeams();
@@ -235,6 +272,7 @@ public class PerformanceTestController {
     }
 
     @GetMapping("/admin/performance/generate-europe-knockout")
+    @Transactional
     public String generateEuropeKnockoutPerformance() {
         return buildSummary(runGenerateAllEuropeanKnockouts());
     }
@@ -308,8 +346,6 @@ public class PerformanceTestController {
     private PerformanceResult runGeneratePlayersForAllTeams() {
         return runMeasuredTest("APP_FLOW_GENERATE_PLAYERS_ALL", () -> {
             generatedPlayerRepository.deleteAll();
-            entityManager.flush();
-            entityManager.clear();
 
             long insertedPlayers = 0;
             List<RealTeam> teams = realTeamRepository.findAll();
@@ -328,12 +364,121 @@ public class PerformanceTestController {
         return runMeasuredTest("APP_FLOW_GENERATE_ALL_LEAGUE_SEASONS", () -> {
             deleteDomesticMatchData();
 
+            long totalMatches = 0;
+
             for (String league : LEAGUES) {
-                matchGeneratorService.generateLeagueSeason(league);
+                List<RealTeam> teams = realTeamRepository.findAll().stream()
+                        .filter(team -> league.equals(team.getLeagueSlug()))
+                        .sorted(Comparator.comparing(RealTeam::getApiTeamName))
+                        .toList();
+
+                int round = 1;
+
+                for (int i = 0; i < teams.size(); i++) {
+                    for (int j = i + 1; j < teams.size(); j++) {
+                        RealTeam firstTeam = teams.get(i);
+                        RealTeam secondTeam = teams.get(j);
+
+                        Match firstMatch = createLeagueMatch(
+                                league,
+                                firstTeam,
+                                secondTeam,
+                                round++
+                        );
+                        Match savedFirstMatch = matchRepository.save(firstMatch);
+                        insertLeagueMatchEvents(savedFirstMatch);
+                        totalMatches++;
+
+                        Match secondMatch = createLeagueMatch(
+                                league,
+                                secondTeam,
+                                firstTeam,
+                                round++
+                        );
+                        Match savedSecondMatch = matchRepository.save(secondMatch);
+                        insertLeagueMatchEvents(savedSecondMatch);
+                        totalMatches++;
+                    }
+                }
             }
 
-            return matchRepository.count();
+            return totalMatches;
         });
+    }
+
+    private Match createLeagueMatch(
+            String league,
+            RealTeam home,
+            RealTeam away,
+            int roundNumber
+    ) {
+        Match match = new Match();
+        match.setLeague(league);
+        match.setRoundNumber(roundNumber);
+        match.setMatchDate(LocalDateTime.now().plusDays(roundNumber));
+        match.setHomeTeam(home.getApiTeamName());
+        match.setAwayTeam(away.getApiTeamName());
+        match.setHomeTeamLogo(home.getApiLogo());
+        match.setAwayTeamLogo(away.getApiLogo());
+        match.setHomeClubSlug(home.getClubSlug());
+        match.setAwayClubSlug(away.getClubSlug());
+        match.setHomeLeagueSlug(home.getLeagueSlug());
+        match.setAwayLeagueSlug(away.getLeagueSlug());
+        match.setHomeGoals(random.nextInt(5));
+        match.setAwayGoals(random.nextInt(5));
+        match.setHalfTimeHomeGoals(0);
+        match.setHalfTimeAwayGoals(0);
+        match.setStatus("FINISHED");
+        return match;
+    }
+
+    private void insertLeagueMatchEvents(Match match) {
+        if (generatedPlayerRepository.count() == 0) {
+            return;
+        }
+
+        List<GeneratedPlayer> players = new ArrayList<>();
+        players.addAll(generatedPlayerRepository.findByClubSlug(match.getHomeClubSlug()));
+        players.addAll(generatedPlayerRepository.findByClubSlug(match.getAwayClubSlug()));
+
+        if (players.isEmpty()) {
+            return;
+        }
+
+        int goals = valueOrZero(match.getHomeGoals()) + valueOrZero(match.getAwayGoals());
+
+        for (int i = 0; i < goals; i++) {
+            GeneratedPlayer player = players.get(random.nextInt(players.size()));
+            matchEventRepository.save(createLeagueEvent(match, player, "GOAL"));
+        }
+
+        int cards = random.nextInt(4);
+        for (int i = 0; i < cards; i++) {
+            GeneratedPlayer player = players.get(random.nextInt(players.size()));
+            matchEventRepository.save(createLeagueEvent(match, player, "YELLOW_CARD"));
+        }
+    }
+
+    private MatchEvent createLeagueEvent(
+            Match match,
+            GeneratedPlayer player,
+            String eventType
+    ) {
+        MatchEvent event = new MatchEvent();
+        event.setMatchId(match.getId());
+        event.setPlayerId(player.getId());
+        event.setPlayerName(player.getFirstName() + " " + player.getLastName());
+        event.setEventType(eventType);
+        event.setEventMinute(random.nextInt(1, 91));
+        event.setDescription(eventType);
+        event.setTeamSide(
+                player.getClubSlug().equals(match.getHomeClubSlug()) ? "HOME" : "AWAY"
+        );
+        return event;
+    }
+
+    private int valueOrZero(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private PerformanceResult runCalculateAllLeagueTables() {
@@ -388,10 +533,215 @@ public class PerformanceTestController {
 
             for (String competition : EUROPEAN_COMPETITIONS) {
                 europeanCompetitionService.generateOrRegenerateEuropeanCompetition(SEASON, competition);
+                repairDuplicateEuropeanParticipantsAndMatches(SEASON, competition);
             }
 
             return europeanMatchRepository.count();
         });
+    }
+
+
+    /**
+     * Naprawa wykonywana wyłącznie na potrzeby testów wydajnościowych.
+     * Usuwa sytuację, w której ten sam klub trafia do jednej konkurencji
+     * jednocześnie jako obrońca tytułu i poprzez kwalifikację ligową.
+     *
+     * Nie modyfikuje EuropeanCompetitionService.
+     */
+    private void repairDuplicateEuropeanParticipantsAndMatches(
+            String season,
+            String competitionSlug
+    ) {
+        List<EuropeanCompetitionParticipant> participants = entityManager.createQuery(
+                        "SELECT p FROM EuropeanCompetitionParticipant p " +
+                                "WHERE p.season = :season " +
+                                "AND p.competitionSlug = :competition " +
+                                "ORDER BY p.id",
+                        EuropeanCompetitionParticipant.class
+                )
+                .setParameter("season", season)
+                .setParameter("competition", competitionSlug)
+                .getResultList();
+
+        Map<String, List<EuropeanCompetitionParticipant>> byClubSlug = new LinkedHashMap<>();
+
+        for (EuropeanCompetitionParticipant participant : participants) {
+            byClubSlug.computeIfAbsent(
+                    participant.getClubSlug(),
+                    ignored -> new ArrayList<>()
+            ).add(participant);
+        }
+
+        Set<String> currentCompetitionSlugs = new HashSet<>();
+        for (EuropeanCompetitionParticipant participant : participants) {
+            currentCompetitionSlugs.add(participant.getClubSlug());
+        }
+
+        Set<String> allEuropeanSlugs = new HashSet<>(
+                entityManager.createQuery(
+                                "SELECT DISTINCT p.clubSlug " +
+                                        "FROM EuropeanCompetitionParticipant p " +
+                                        "WHERE p.season = :season",
+                                String.class
+                        )
+                        .setParameter("season", season)
+                        .getResultList()
+        );
+
+        Map<String, Long> teamsPerLeague = new HashMap<>();
+        for (EuropeanCompetitionParticipant participant : participants) {
+            teamsPerLeague.merge(participant.getLeagueSlug(), 1L, Long::sum);
+        }
+
+        List<RealTeam> replacementPool = realTeamRepository.findAll().stream()
+                .sorted(Comparator.comparing(RealTeam::getApiTeamName))
+                .toList();
+
+        for (Map.Entry<String, List<EuropeanCompetitionParticipant>> entry : byClubSlug.entrySet()) {
+            List<EuropeanCompetitionParticipant> duplicates = entry.getValue();
+
+            if (duplicates.size() < 2) {
+                continue;
+            }
+
+            // Zachowujemy rekord obrońcy tytułu, a podmieniamy zwykłego uczestnika.
+            EuropeanCompetitionParticipant duplicateToReplace = duplicates.stream()
+                    .filter(participant -> !participant.isTitleHolder())
+                    .findFirst()
+                    .orElse(duplicates.get(duplicates.size() - 1));
+
+            RealTeam replacement = replacementPool.stream()
+                    .filter(team -> !currentCompetitionSlugs.contains(team.getClubSlug()))
+                    .filter(team -> !allEuropeanSlugs.contains(team.getClubSlug()))
+                    .filter(team ->
+                            teamsPerLeague.getOrDefault(team.getLeagueSlug(), 0L)
+                                    < getEuropeanLeagueLimit(competitionSlug)
+                    )
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Cannot find a unique replacement team for "
+                                    + competitionSlug
+                                    + ", duplicated club="
+                                    + entry.getKey()
+                    ));
+
+            String duplicatedClubSlug = duplicateToReplace.getClubSlug();
+
+            duplicateToReplace.setClubName(replacement.getApiTeamName());
+            duplicateToReplace.setClubSlug(replacement.getClubSlug());
+            duplicateToReplace.setLeagueSlug(replacement.getLeagueSlug());
+            duplicateToReplace.setCountryCode(resolveCountryCode(replacement.getLeagueSlug()));
+            duplicateToReplace.setTitleHolder(false);
+            duplicateToReplace.setUefaRankingPoints(
+                    Math.abs(replacement.getApiTeamId())
+            );
+
+            currentCompetitionSlugs.add(replacement.getClubSlug());
+            allEuropeanSlugs.add(replacement.getClubSlug());
+            teamsPerLeague.merge(replacement.getLeagueSlug(), 1L, Long::sum);
+
+            replaceDuplicateTeamInEightLeaguePhaseMatches(
+                    season,
+                    competitionSlug,
+                    duplicatedClubSlug,
+                    replacement
+            );
+
+            System.out.println(
+                    "PERFORMANCE_TEST | EUROPE_DUPLICATE_REPAIRED"
+                            + " | competition=" + competitionSlug
+                            + " | duplicatedClub=" + duplicatedClubSlug
+                            + " | replacementClub=" + replacement.getClubSlug()
+            );
+        }
+    }
+
+    private void replaceDuplicateTeamInEightLeaguePhaseMatches(
+            String season,
+            String competitionSlug,
+            String duplicatedClubSlug,
+            RealTeam replacement
+    ) {
+        List<EuropeanMatch> matchesWithDuplicate = europeanMatchRepository
+                .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(
+                        season,
+                        competitionSlug
+                )
+                .stream()
+                .filter(match ->
+                        duplicatedClubSlug.equals(match.getHomeClubSlug())
+                                || duplicatedClubSlug.equals(match.getAwayClubSlug())
+                )
+                .toList();
+
+        int matchesToReplace = Math.min(8, matchesWithDuplicate.size());
+
+        for (int i = matchesWithDuplicate.size() - matchesToReplace;
+             i < matchesWithDuplicate.size();
+             i++) {
+
+            EuropeanMatch match = matchesWithDuplicate.get(i);
+
+            if (duplicatedClubSlug.equals(match.getHomeClubSlug())) {
+                match.setHomeTeam(replacement.getApiTeamName());
+                match.setHomeClubSlug(replacement.getClubSlug());
+                match.setHomeLeagueSlug(replacement.getLeagueSlug());
+            } else {
+                match.setAwayTeam(replacement.getApiTeamName());
+                match.setAwayClubSlug(replacement.getClubSlug());
+                match.setAwayLeagueSlug(replacement.getLeagueSlug());
+            }
+        }
+
+        europeanMatchRepository.saveAll(
+                matchesWithDuplicate.subList(
+                        matchesWithDuplicate.size() - matchesToReplace,
+                        matchesWithDuplicate.size()
+                )
+        );
+    }
+
+    private int getEuropeanLeagueLimit(String competitionSlug) {
+        return switch (competitionSlug) {
+            case "champions-league" -> 5;
+            case "europa-league" -> 4;
+            case "conference-league" -> 3;
+            default -> 3;
+        };
+    }
+
+    private String resolveCountryCode(String leagueSlug) {
+        return switch (leagueSlug) {
+            case "england" -> "gb-eng";
+            case "spain" -> "es";
+            case "germany" -> "de";
+            case "italy" -> "it";
+            case "france" -> "fr";
+            case "portugal" -> "pt";
+            case "netherlands" -> "nl";
+            case "belgium" -> "be";
+            case "scotland" -> "gb-sct";
+            case "turkiye" -> "tr";
+            case "poland" -> "pl";
+            case "austria" -> "at";
+            case "croatia" -> "hr";
+            case "czech-republic" -> "cz";
+            case "denmark" -> "dk";
+            case "greece" -> "gr";
+            case "norway" -> "no";
+            case "sweden" -> "se";
+            case "switzerland" -> "ch";
+            case "serbia" -> "rs";
+            case "romania" -> "ro";
+            case "bulgaria" -> "bg";
+            case "ukraine" -> "ua";
+            case "russia" -> "ru";
+            case "israel" -> "il";
+            case "hungary" -> "hu";
+            case "moldova" -> "md";
+            case "republic-of-ireland" -> "ie";
+            default -> "";
+        };
     }
 
     private PerformanceResult runCalculateAllEuropeanTables() {
@@ -506,8 +856,6 @@ public class PerformanceTestController {
         System.out.println("========================================");
 
         for (int trial = 1; trial <= TRIALS; trial++) {
-            entityManager.clear();
-
             long start = System.nanoTime();
             long result = operation.execute();
             long end = System.nanoTime();
@@ -624,15 +972,11 @@ public class PerformanceTestController {
         deleteDomesticMatchData();
         generatedPlayerRepository.deleteAll();
         deleteAllEuropeanCompetitionData();
-        entityManager.flush();
-        entityManager.clear();
     }
 
     private void deleteDomesticMatchData() {
         matchEventRepository.deleteAll();
         matchRepository.deleteAll();
-        entityManager.flush();
-        entityManager.clear();
     }
 
     private void deleteAllEuropeanCompetitionData() {
@@ -640,8 +984,6 @@ public class PerformanceTestController {
         europeanKnockoutMatchRepository.deleteAll();
         europeanMatchRepository.deleteAll();
         deleteEuropeanParticipantsBySeason(SEASON);
-        entityManager.flush();
-        entityManager.clear();
     }
 
     private void deleteEuropeanKnockoutData(String season, String competitionSlug) {
@@ -656,8 +998,6 @@ public class PerformanceTestController {
         }
 
         europeanKnockoutMatchRepository.deleteBySeasonAndCompetitionSlug(season, competitionSlug);
-        entityManager.flush();
-        entityManager.clear();
     }
 
     private void deleteEuropeanParticipantsBySeason(String season) {
@@ -773,6 +1113,10 @@ public class PerformanceTestController {
 
                 String clubName = fileName.substring(0, fileName.length() - 4);
                 String clubSlug = slugify(clubName);
+
+                if (LEAGUE_LOGO_SLUGS.contains(clubSlug)) {
+                    continue;
+                }
 
                 if (realTeamRepository.existsByLeagueSlugAndClubSlug(leagueSlug, clubSlug)) {
                     continue;

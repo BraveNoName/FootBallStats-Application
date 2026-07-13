@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
@@ -62,6 +63,36 @@ public class MongoPerformanceTestController {
     private static final String[] EUROPEAN_COMPETITIONS = {
             "champions-league", "europa-league", "conference-league"
     };
+
+    private static final Set<String> LEAGUE_LOGO_SLUGS = Set.of(
+            "premierleague",
+            "laliga",
+            "bundesliga",
+            "seriea",
+            "ligue1",
+            "ligaportugal",
+            "eredivisie",
+            "proleague",
+            "scottishpremiership",
+            "superlig",
+            "pkobpekstraklasa",
+            "austriabundesliga",
+            "supersporthnl",
+            "chanceliga",
+            "superliga",
+            "superleague1",
+            "eliteserien",
+            "allsvenskan",
+            "superleague",
+            "superligaserbije",
+            "romaniasuperliga",
+            "efbetliga",
+            "premierliga",
+            "ligathaai",
+            "russiapremierliga",
+            "nemzetibanjnoksag",
+            "irelandpremierdivision"
+    );
 
     private final MongoPerformanceTestRepository performanceTestRepository;
     private final MongoTemplate mongoTemplate;
@@ -174,7 +205,78 @@ public class MongoPerformanceTestController {
 
                 Main endpoint:
                 /admin/performance/app-flow-mongodb
+
+                Individual endpoints:
+                /admin/performance/generate-players-mongodb
+                /admin/performance/generate-leagues-mongodb
+                /admin/performance/calculate-league-tables-mongodb
+                /admin/performance/select-league-matches-mongodb
+                /admin/performance/select-match-events-mongodb
+                /admin/performance/select-players-mongodb
+                /admin/performance/generate-europe-mongodb
+                /admin/performance/calculate-europe-tables-mongodb
+                /admin/performance/build-europe-rounds-mongodb
+                /admin/performance/generate-europe-knockout-mongodb
+                /admin/performance/select-europe-events-mongodb
+                /admin/performance/query-pagination-mongodb
+                /admin/performance/query-join-mongodb
+                /admin/performance/query-sort-filter-mongodb
                 """;
+    }
+
+    @GetMapping("/admin/performance/reset-mongodb")
+    public String resetMongoPerformanceData() {
+        resetApplicationCollections();
+
+        return """
+                MONGODB PERFORMANCE DATA RESET COMPLETED
+
+                Removed collections:
+                - generatedPlayer
+                - match
+                - matchEvent
+                - europeanMatch
+                - europeanMatchEvent
+                - europeanKnockoutMatch
+                """;
+    }
+
+    @GetMapping("/admin/performance/counts-mongodb")
+    public String mongoPerformanceCounts() {
+        return """
+                MONGODB PERFORMANCE DATA COUNTS
+
+                competitions: %d
+                realTeams: %d
+                referees: %d
+                generatedPlayers: %d
+                matches: %d
+                matchEvents: %d
+                europeanMatches: %d
+                europeanMatchEvents: %d
+                europeanKnockoutMatches: %d
+                """
+                .formatted(
+                        countCollection(C_COMPETITIONS),
+                        countCollection(C_REAL_TEAMS),
+                        countCollection(C_REFEREES),
+                        countCollection(C_GENERATED_PLAYERS),
+                        countCollection(C_MATCHES),
+                        countCollection(C_MATCH_EVENTS),
+                        countCollection(C_EUROPEAN_MATCHES),
+                        countCollection(C_EUROPEAN_MATCH_EVENTS),
+                        countCollection(C_EUROPEAN_KNOCKOUT)
+                );
+    }
+
+    @GetMapping("/admin/performance/app-flow-clean-mongodb")
+    public String runMongoApplicationFlowCleanPerformanceTests() {
+        resetApplicationCollections();
+        ensureCompetitions();
+        ensureReferees();
+        ensureRealTeams();
+
+        return runMongoApplicationFlowPerformanceTests();
     }
 
     @GetMapping("/admin/performance/generate-players-mongodb")
@@ -190,9 +292,39 @@ public class MongoPerformanceTestController {
         return buildSummary(runGenerateAllLeagueSeasons());
     }
 
+    @GetMapping("/admin/performance/calculate-league-tables-mongodb")
+    public String calculateLeagueTablesMongoPerformance() {
+        return buildSummary(runCalculateAllLeagueTables());
+    }
+
+    @GetMapping("/admin/performance/select-league-matches-mongodb")
+    public String selectLeagueMatchesMongoPerformance() {
+        return buildSummary(runSelectAllLeagueMatches());
+    }
+
+    @GetMapping("/admin/performance/select-match-events-mongodb")
+    public String selectMatchEventsMongoPerformance() {
+        return buildSummary(runSelectSampleMatchEvents());
+    }
+
     @GetMapping("/admin/performance/select-players-mongodb")
     public String selectPlayersMongoPerformance() {
         return buildSummary(runSelectAllGeneratedPlayers());
+    }
+
+    @GetMapping("/admin/performance/generate-europe-mongodb")
+    public String generateEuropeMongoPerformance() {
+        return buildSummary(runGenerateAllEuropeanCompetitions());
+    }
+
+    @GetMapping("/admin/performance/calculate-europe-tables-mongodb")
+    public String calculateEuropeTablesMongoPerformance() {
+        return buildSummary(runCalculateAllEuropeanTables());
+    }
+
+    @GetMapping("/admin/performance/build-europe-rounds-mongodb")
+    public String buildEuropeRoundsMongoPerformance() {
+        return buildSummary(runBuildAllEuropeanRoundViews());
     }
 
     @GetMapping("/admin/performance/generate-europe-knockout-mongodb")
@@ -218,6 +350,24 @@ public class MongoPerformanceTestController {
     @GetMapping("/admin/performance/query-sort-filter-mongodb")
     public String querySortFilterMongoPerformance() {
         return buildSummary(runQuerySortFilterPlayersByValue());
+    }
+
+    @GetMapping("/admin/performance/query-advanced-mongodb")
+    public String queryAdvancedMongoPerformance() {
+        List<PerformanceResult> results = List.of(
+                runQueryPaginationMatches(),
+                runQueryJoinMatchesEventsPlayers(),
+                runQuerySortFilterPlayersByValue()
+        );
+
+        StringBuilder response = new StringBuilder();
+        response.append("MONGODB ADVANCED QUERY PERFORMANCE TESTS COMPLETED\n\n");
+
+        for (PerformanceResult result : results) {
+            response.append(buildSummary(result)).append("\n\n");
+        }
+
+        return response.toString();
     }
 
     private PerformanceResult runInsertTest(int size) {
@@ -784,9 +934,12 @@ public class MongoPerformanceTestController {
                 competition(23, "Premier Liga Ukraine", "ukraine", "DOMESTIC_LEAGUE"),
                 competition(24, "Premier Liga Russia", "russia", "DOMESTIC_LEAGUE"),
                 competition(25, "Ligat ha Al", "israel", "DOMESTIC_LEAGUE"),
-                competition(26, "Champions League", "champions-league", "EUROPEAN_CUP"),
-                competition(27, "Europa League", "europa-league", "EUROPEAN_CUP"),
-                competition(28, "Conference League", "conference-league", "EUROPEAN_CUP")
+                competition(26, "Nemzeti Bajnokság", "hungary", "DOMESTIC_LEAGUE"),
+                competition(27, "Moldovan Super Liga", "moldova", "DOMESTIC_LEAGUE"),
+                competition(28, "Ireland Premier Division", "republic-of-ireland", "DOMESTIC_LEAGUE"),
+                competition(29, "Champions League", "champions-league", "EUROPEAN_CUP"),
+                competition(30, "Europa League", "europa-league", "EUROPEAN_CUP"),
+                competition(31, "Conference League", "conference-league", "EUROPEAN_CUP")
         );
 
         mongoTemplate.insert(competitions, C_COMPETITIONS);
@@ -861,6 +1014,10 @@ public class MongoPerformanceTestController {
                 String clubName = fileName.substring(0, fileName.length() - 4);
                 String clubSlug = slugify(clubName);
 
+                if (LEAGUE_LOGO_SLUGS.contains(clubSlug)) {
+                    continue;
+                }
+
                 boolean exists = teams.stream().anyMatch(team ->
                         leagueSlug.equals(team.getString("leagueSlug")) && clubSlug.equals(team.getString("clubSlug"))
                 );
@@ -918,6 +1075,26 @@ public class MongoPerformanceTestController {
 
         mongoTemplate.insert(referees, C_REFEREES);
         System.out.println("PERFORMANCE_TEST | MONGODB_SETUP_REFEREES | count=" + names.length);
+    }
+
+    private void resetApplicationCollections() {
+        mongoTemplate.dropCollection(C_COMPETITIONS);
+        mongoTemplate.dropCollection(C_REAL_TEAMS);
+        mongoTemplate.dropCollection(C_REFEREES);
+        mongoTemplate.dropCollection(C_GENERATED_PLAYERS);
+        mongoTemplate.dropCollection(C_MATCHES);
+        mongoTemplate.dropCollection(C_MATCH_EVENTS);
+        mongoTemplate.dropCollection(C_EUROPEAN_MATCHES);
+        mongoTemplate.dropCollection(C_EUROPEAN_MATCH_EVENTS);
+        mongoTemplate.dropCollection(C_EUROPEAN_KNOCKOUT);
+    }
+
+    private long countCollection(String collectionName) {
+        if (!mongoTemplate.collectionExists(collectionName)) {
+            return 0;
+        }
+
+        return mongoTemplate.count(new Query(), collectionName);
     }
 
     private List<Document> findTeamsByLeague(String league) {

@@ -86,7 +86,8 @@ public class RedisPerformanceTestController {
             "efbetliga",
             "premierliga",
             "ligathaai",
-            "nemzetibajnoksag",
+            "russiapremierliga",
+            "nemzetibanjnoksag",
             "irelandpremierdivision"
     );
 
@@ -127,6 +128,71 @@ public class RedisPerformanceTestController {
         }
 
         return response.toString();
+    }
+
+    @GetMapping("/admin/performance/app-flow-clean-redis")
+    public String runCleanRedisApplicationFlowPerformanceTests() {
+        resetRedisPerformanceData();
+        setupRedisPerformanceData();
+        return runRedisApplicationFlowPerformanceTests();
+    }
+
+    @GetMapping("/admin/performance/reset-redis")
+    public String resetRedisPerformanceData() {
+        deleteByPrefix(K_COMPETITIONS);
+        deleteByPrefix(K_REAL_TEAMS);
+        deleteByPrefix(K_REFEREES);
+        deleteByPrefix(K_GENERATED_PLAYERS);
+        deleteByPrefix(K_MATCHES);
+        deleteByPrefix(K_MATCH_EVENTS);
+        deleteByPrefix(K_EUROPEAN_MATCHES);
+        deleteByPrefix(K_EUROPEAN_MATCH_EVENTS);
+        deleteByPrefix(K_EUROPEAN_KNOCKOUT);
+
+        return """
+                REDIS PERFORMANCE DATA RESET COMPLETED
+
+                Deleted key prefixes:
+                - competitions
+                - real teams
+                - referees
+                - generated players
+                - league matches
+                - league match events
+                - european matches
+                - european match events
+                - european knockout matches
+                """;
+    }
+
+    @GetMapping("/admin/performance/counts-redis")
+    public String countsRedisPerformanceData() {
+        return """
+                REDIS PERFORMANCE DATA COUNTS
+
+                competitions=%d
+                realTeams=%d
+                referees=%d
+                generatedPlayers=%d
+                leagueMatches=%d
+                leagueMatchEvents=%d
+                europeanMatches=%d
+                europeanMatchEvents=%d
+                europeanKnockoutMatches=%d
+                totalKeys=%d
+                """
+                .formatted(
+                        countByPrefix(K_COMPETITIONS),
+                        countByPrefix(K_REAL_TEAMS),
+                        countByPrefix(K_REFEREES),
+                        countByPrefix(K_GENERATED_PLAYERS),
+                        countByPrefix(K_MATCHES),
+                        countByPrefix(K_MATCH_EVENTS),
+                        countByPrefix(K_EUROPEAN_MATCHES),
+                        countByPrefix(K_EUROPEAN_MATCH_EVENTS),
+                        countByPrefix(K_EUROPEAN_KNOCKOUT),
+                        countByPrefix("redis:")
+                );
     }
 
     @GetMapping("/admin/performance/setup-redis")
@@ -742,9 +808,12 @@ public class RedisPerformanceTestController {
                 competition(23, "Premier Liga Ukraine", "ukraine", "DOMESTIC_LEAGUE"),
                 competition(24, "Premier Liga Russia", "russia", "DOMESTIC_LEAGUE"),
                 competition(25, "Ligat ha Al", "israel", "DOMESTIC_LEAGUE"),
-                competition(26, "Champions League", "champions-league", "EUROPEAN_CUP"),
-                competition(27, "Europa League", "europa-league", "EUROPEAN_CUP"),
-                competition(28, "Conference League", "conference-league", "EUROPEAN_CUP")
+                competition(26, "Nemzeti Bajnoksag", "hungary", "DOMESTIC_LEAGUE"),
+                competition(27, "Moldova Superliga", "moldova", "DOMESTIC_LEAGUE"),
+                competition(28, "Ireland Premier Division", "republic-of-ireland", "DOMESTIC_LEAGUE"),
+                competition(29, "Champions League", "champions-league", "EUROPEAN_CUP"),
+                competition(30, "Europa League", "europa-league", "EUROPEAN_CUP"),
+                competition(31, "Conference League", "conference-league", "EUROPEAN_CUP")
         );
 
         Map<String, String> rows = new LinkedHashMap<>();
@@ -987,6 +1056,11 @@ public class RedisPerformanceTestController {
     private boolean existsAny(String prefix) {
         Set<String> keys = redisTemplate.keys(prefix + "*");
         return keys != null && !keys.isEmpty();
+    }
+
+    private long countByPrefix(String prefix) {
+        Set<String> keys = redisTemplate.keys(prefix + "*");
+        return keys == null ? 0L : keys.size();
     }
 
     private void save(String key, Map<String, Object> value) {

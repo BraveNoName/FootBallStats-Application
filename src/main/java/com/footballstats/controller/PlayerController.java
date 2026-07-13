@@ -100,6 +100,7 @@ public class PlayerController {
             "allsvenskan",
             "superleague",
             "superligaserbije",
+            "russiapremierliga",
             "romaniasuperliga",
             "efbetliga",
             "premierliga",
