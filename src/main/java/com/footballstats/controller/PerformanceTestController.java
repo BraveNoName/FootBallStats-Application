@@ -12,6 +12,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
+@Profile({"postgres", "mysql", "mssql", "oracle"})
 public class PerformanceTestController {
 
     private static final String SEASON = "2025/2026";

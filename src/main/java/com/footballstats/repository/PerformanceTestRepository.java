@@ -5,3 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PerformanceTestRepository extends JpaRepository<PerformanceTestEntity, Long> {
 }
+
+
