@@ -9675,3 +9675,7 @@ Database is already closed (to disable automatic closing at VM shutdown, add ";D
 	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)
 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)
 	at java.base/java.lang.Thread.run(Thread.java:1474)
+2026-08-13 00:45:43.717202+02:00 jdbc[24]: exception
+org.h2.jdbc.JdbcSQLTimeoutException: Czas oczekiwania na blokadę tabeli "GENERATED_PLAYER" skończył się
+Timeout trying to lock table "GENERATED_PLAYER"; SQL statement:
+update generated_player set active=?,age=?,birth_date=?,club_logo=?,club_slug=?,contract_until=?,country_code=?,current_club=?,first_name=?,height=?,image_url=?,injured_matches=?,joined_club_date=?,last_contract_extension=?,last_name=?,league_slug=?,market_value=?,nationality=?,position=?,preferred_foot=?,shirt_number=?,suspended_matches=?,team_id=? where id=? [50200-240]

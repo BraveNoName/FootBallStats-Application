@@ -1,8 +1,14 @@
 package com.footballstats.performance.mongo;
 
-import com.footballstats.model.GeneratedPlayer;
-import com.footballstats.model.RealTeam;
+import com.footballstats.dto.EuropeanLeaguePhaseRoundView;
+import com.footballstats.dto.EuropeanLeagueTableRow;
+import com.footballstats.dto.LeagueTableRow;
+import com.footballstats.model.*;
+import com.footballstats.repository.*;
+import com.footballstats.service.LeagueTableService;
+import com.footballstats.service.MatchGeneratorService;
 import com.footballstats.service.PlayerGenerator;
+import com.footballstats.service.europe.EuropeanCompetitionService;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.context.annotation.Profile;
@@ -12,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +39,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,7 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MongoPerformanceTestController {
 
     private static final String SEASON = "2025/2026";
-    private static final int TRIALS = 10;
+    private static final int TRIALS = 1;
 
     private static final String C_PERFORMANCE = "performance_test";
     private static final String C_COMPETITIONS = "competitions";
@@ -50,6 +63,8 @@ public class MongoPerformanceTestController {
     private static final String C_EUROPEAN_MATCHES = "europeanMatch";
     private static final String C_EUROPEAN_MATCH_EVENTS = "europeanMatchEvent";
     private static final String C_EUROPEAN_KNOCKOUT = "europeanKnockoutMatch";
+    private static final String C_PARTICIPANTS = "europeanCompetitionParticipant";
+    private static final String C_SEQUENCES = "performanceSequences";
 
     private static final String[] LEAGUES = {
             "england", "spain", "germany", "italy", "france",
@@ -98,6 +113,18 @@ public class MongoPerformanceTestController {
     private final MongoTemplate mongoTemplate;
 
     private final PlayerGenerator playerGenerator = new PlayerGenerator();
+    private final LeagueTableService leagueTableService = new LeagueTableService();
+
+    private volatile MatchRepository appMatchRepository;
+    private volatile MatchEventRepository appMatchEventRepository;
+    private volatile GeneratedPlayerRepository appGeneratedPlayerRepository;
+    private volatile EuropeanCompetitionParticipantRepository appParticipantRepository;
+    private volatile EuropeanMatchRepository appEuropeanMatchRepository;
+    private volatile EuropeanMatchEventRepository appEuropeanMatchEventRepository;
+    private volatile EuropeanKnockoutMatchRepository appEuropeanKnockoutRepository;
+    private volatile RefereeRepository appRefereeRepository;
+    private volatile MatchGeneratorService appMatchGeneratorService;
+    private volatile EuropeanCompetitionService appEuropeanCompetitionService;
     private final Random random = new Random();
 
     @GetMapping("/admin/performance/crud")
@@ -430,25 +457,22 @@ public class MongoPerformanceTestController {
 
     private PerformanceResult runGeneratePlayersForAllTeams() {
         return runMeasuredTest("MONGODB_APP_FLOW_GENERATE_PLAYERS_ALL", () -> {
+
             mongoTemplate.dropCollection(C_GENERATED_PLAYERS);
 
-            AtomicLong playerId = new AtomicLong(1);
             long insertedPlayers = 0;
+            List<RealTeam> teams = mongoTemplate.findAll(
+                    RealTeam.class,
+                    C_REAL_TEAMS
+            );
 
-            List<Document> teams = mongoTemplate.findAll(Document.class, C_REAL_TEAMS);
+            for (RealTeam team : teams) {
+                List<GeneratedPlayer> squad =
+                        playerGenerator.generateSquadForTeam(team);
 
-            for (Document teamDoc : teams) {
-                RealTeam team = toRealTeam(teamDoc);
-                List<GeneratedPlayer> squad = playerGenerator.generateSquadForTeam(team);
+                generatedPlayerRepositoryAdapter().saveAll(squad);
 
-                List<Document> playerDocs = squad.stream()
-                        .map(player -> toPlayerDocument(playerId.getAndIncrement(), player))
-                        .toList();
-
-                if (!playerDocs.isEmpty()) {
-                    mongoTemplate.insert(playerDocs, C_GENERATED_PLAYERS);
-                    insertedPlayers += playerDocs.size();
-                }
+                insertedPlayers += squad.size();
             }
 
             return insertedPlayers;
@@ -457,35 +481,13 @@ public class MongoPerformanceTestController {
 
     private PerformanceResult runGenerateAllLeagueSeasons() {
         return runMeasuredTest("MONGODB_APP_FLOW_GENERATE_ALL_LEAGUE_SEASONS", () -> {
-            mongoTemplate.dropCollection(C_MATCHES);
-            mongoTemplate.dropCollection(C_MATCH_EVENTS);
-
-            AtomicLong matchId = new AtomicLong(1);
-            AtomicLong eventId = new AtomicLong(1);
             long totalMatches = 0;
 
             for (String league : LEAGUES) {
-                List<Document> teams = findTeamsByLeague(league);
-                int round = 1;
-
-                for (int i = 0; i < teams.size(); i++) {
-                    for (int j = i + 1; j < teams.size(); j++) {
-                        Document home = teams.get(i);
-                        Document away = teams.get(j);
-
-                        long firstMatchId = matchId.getAndIncrement();
-                        Document firstMatch = createLeagueMatch(firstMatchId, league, home, away, round++);
-                        mongoTemplate.insert(firstMatch, C_MATCHES);
-                        insertMatchEvents(eventId, firstMatchId, firstMatch, false);
-                        totalMatches++;
-
-                        long secondMatchId = matchId.getAndIncrement();
-                        Document secondMatch = createLeagueMatch(secondMatchId, league, away, home, round++);
-                        mongoTemplate.insert(secondMatch, C_MATCHES);
-                        insertMatchEvents(eventId, secondMatchId, secondMatch, false);
-                        totalMatches++;
-                    }
-                }
+                matchGeneratorServiceAdapter().generateLeagueSeason(league);
+                totalMatches += matchRepositoryAdapter()
+                        .findByLeagueOrderByRoundNumberAscMatchDateAsc(league)
+                        .size();
             }
 
             return totalMatches;
@@ -497,55 +499,9 @@ public class MongoPerformanceTestController {
             long totalRows = 0;
 
             for (String league : LEAGUES) {
-                List<Document> teams = findTeamsByLeague(league);
-                Map<String, TableRow> table = new LinkedHashMap<>();
-
-                for (Document team : teams) {
-                    table.put(team.getString("clubSlug"), new TableRow());
-                }
-
-                List<Document> matches = mongoTemplate.find(
-                        Query.query(Criteria.where("league").is(league)),
-                        Document.class,
-                        C_MATCHES
-                );
-
-                for (Document match : matches) {
-                    String homeSlug = match.getString("homeClubSlug");
-                    String awaySlug = match.getString("awayClubSlug");
-                    int homeGoals = match.getInteger("homeGoals", 0);
-                    int awayGoals = match.getInteger("awayGoals", 0);
-
-                    TableRow home = table.get(homeSlug);
-                    TableRow away = table.get(awaySlug);
-
-                    if (home == null || away == null) {
-                        continue;
-                    }
-
-                    home.played++;
-                    away.played++;
-                    home.goalsFor += homeGoals;
-                    home.goalsAgainst += awayGoals;
-                    away.goalsFor += awayGoals;
-                    away.goalsAgainst += homeGoals;
-
-                    if (homeGoals > awayGoals) {
-                        home.points += 3;
-                        home.wins++;
-                        away.losses++;
-                    } else if (homeGoals < awayGoals) {
-                        away.points += 3;
-                        away.wins++;
-                        home.losses++;
-                    } else {
-                        home.points++;
-                        away.points++;
-                        home.draws++;
-                        away.draws++;
-                    }
-                }
-
+                List<Match> matches = matchRepositoryAdapter()
+                        .findByLeagueOrderByRoundNumberAscMatchDateAsc(league);
+                List<LeagueTableRow> table = leagueTableService.calculateTable(matches, league);
                 totalRows += table.size();
             }
 
@@ -556,66 +512,45 @@ public class MongoPerformanceTestController {
     private PerformanceResult runSelectAllLeagueMatches() {
         return runMeasuredTest("MONGODB_APP_FLOW_SELECT_ALL_LEAGUE_MATCHES", () -> {
             long totalMatches = 0;
-
             for (String league : LEAGUES) {
-                Query query = Query.query(Criteria.where("league").is(league))
-                        .with(Sort.by(Sort.Direction.ASC, "roundNumber", "matchDate"));
-                totalMatches += mongoTemplate.find(query, Document.class, C_MATCHES).size();
+                totalMatches += matchRepositoryAdapter()
+                        .findByLeagueOrderByRoundNumberAscMatchDateAsc(league)
+                        .size();
             }
-
             return totalMatches;
         });
     }
 
     private PerformanceResult runSelectSampleMatchEvents() {
         return runMeasuredTest("MONGODB_APP_FLOW_SELECT_SAMPLE_MATCH_EVENTS", () -> {
-            Document match = mongoTemplate.findOne(new Query().limit(1), Document.class, C_MATCHES);
-
-            if (match == null) {
-                return 0;
-            }
-
-            Query query = Query.query(Criteria.where("matchId").is(match.getLong("_id")))
-                    .with(Sort.by(Sort.Direction.ASC, "eventMinute"));
-
-            return mongoTemplate.find(query, Document.class, C_MATCH_EVENTS).size();
+            Match match = mongoTemplate.findOne(
+                    new Query().with(Sort.by(Sort.Direction.ASC, "roundNumber", "matchDate")).limit(1),
+                    Match.class,
+                    C_MATCHES
+            );
+            if (match == null) return 0;
+            return matchEventRepositoryAdapter()
+                    .findByMatchIdOrderByEventMinuteAsc(match.getId())
+                    .size();
         });
     }
 
     private PerformanceResult runSelectAllGeneratedPlayers() {
         return runMeasuredTest("MONGODB_APP_FLOW_SELECT_ALL_GENERATED_PLAYERS", () ->
-                mongoTemplate.findAll(Document.class, C_GENERATED_PLAYERS).size()
+                mongoTemplate.findAll(GeneratedPlayer.class, C_GENERATED_PLAYERS).size()
         );
     }
 
     private PerformanceResult runGenerateAllEuropeanCompetitions() {
         return runMeasuredTest("MONGODB_APP_FLOW_GENERATE_ALL_EUROPEAN_COMPETITIONS", () -> {
-            mongoTemplate.dropCollection(C_EUROPEAN_MATCHES);
-            mongoTemplate.dropCollection(C_EUROPEAN_MATCH_EVENTS);
-
-            AtomicLong matchId = new AtomicLong(1);
-            AtomicLong eventId = new AtomicLong(1);
             long totalMatches = 0;
-
-            List<Document> allTeams = mongoTemplate.findAll(Document.class, C_REAL_TEAMS);
-
             for (String competition : EUROPEAN_COMPETITIONS) {
-                List<Document> participants = allTeams.stream().limit(36).toList();
-
-                for (int round = 1; round <= 8; round++) {
-                    for (int i = 0; i < participants.size(); i += 2) {
-                        Document home = participants.get((i + round - 1) % participants.size());
-                        Document away = participants.get((i + round) % participants.size());
-
-                        long id = matchId.getAndIncrement();
-                        Document match = createEuropeanMatch(id, competition, home, away, round);
-                        mongoTemplate.insert(match, C_EUROPEAN_MATCHES);
-                        insertMatchEvents(eventId, id, match, true);
-                        totalMatches++;
-                    }
-                }
+                europeanCompetitionServiceAdapter()
+                        .generateOrRegenerateEuropeanCompetition(SEASON, competition);
+                totalMatches += europeanMatchRepositoryAdapter()
+                        .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(SEASON, competition)
+                        .size();
             }
-
             return totalMatches;
         });
     }
@@ -623,52 +558,11 @@ public class MongoPerformanceTestController {
     private PerformanceResult runCalculateAllEuropeanTables() {
         return runMeasuredTest("MONGODB_APP_FLOW_CALCULATE_ALL_EUROPEAN_TABLES", () -> {
             long totalRows = 0;
-
             for (String competition : EUROPEAN_COMPETITIONS) {
-                List<Document> matches = mongoTemplate.find(
-                        Query.query(Criteria.where("competitionSlug").is(competition)),
-                        Document.class,
-                        C_EUROPEAN_MATCHES
-                );
-
-                Map<String, TableRow> table = new LinkedHashMap<>();
-
-                for (Document match : matches) {
-                    table.putIfAbsent(match.getString("homeClubSlug"), new TableRow());
-                    table.putIfAbsent(match.getString("awayClubSlug"), new TableRow());
-
-                    TableRow home = table.get(match.getString("homeClubSlug"));
-                    TableRow away = table.get(match.getString("awayClubSlug"));
-
-                    int homeGoals = match.getInteger("homeGoals", 0);
-                    int awayGoals = match.getInteger("awayGoals", 0);
-
-                    home.played++;
-                    away.played++;
-                    home.goalsFor += homeGoals;
-                    home.goalsAgainst += awayGoals;
-                    away.goalsFor += awayGoals;
-                    away.goalsAgainst += homeGoals;
-
-                    if (homeGoals > awayGoals) {
-                        home.points += 3;
-                        home.wins++;
-                        away.losses++;
-                    } else if (homeGoals < awayGoals) {
-                        away.points += 3;
-                        away.wins++;
-                        home.losses++;
-                    } else {
-                        home.points++;
-                        away.points++;
-                        home.draws++;
-                        away.draws++;
-                    }
-                }
-
+                List<EuropeanLeagueTableRow> table = europeanCompetitionServiceAdapter()
+                        .calculateLeaguePhaseTable(SEASON, competition);
                 totalRows += table.size();
             }
-
             return totalRows;
         });
     }
@@ -676,103 +570,49 @@ public class MongoPerformanceTestController {
     private PerformanceResult runBuildAllEuropeanRoundViews() {
         return runMeasuredTest("MONGODB_APP_FLOW_BUILD_ALL_EUROPEAN_ROUND_VIEWS", () -> {
             long totalRounds = 0;
-
             for (String competition : EUROPEAN_COMPETITIONS) {
-                for (int round = 1; round <= 8; round++) {
-                    Query query = Query.query(
-                                    Criteria.where("competitionSlug").is(competition)
-                                            .and("roundNumber").is(round)
-                            )
-                            .with(Sort.by(Sort.Direction.ASC, "matchDate"));
-                    mongoTemplate.find(query, Document.class, C_EUROPEAN_MATCHES);
-                    totalRounds++;
-                }
+                List<EuropeanLeaguePhaseRoundView> rounds = europeanCompetitionServiceAdapter()
+                        .buildLeaguePhaseRoundViews(SEASON, competition);
+                totalRounds += rounds.size();
             }
-
             return totalRounds;
         });
     }
 
     private PerformanceResult runGenerateAllEuropeanKnockouts() {
         return runMeasuredTest("MONGODB_APP_FLOW_GENERATE_ALL_EUROPEAN_KNOCKOUTS", () -> {
-            mongoTemplate.dropCollection(C_EUROPEAN_KNOCKOUT);
+            synchronized (this) {
+                long total = 0;
 
-            AtomicLong knockoutId = new AtomicLong(1);
-            long totalKnockoutMatches = 0;
+                for (String competition : EUROPEAN_COMPETITIONS) {
+                    if (!europeanCompetitionServiceAdapter()
+                            .isKnockoutGenerated(SEASON, competition)) {
 
-            for (String competition : EUROPEAN_COMPETITIONS) {
-                List<Document> teams = mongoTemplate.findAll(Document.class, C_REAL_TEAMS)
-                        .stream()
-                        .limit(36)
-                        .toList();
+                        europeanCompetitionServiceAdapter()
+                                .generateKnockoutStage(SEASON, competition);
+                    }
 
-                if (teams.size() < 24) {
-                    continue;
+                    total += europeanCompetitionServiceAdapter()
+                            .getKnockoutMatches(SEASON, competition)
+                            .size();
                 }
 
-                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "PLAY-OFF", 1, teams, 8, 24, 8);
-                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "ROUND-OF-16", 2, teams, 0, 8, 8);
-                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "QUARTER-FINAL", 3, teams, 0, 4, 4);
-                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "SEMI-FINAL", 4, teams, 0, 2, 2);
-                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "FINAL", 5, teams, 0, 1, 1);
+                return total;
             }
-
-            return totalKnockoutMatches;
         });
-    }
-
-    private long createKnockoutRound(
-            AtomicLong knockoutId,
-            String competition,
-            String round,
-            int roundOrder,
-            List<Document> teams,
-            int startIndex,
-            int awayStartIndex,
-            int matchesCount
-    ) {
-        long created = 0;
-
-        for (int i = 0; i < matchesCount; i++) {
-            Document home = teams.get((startIndex + i) % teams.size());
-            Document away = teams.get((awayStartIndex - 1 - i + teams.size()) % teams.size());
-
-            Document match = new Document("_id", knockoutId.getAndIncrement())
-                    .append("season", SEASON)
-                    .append("competitionSlug", competition)
-                    .append("round", round)
-                    .append("roundOrder", roundOrder)
-                    .append("bracketOrder", i + 1)
-                    .append("homeTeam", home.getString("apiTeamName"))
-                    .append("awayTeam", away.getString("apiTeamName"))
-                    .append("homeClubSlug", home.getString("clubSlug"))
-                    .append("awayClubSlug", away.getString("clubSlug"))
-                    .append("homeLeagueSlug", home.getString("leagueSlug"))
-                    .append("awayLeagueSlug", away.getString("leagueSlug"))
-                    .append("homeGoals", random.nextInt(5))
-                    .append("awayGoals", random.nextInt(5))
-                    .append("matchDate", LocalDateTime.now().plusDays(roundOrder * 7L + i))
-                    .append("status", "FINISHED");
-
-            mongoTemplate.insert(match, C_EUROPEAN_KNOCKOUT);
-            created++;
-        }
-
-        return created;
     }
 
     private PerformanceResult runSelectSampleEuropeanMatchEvents() {
         return runMeasuredTest("MONGODB_APP_FLOW_SELECT_SAMPLE_EUROPEAN_MATCH_EVENTS", () -> {
-            Document match = mongoTemplate.findOne(new Query().limit(1), Document.class, C_EUROPEAN_MATCHES);
-
-            if (match == null) {
-                return 0;
-            }
-
-            Query query = Query.query(Criteria.where("matchId").is(match.getLong("_id")))
-                    .with(Sort.by(Sort.Direction.ASC, "eventMinute"));
-
-            return mongoTemplate.find(query, Document.class, C_EUROPEAN_MATCH_EVENTS).size();
+            EuropeanMatch match = mongoTemplate.findOne(
+                    new Query().with(Sort.by(Sort.Direction.ASC, "roundNumber", "matchDate")).limit(1),
+                    EuropeanMatch.class,
+                    C_EUROPEAN_MATCHES
+            );
+            if (match == null) return 0;
+            return europeanMatchEventRepositoryAdapter()
+                    .findByMatchIdOrderByEventMinuteAsc(match.getId())
+                    .size();
         });
     }
 
@@ -783,27 +623,22 @@ public class MongoPerformanceTestController {
                     .limit(100)
                     .with(Sort.by(Sort.Direction.ASC, "roundNumber", "matchDate"));
 
-            return mongoTemplate.find(query, Document.class, C_MATCHES).size();
+            return mongoTemplate.find(query, Match.class, C_MATCHES).size();
         });
     }
 
     private PerformanceResult runQueryJoinMatchesEventsPlayers() {
         return runMeasuredTest("MONGODB_QUERY_COMPLEX_JOIN_MATCHES_EVENTS_PLAYERS", () -> {
-            List<Document> events = mongoTemplate.find(new Query().limit(1000), Document.class, C_MATCH_EVENTS);
+            List<MatchEvent> events = mongoTemplate.find(new Query().limit(1000), MatchEvent.class, C_MATCH_EVENTS);
             long rows = 0;
 
-            for (Document event : events) {
-                Long matchId = event.getLong("matchId");
-                Long playerId = event.getLong("playerId");
-
-                Document match = mongoTemplate.findById(matchId, Document.class, C_MATCHES);
-                Document player = mongoTemplate.findById(playerId, Document.class, C_GENERATED_PLAYERS);
-
-                if (match != null && player != null) {
-                    rows++;
-                }
+            for (MatchEvent event : events) {
+                Match match = mongoTemplate.findById(event.getMatchId(), Match.class, C_MATCHES);
+                GeneratedPlayer player = event.getPlayerId() == null
+                        ? null
+                        : mongoTemplate.findById(event.getPlayerId(), GeneratedPlayer.class, C_GENERATED_PLAYERS);
+                if (match != null && player != null) rows++;
             }
-
             return rows;
         });
     }
@@ -811,14 +646,274 @@ public class MongoPerformanceTestController {
     private PerformanceResult runQuerySortFilterPlayersByValue() {
         return runMeasuredTest("MONGODB_QUERY_SORT_FILTER_PLAYERS_BY_VALUE", () -> {
             Query query = Query.query(
-                            Criteria.where("marketValue").ne(null)
+                            Criteria.where("marketValue").gt(0)
                                     .and("leagueSlug").is("england")
                     )
                     .with(Sort.by(Sort.Direction.DESC, "marketValue"))
                     .limit(100);
-
-            return mongoTemplate.find(query, Document.class, C_GENERATED_PLAYERS).size();
+            return mongoTemplate.find(query, GeneratedPlayer.class, C_GENERATED_PLAYERS).size();
         });
+    }
+
+    // -------------------------------------------------------------------------
+    // Adaptery repozytoriów: pozwalają używać dokładnie tej samej logiki
+    // MatchGeneratorService i EuropeanCompetitionService co aplikacja relacyjna,
+    // ale zapis/odczyt wykonują przez MongoTemplate.
+    // -------------------------------------------------------------------------
+
+    private MatchGeneratorService matchGeneratorServiceAdapter() {
+        if (appMatchGeneratorService == null) {
+            synchronized (this) {
+                if (appMatchGeneratorService == null) {
+                    appMatchGeneratorService = new MatchGeneratorService(
+                            matchRepositoryAdapter(),
+                            matchEventRepositoryAdapter(),
+                            generatedPlayerRepositoryAdapter()
+                    );
+                }
+            }
+        }
+        return appMatchGeneratorService;
+    }
+
+    private EuropeanCompetitionService europeanCompetitionServiceAdapter() {
+        if (appEuropeanCompetitionService == null) {
+            synchronized (this) {
+                if (appEuropeanCompetitionService == null) {
+                    appEuropeanCompetitionService = new EuropeanCompetitionService(
+                            participantRepositoryAdapter(),
+                            europeanMatchRepositoryAdapter(),
+                            europeanKnockoutRepositoryAdapter(),
+                            matchRepositoryAdapter(),
+                            leagueTableService,
+                            generatedPlayerRepositoryAdapter(),
+                            europeanMatchEventRepositoryAdapter(),
+                            matchGeneratorServiceAdapter(),
+                            refereeRepositoryAdapter()
+                    );
+                }
+            }
+        }
+        return appEuropeanCompetitionService;
+    }
+
+    private MatchRepository matchRepositoryAdapter() {
+        if (appMatchRepository == null) {
+            appMatchRepository = proxyRepository(MatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findByLeagueOrderByRoundNumberAscMatchDateAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("league").is(args[0]))
+                                .with(Sort.by(Sort.Order.asc("roundNumber"), Sort.Order.asc("matchDate"))),
+                        Match.class, C_MATCHES);
+                case "existsByLeague" -> mongoTemplate.exists(
+                        Query.query(Criteria.where("league").is(args[0])), C_MATCHES);
+                case "deleteByLeague" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("league").is(args[0])), C_MATCHES); yield null; }
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_MATCHES);
+                default -> unsupported(method);
+            });
+        }
+        return appMatchRepository;
+    }
+
+    private MatchEventRepository matchEventRepositoryAdapter() {
+        if (appMatchEventRepository == null) {
+            appMatchEventRepository = proxyRepository(MatchEventRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findByMatchIdOrderByEventMinuteAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("matchId").is(args[0]))
+                                .with(Sort.by(Sort.Order.asc("eventMinute"))),
+                        MatchEvent.class, C_MATCH_EVENTS);
+                case "deleteByMatchIdIn" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("matchId").in((Collection<?>) args[0])), C_MATCH_EVENTS); yield null; }
+                case "save" -> saveMongo(args[0], C_MATCH_EVENTS);
+                default -> unsupported(method);
+            });
+        }
+        return appMatchEventRepository;
+    }
+
+    private GeneratedPlayerRepository generatedPlayerRepositoryAdapter() {
+        if (appGeneratedPlayerRepository == null) {
+            appGeneratedPlayerRepository = proxyRepository(GeneratedPlayerRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findByLeagueSlugAndClubSlug" -> mongoTemplate.find(
+                        Query.query(Criteria.where("leagueSlug").is(args[0]).and("clubSlug").is(args[1])),
+                        GeneratedPlayer.class, C_GENERATED_PLAYERS);
+                case "findByClubSlug" -> mongoTemplate.find(
+                        Query.query(Criteria.where("clubSlug").is(args[0])),
+                        GeneratedPlayer.class, C_GENERATED_PLAYERS);
+                case "existsByLeagueSlugAndClubSlug" -> mongoTemplate.exists(
+                        Query.query(Criteria.where("leagueSlug").is(args[0]).and("clubSlug").is(args[1])),
+                        C_GENERATED_PLAYERS);
+                case "save" -> saveMongo(args[0], C_GENERATED_PLAYERS);
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_GENERATED_PLAYERS);
+                default -> unsupported(method);
+            });
+        }
+        return appGeneratedPlayerRepository;
+    }
+
+    private EuropeanCompetitionParticipantRepository participantRepositoryAdapter() {
+        if (appParticipantRepository == null) {
+            appParticipantRepository = proxyRepository(EuropeanCompetitionParticipantRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findBySeasonAndCompetitionSlugOrderByPotNumberAscUefaRankingPointsDesc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1]))
+                                .with(Sort.by(Sort.Order.asc("potNumber"), Sort.Order.desc("uefaRankingPoints"))),
+                        EuropeanCompetitionParticipant.class, C_PARTICIPANTS);
+                case "existsBySeasonAndCompetitionSlug" -> mongoTemplate.exists(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1])), C_PARTICIPANTS);
+                case "deleteBySeason" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("season").is(args[0])), C_PARTICIPANTS); yield null; }
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_PARTICIPANTS);
+                default -> unsupported(method);
+            });
+        }
+        return appParticipantRepository;
+    }
+
+    private EuropeanMatchRepository europeanMatchRepositoryAdapter() {
+        if (appEuropeanMatchRepository == null) {
+            appEuropeanMatchRepository = proxyRepository(EuropeanMatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "existsBySeasonAndCompetitionSlug" -> mongoTemplate.exists(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1])), C_EUROPEAN_MATCHES);
+                case "findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1]))
+                                .with(Sort.by(Sort.Order.asc("roundNumber"), Sort.Order.asc("matchDate"))),
+                        EuropeanMatch.class, C_EUROPEAN_MATCHES);
+                case "deleteBySeasonAndCompetitionSlug" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1])), C_EUROPEAN_MATCHES); yield null; }
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_EUROPEAN_MATCHES);
+                default -> unsupported(method);
+            });
+        }
+        return appEuropeanMatchRepository;
+    }
+
+    private EuropeanMatchEventRepository europeanMatchEventRepositoryAdapter() {
+        if (appEuropeanMatchEventRepository == null) {
+            appEuropeanMatchEventRepository = proxyRepository(EuropeanMatchEventRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findByMatchIdOrderByEventMinuteAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("matchId").is(args[0])).with(Sort.by("eventMinute")),
+                        EuropeanMatchEvent.class, C_EUROPEAN_MATCH_EVENTS);
+                case "findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("knockoutMatchId").is(args[0]).and("knockoutLeg").is(args[1]))
+                                .with(Sort.by("eventMinute")),
+                        EuropeanMatchEvent.class, C_EUROPEAN_MATCH_EVENTS);
+                case "deleteByMatchIdIn" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("matchId").in((Collection<?>) args[0])), C_EUROPEAN_MATCH_EVENTS); yield null; }
+                case "deleteByKnockoutMatchIdIn" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("knockoutMatchId").in((Collection<?>) args[0])), C_EUROPEAN_MATCH_EVENTS); yield null; }
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_EUROPEAN_MATCH_EVENTS);
+                default -> unsupported(method);
+            });
+        }
+        return appEuropeanMatchEventRepository;
+    }
+
+    private EuropeanKnockoutMatchRepository europeanKnockoutRepositoryAdapter() {
+        if (appEuropeanKnockoutRepository == null) {
+            appEuropeanKnockoutRepository = proxyRepository(EuropeanKnockoutMatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "existsBySeasonAndCompetitionSlug" -> mongoTemplate.exists(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1])), C_EUROPEAN_KNOCKOUT);
+                case "findBySeasonAndCompetitionSlugOrderByRoundOrderAscBracketOrderAsc" -> mongoTemplate.find(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1]))
+                                .with(Sort.by(Sort.Order.asc("roundOrder"), Sort.Order.asc("bracketOrder"))),
+                        EuropeanKnockoutMatch.class, C_EUROPEAN_KNOCKOUT);
+                case "deleteBySeasonAndCompetitionSlug" -> { mongoTemplate.remove(
+                        Query.query(Criteria.where("season").is(args[0]).and("competitionSlug").is(args[1])), C_EUROPEAN_KNOCKOUT); yield null; }
+                case "saveAll" -> saveAllMongo((Iterable<?>) args[0], C_EUROPEAN_KNOCKOUT);
+                default -> unsupported(method);
+            });
+        }
+        return appEuropeanKnockoutRepository;
+    }
+
+    private RefereeRepository refereeRepositoryAdapter() {
+        if (appRefereeRepository == null) {
+            appRefereeRepository = proxyRepository(RefereeRepository.class, (proxy, method, args) -> switch (method.getName()) {
+                case "findAll" -> mongoTemplate.findAll(Referee.class, C_REFEREES);
+                default -> unsupported(method);
+            });
+        }
+        return appRefereeRepository;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T proxyRepository(Class<T> type, InvocationHandler handler) {
+        return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, handler);
+    }
+
+    private Object unsupported(Method method) {
+        throw new UnsupportedOperationException("Mongo repository adapter does not implement: " + method.getName());
+    }
+
+    private List<Object> saveAllMongo(Iterable<?> values, String collection) {
+        List<Object> saved = new ArrayList<>();
+        for (Object value : values) {
+            saved.add(value);
+        }
+
+        if (saved.isEmpty()) {
+            return saved;
+        }
+
+        long lastId = reserveMongoIds(collection, saved.size());
+        long firstId = lastId - saved.size() + 1;
+
+        for (int i = 0; i < saved.size(); i++) {
+            ensureId(saved.get(i), firstId + i);
+        }
+
+        mongoTemplate.insert(saved, collection);
+
+        return saved;
+    }
+
+    private long reserveMongoIds(String collection, int count) {
+        Document sequence = mongoTemplate.findAndModify(
+                Query.query(Criteria.where("_id").is(collection)),
+                new Update().inc("value", count),
+                FindAndModifyOptions.options().upsert(true).returnNew(true),
+                Document.class,
+                C_SEQUENCES
+        );
+
+        return sequence == null
+                ? count
+                : ((Number) sequence.get("value")).longValue();
+    }
+
+    private Object saveMongo(Object value, String collection) {
+        ensureId(value, nextMongoId(collection));
+        return mongoTemplate.save(value, collection);
+    }
+
+    private long nextMongoId(String collection) {
+        Document sequence = mongoTemplate.findAndModify(
+                Query.query(Criteria.where("_id").is(collection)),
+                new Update().inc("value", 1L),
+                FindAndModifyOptions.options().upsert(true).returnNew(true),
+                Document.class,
+                C_SEQUENCES
+        );
+        return sequence == null ? 1L : ((Number) sequence.get("value")).longValue();
+    }
+
+    private void ensureId(Object value, long proposedId) {
+        try {
+            Field field = findField(value.getClass(), "id");
+            field.setAccessible(true);
+            if (field.get(value) == null) field.set(value, proposedId);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot assign Mongo id to " + value.getClass().getSimpleName(), e);
+        }
+    }
+
+    private Field findField(Class<?> type, String name) throws NoSuchFieldException {
+        Class<?> current = type;
+        while (current != null) {
+            try { return current.getDeclaredField(name); }
+            catch (NoSuchFieldException ignored) { current = current.getSuperclass(); }
+        }
+        throw new NoSuchFieldException(name);
     }
 
     private Document createLeagueMatch(long id, String league, Document home, Document away, int roundNumber) {
@@ -1078,15 +1173,14 @@ public class MongoPerformanceTestController {
     }
 
     private void resetApplicationCollections() {
-        mongoTemplate.dropCollection(C_COMPETITIONS);
-        mongoTemplate.dropCollection(C_REAL_TEAMS);
-        mongoTemplate.dropCollection(C_REFEREES);
         mongoTemplate.dropCollection(C_GENERATED_PLAYERS);
         mongoTemplate.dropCollection(C_MATCHES);
         mongoTemplate.dropCollection(C_MATCH_EVENTS);
         mongoTemplate.dropCollection(C_EUROPEAN_MATCHES);
         mongoTemplate.dropCollection(C_EUROPEAN_MATCH_EVENTS);
         mongoTemplate.dropCollection(C_EUROPEAN_KNOCKOUT);
+        mongoTemplate.dropCollection(C_PARTICIPANTS);
+        mongoTemplate.dropCollection(C_SEQUENCES);
     }
 
     private long countCollection(String collectionName) {
