@@ -279,14 +279,14 @@ public class EuropeanMatchesController {
                 : finalMatches.get(0);
 
         List<EuropeanBracketPairView> pairs = List.of(
-                new EuropeanBracketPairView(playOffMatches.get(7), roundOf16Matches.get(0)),
-                new EuropeanBracketPairView(playOffMatches.get(6), roundOf16Matches.get(1)),
-                new EuropeanBracketPairView(playOffMatches.get(5), roundOf16Matches.get(2)),
-                new EuropeanBracketPairView(playOffMatches.get(4), roundOf16Matches.get(3)),
-                new EuropeanBracketPairView(playOffMatches.get(3), roundOf16Matches.get(4)),
-                new EuropeanBracketPairView(playOffMatches.get(2), roundOf16Matches.get(5)),
-                new EuropeanBracketPairView(playOffMatches.get(1), roundOf16Matches.get(6)),
-                new EuropeanBracketPairView(playOffMatches.get(0), roundOf16Matches.get(7))
+                new EuropeanBracketPairView(playOffMatches.get(0), roundOf16Matches.get(0)),
+                new EuropeanBracketPairView(playOffMatches.get(1), roundOf16Matches.get(1)),
+                new EuropeanBracketPairView(playOffMatches.get(2), roundOf16Matches.get(2)),
+                new EuropeanBracketPairView(playOffMatches.get(3), roundOf16Matches.get(3)),
+                new EuropeanBracketPairView(playOffMatches.get(4), roundOf16Matches.get(4)),
+                new EuropeanBracketPairView(playOffMatches.get(5), roundOf16Matches.get(5)),
+                new EuropeanBracketPairView(playOffMatches.get(6), roundOf16Matches.get(6)),
+                new EuropeanBracketPairView(playOffMatches.get(7), roundOf16Matches.get(7))
         );
 
         EuropeanBracketQuarterView qf1 = new EuropeanBracketQuarterView(

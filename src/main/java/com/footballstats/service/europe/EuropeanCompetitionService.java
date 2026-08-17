@@ -38,6 +38,12 @@ public class EuropeanCompetitionService {
     private static final String QUARTER_FINAL = "QUARTER-FINAL";
     private static final String SEMI_FINAL = "SEMI-FINAL";
     private static final String FINAL = "FINAL";
+    private static final int LEAGUE_PHASE_TEAM_COUNT = 36;
+    private static final int LEAGUE_PHASE_POT_COUNT = 4;
+    private static final int LEAGUE_PHASE_TEAMS_PER_POT = 9;
+    private static final int LEAGUE_PHASE_MATCHES_PER_TEAM = 8;
+    private static final int LEAGUE_PHASE_MATCH_COUNT = 144;
+    private static final int LEAGUE_PHASE_ROUND_COUNT = 8;
 
     private final EuropeanCompetitionParticipantRepository participantRepository;
     private final EuropeanMatchRepository europeanMatchRepository;
@@ -1559,226 +1565,898 @@ public class EuropeanCompetitionService {
             String season,
             String competitionSlug
     ) {
-        return createSimpleLeaguePhaseSchedule(teams, season, competitionSlug);
-    }
+        validateLeaguePhasePots(teams);
 
-    private List<EuropeanMatch> createSimpleLeaguePhaseSchedule(
-            List<EuropeanCompetitionParticipant> teams,
-            String season,
-            String competitionSlug
-    ) {
-        List<EuropeanMatch> matches = new ArrayList<>();
-        LocalDateTime startDate = LocalDateTime.now().plusDays(7);
+        Random random = new Random();
+        RuntimeException lastFailure = null;
 
-        for (int round = 1; round <= 8; round++) {
-            List<EuropeanCompetitionParticipant> roundTeams = new ArrayList<>(teams);
-            Collections.shuffle(roundTeams);
+        for (int attempt = 1; attempt <= 300; attempt++) {
+            try {
+                List<EuropeanMatch> matches = tryCreateUefaLeaguePhaseDraw(
+                        teams,
+                        season,
+                        competitionSlug,
+                        random
+                );
 
-            for (int i = 0; i < roundTeams.size(); i += 2) {
-                EuropeanCompetitionParticipant home = roundTeams.get(i);
-                EuropeanCompetitionParticipant away = roundTeams.get(i + 1);
+                if (matches == null) {
+                    continue;
+                }
 
-                EuropeanMatch match = new EuropeanMatch();
+                validateLeaguePhaseDraw(matches, teams);
 
-                match.setSeason(season);
-                match.setCompetitionSlug(competitionSlug);
+                LocalDateTime startDate = LocalDateTime.now().plusDays(7);
+                if (!tryAssignLeaguePhaseRounds(matches, teams, startDate, random)) {
+                    continue;
+                }
 
-                match.setHomeTeam(home.getClubName());
-                match.setAwayTeam(away.getClubName());
-
-                match.setHomeClubSlug(home.getClubSlug());
-                match.setAwayClubSlug(away.getClubSlug());
-
-                match.setHomeLeagueSlug(home.getLeagueSlug());
-                match.setAwayLeagueSlug(away.getLeagueSlug());
-
-                match.setHomeGoals(0);
-                match.setAwayGoals(0);
-                match.setStatus("SCHEDULED");
-
-                match.setRoundNumber(round);
-                match.setMatchDate(startDate.plusWeeks(round - 1));
-
-                matches.add(match);
+                validateLeaguePhaseRounds(matches, teams);
+                return matches;
+            } catch (RuntimeException ex) {
+                lastFailure = ex;
             }
         }
 
-        return matches;
+        throw new RuntimeException(
+                "Could not create a valid UEFA-style league phase draw after 300 attempts.",
+                lastFailure
+        );
     }
 
-    private List<EuropeanMatch> createSingleLeaguePhaseDraw(
+    /**
+     * Builds the 2024/25 league-phase opponent structure used by the Champions League:
+     * 36 teams, four pots of nine, eight different opponents, two from every pot,
+     * with one home and one away match against every pot.
+     *
+     * The same-association restriction and the maximum of two opponents from any
+     * other association are enforced while the draw is built, not only afterwards.
+     */
+    private List<EuropeanMatch> tryCreateUefaLeaguePhaseDraw(
             List<EuropeanCompetitionParticipant> teams,
             String season,
-            String competitionSlug
+            String competitionSlug,
+            Random random
     ) {
-        List<EuropeanMatch> matches = new ArrayList<>();
-
-        Map<Long, Set<Long>> opponents = new HashMap<>();
-        Map<Long, Map<Integer, Integer>> potCounter = new HashMap<>();
-        Map<Long, Map<String, Integer>> countryCounter = new HashMap<>();
-        Map<Long, Integer> homeCounter = new HashMap<>();
-        Map<Long, Integer> awayCounter = new HashMap<>();
-
-        for (EuropeanCompetitionParticipant team : teams) {
-            opponents.put(team.getId(), new HashSet<>());
-            potCounter.put(team.getId(), new HashMap<>());
-            countryCounter.put(team.getId(), new HashMap<>());
-            homeCounter.put(team.getId(), 0);
-            awayCounter.put(team.getId(), 0);
+        Map<Integer, List<EuropeanCompetitionParticipant>> pots = new HashMap<>();
+        for (int pot = 1; pot <= LEAGUE_PHASE_POT_COUNT; pot++) {
+            final int currentPot = pot;
+            pots.put(
+                    pot,
+                    teams.stream()
+                            .filter(team -> team.getPotNumber() == currentPot)
+                            .collect(Collectors.toCollection(ArrayList::new))
+            );
         }
 
-        List<EuropeanCompetitionParticipant> shuffledTeams = new ArrayList<>(teams);
-        Collections.shuffle(shuffledTeams);
+        List<EuropeanMatch> matches = new ArrayList<>();
+        Set<String> usedPairs = new HashSet<>();
+        Map<String, Map<String, Integer>> associationCounters = new HashMap<>();
 
-        for (EuropeanCompetitionParticipant team : shuffledTeams) {
-            for (int pot = 1; pot <= 4; pot++) {
-                final int currentPot = pot;
-                while (potCounter.get(team.getId()).getOrDefault(currentPot, 0) < 2) {
+        for (EuropeanCompetitionParticipant team : teams) {
+            associationCounters.put(participantKey(team), new HashMap<>());
+        }
 
-                    List<EuropeanCompetitionParticipant> candidates = teams.stream()
-                            .filter(candidate -> !candidate.getId().equals(team.getId()))
-                            .filter(candidate -> candidate.getPotNumber() == currentPot)
-                            .filter(candidate -> !opponents.get(team.getId()).contains(candidate.getId()))
-                            .filter(candidate -> potCounter.get(candidate.getId())
-                                    .getOrDefault(team.getPotNumber(), 0) < 2)
-                            .filter(candidate -> countryCounter.get(team.getId())
-                                    .getOrDefault(candidate.getCountryCode(), 0) < 2)
-                            .filter(candidate -> countryCounter.get(candidate.getId())
-                                    .getOrDefault(team.getCountryCode(), 0) < 2)
-                            .filter(candidate ->
-                                    (homeCounter.get(team.getId()) < 4 && awayCounter.get(candidate.getId()) < 4)
-                                            ||
-                                            (homeCounter.get(candidate.getId()) < 4 && awayCounter.get(team.getId()) < 4)
-                            )
-                            .collect(Collectors.toList());
+        // A nine-team pot needs a 2-regular graph internally. A directed 9-cycle
+        // gives every club exactly one HOME and one AWAY opponent from its own pot.
+        List<Integer> samePotOrder = new ArrayList<>(List.of(1, 2, 3, 4));
+        Collections.shuffle(samePotOrder, random);
 
-                    if (candidates.isEmpty()) {
-                        throw new RuntimeException("Draw attempt failed.");
-                    }
+        for (Integer potNumber : samePotOrder) {
+            if (!createSamePotCycle(
+                    pots.get(potNumber),
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters,
+                    random
+            )) {
+                return null;
+            }
+        }
 
-                    Collections.shuffle(candidates);
+        // For every pair of different pots create two disjoint perfect matchings:
+        // A(home)-B(away) and B(home)-A(away). This guarantees one HOME and one
+        // AWAY opponent from each of the three other pots for every club.
+        List<int[]> potPairs = new ArrayList<>();
+        for (int firstPot = 1; firstPot <= LEAGUE_PHASE_POT_COUNT; firstPot++) {
+            for (int secondPot = firstPot + 1; secondPot <= LEAGUE_PHASE_POT_COUNT; secondPot++) {
+                potPairs.add(new int[]{firstPot, secondPot});
+            }
+        }
+        Collections.shuffle(potPairs, random);
 
-                    EuropeanCompetitionParticipant rival = candidates.get(0);
+        for (int[] pair : potPairs) {
+            List<EuropeanCompetitionParticipant> first = pots.get(pair[0]);
+            List<EuropeanCompetitionParticipant> second = pots.get(pair[1]);
 
-                    boolean teamCanHome = homeCounter.get(team.getId()) < 4
-                            && awayCounter.get(rival.getId()) < 4;
+            boolean firstPotStartsAtHome = random.nextBoolean();
 
-                    boolean rivalCanHome = homeCounter.get(rival.getId()) < 4
-                            && awayCounter.get(team.getId()) < 4;
+            if (firstPotStartsAtHome) {
+                if (!createCrossPotPerfectMatching(
+                        first,
+                        second,
+                        season,
+                        competitionSlug,
+                        matches,
+                        usedPairs,
+                        associationCounters,
+                        random
+                )) {
+                    return null;
+                }
 
-                    EuropeanCompetitionParticipant home;
-                    EuropeanCompetitionParticipant away;
+                if (!createCrossPotPerfectMatching(
+                        second,
+                        first,
+                        season,
+                        competitionSlug,
+                        matches,
+                        usedPairs,
+                        associationCounters,
+                        random
+                )) {
+                    return null;
+                }
+            } else {
+                if (!createCrossPotPerfectMatching(
+                        second,
+                        first,
+                        season,
+                        competitionSlug,
+                        matches,
+                        usedPairs,
+                        associationCounters,
+                        random
+                )) {
+                    return null;
+                }
 
-                    if (teamCanHome && rivalCanHome) {
-                        if (homeCounter.get(team.getId()) <= homeCounter.get(rival.getId())) {
-                            home = team;
-                            away = rival;
-                        } else {
-                            home = rival;
-                            away = team;
-                        }
-                    } else if (teamCanHome) {
-                        home = team;
-                        away = rival;
-                    } else if (rivalCanHome) {
-                        home = rival;
-                        away = team;
-                    } else {
-                        throw new RuntimeException("Draw attempt failed - home/away blocked.");
-                    }
-
-                    EuropeanMatch match = new EuropeanMatch();
-                    match.setSeason(season);
-                    match.setCompetitionSlug(competitionSlug);
-                    match.setHomeTeam(home.getClubName());
-                    match.setAwayTeam(away.getClubName());
-                    match.setHomeGoals(0);
-                    match.setAwayGoals(0);
-                    match.setStatus("SCHEDULED");
-
-                    match.setHomeClubSlug(home.getClubSlug());
-                    match.setAwayClubSlug(away.getClubSlug());
-                    match.setHomeLeagueSlug(home.getLeagueSlug());
-                    match.setAwayLeagueSlug(away.getLeagueSlug());
-
-                    matches.add(match);
-
-                    opponents.get(team.getId()).add(rival.getId());
-                    opponents.get(rival.getId()).add(team.getId());
-
-                    potCounter.get(team.getId()).merge(rival.getPotNumber(), 1, Integer::sum);
-                    potCounter.get(rival.getId()).merge(team.getPotNumber(), 1, Integer::sum);
-
-                    countryCounter.get(team.getId()).merge(rival.getCountryCode(), 1, Integer::sum);
-                    countryCounter.get(rival.getId()).merge(team.getCountryCode(), 1, Integer::sum);
-
-                    homeCounter.merge(home.getId(), 1, Integer::sum);
-                    awayCounter.merge(away.getId(), 1, Integer::sum);
+                if (!createCrossPotPerfectMatching(
+                        first,
+                        second,
+                        season,
+                        competitionSlug,
+                        matches,
+                        usedPairs,
+                        associationCounters,
+                        random
+                )) {
+                    return null;
                 }
             }
         }
 
-        if (matches.size() != 144) {
-            throw new RuntimeException("Invalid league phase draw. Expected 144 matches, found: " + matches.size());
-        }
-
-        for (EuropeanCompetitionParticipant team : teams) {
-            Long id = team.getId();
-
-            if (opponents.get(id).size() != 8) {
-                throw new RuntimeException("Invalid opponent count for: " + team.getClubName());
-            }
-
-            if (homeCounter.get(id) != 4 || awayCounter.get(id) != 4) {
-                throw new RuntimeException("Invalid home/away balance for: " + team.getClubName());
-            }
-
-            for (int pot = 1; pot <= 4; pot++) {
-                if (potCounter.get(id).getOrDefault(pot, 0) != 2) {
-                    throw new RuntimeException("Invalid pot balance for: " + team.getClubName());
-                }
-            }
-        }
-
-        LocalDateTime startDate = LocalDateTime.now().plusDays(7);
-        assignLeaguePhaseRounds(matches, startDate);
-        return matches;
+        return matches.size() == LEAGUE_PHASE_MATCH_COUNT ? matches : null;
     }
 
-    private void assignLeaguePhaseRounds(List<EuropeanMatch> matches, LocalDateTime startDate) {
-        List<EuropeanMatch> remainingMatches = new ArrayList<>(matches);
+    private boolean createSamePotCycle(
+            List<EuropeanCompetitionParticipant> potTeams,
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters,
+            Random random
+    ) {
+        if (potTeams == null || potTeams.size() != LEAGUE_PHASE_TEAMS_PER_POT) {
+            return false;
+        }
 
-        for (int round = 1; round <= 8; round++) {
-            List<EuropeanMatch> roundMatches = new ArrayList<>();
+        List<EuropeanCompetitionParticipant> shuffled = new ArrayList<>(potTeams);
+        Collections.shuffle(shuffled, random);
+
+        for (EuropeanCompetitionParticipant start : shuffled) {
+            List<EuropeanCompetitionParticipant> path = new ArrayList<>();
             Set<String> usedTeams = new HashSet<>();
 
-            Iterator<EuropeanMatch> iterator = remainingMatches.iterator();
+            path.add(start);
+            usedTeams.add(participantKey(start));
 
-            while (iterator.hasNext() && roundMatches.size() < 18) {
-                EuropeanMatch match = iterator.next();
-
-                String homeKey = match.getHomeLeagueSlug() + "|" + match.getHomeClubSlug();
-                String awayKey = match.getAwayLeagueSlug() + "|" + match.getAwayClubSlug();
-
-                if (!usedTeams.contains(homeKey) && !usedTeams.contains(awayKey)) {
-                    match.setRoundNumber(round);
-                    match.setMatchDate(startDate.plusWeeks(round - 1));
-
-                    usedTeams.add(homeKey);
-                    usedTeams.add(awayKey);
-
-                    roundMatches.add(match);
-                    iterator.remove();
-                }
-            }
-
-            if (roundMatches.size() != 18) {
-                throw new RuntimeException("Could not build full round " + round + ". Matches: " + roundMatches.size());
+            if (buildSamePotCycle(
+                    start,
+                    path,
+                    usedTeams,
+                    potTeams,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters,
+                    random
+            )) {
+                return true;
             }
         }
 
-        if (!remainingMatches.isEmpty()) {
-            throw new RuntimeException("Unassigned European matches: " + remainingMatches.size());
+        return false;
+    }
+
+    private boolean buildSamePotCycle(
+            EuropeanCompetitionParticipant start,
+            List<EuropeanCompetitionParticipant> path,
+            Set<String> usedTeams,
+            List<EuropeanCompetitionParticipant> potTeams,
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters,
+            Random random
+    ) {
+        EuropeanCompetitionParticipant current = path.get(path.size() - 1);
+
+        if (path.size() == potTeams.size()) {
+            if (!canCreateLeaguePhasePair(current, start, usedPairs, associationCounters)) {
+                return false;
+            }
+
+            registerLeaguePhaseMatch(
+                    current,
+                    start,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters
+            );
+            return true;
+        }
+
+        List<EuropeanCompetitionParticipant> candidates = potTeams.stream()
+                .filter(candidate -> !usedTeams.contains(participantKey(candidate)))
+                .filter(candidate -> canCreateLeaguePhasePair(
+                        current,
+                        candidate,
+                        usedPairs,
+                        associationCounters
+                ))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        Collections.shuffle(candidates, random);
+
+        for (EuropeanCompetitionParticipant candidate : candidates) {
+            usedTeams.add(participantKey(candidate));
+            path.add(candidate);
+
+            EuropeanMatch created = registerLeaguePhaseMatch(
+                    current,
+                    candidate,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters
+            );
+
+            if (buildSamePotCycle(
+                    start,
+                    path,
+                    usedTeams,
+                    potTeams,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters,
+                    random
+            )) {
+                return true;
+            }
+
+            unregisterLeaguePhaseMatch(
+                    created,
+                    current,
+                    candidate,
+                    matches,
+                    usedPairs,
+                    associationCounters
+            );
+
+            path.remove(path.size() - 1);
+            usedTeams.remove(participantKey(candidate));
+        }
+
+        return false;
+    }
+
+    private boolean createCrossPotPerfectMatching(
+            List<EuropeanCompetitionParticipant> homeTeams,
+            List<EuropeanCompetitionParticipant> awayTeams,
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters,
+            Random random
+    ) {
+        return buildCrossPotPerfectMatching(
+                new ArrayList<>(homeTeams),
+                awayTeams,
+                new HashSet<>(),
+                season,
+                competitionSlug,
+                matches,
+                usedPairs,
+                associationCounters,
+                random
+        );
+    }
+
+    private boolean buildCrossPotPerfectMatching(
+            List<EuropeanCompetitionParticipant> remainingHomeTeams,
+            List<EuropeanCompetitionParticipant> awayTeams,
+            Set<String> usedAwayTeams,
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters,
+            Random random
+    ) {
+        if (remainingHomeTeams.isEmpty()) {
+            return true;
+        }
+
+        EuropeanCompetitionParticipant selectedHome = null;
+        List<EuropeanCompetitionParticipant> selectedCandidates = null;
+
+        // Minimum-remaining-values heuristic: resolve the most constrained club first.
+        List<EuropeanCompetitionParticipant> shuffledHomes = new ArrayList<>(remainingHomeTeams);
+        Collections.shuffle(shuffledHomes, random);
+
+        for (EuropeanCompetitionParticipant home : shuffledHomes) {
+            List<EuropeanCompetitionParticipant> candidates = awayTeams.stream()
+                    .filter(away -> !usedAwayTeams.contains(participantKey(away)))
+                    .filter(away -> canCreateLeaguePhasePair(
+                            home,
+                            away,
+                            usedPairs,
+                            associationCounters
+                    ))
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            if (candidates.isEmpty()) {
+                return false;
+            }
+
+            if (selectedCandidates == null || candidates.size() < selectedCandidates.size()) {
+                selectedHome = home;
+                selectedCandidates = candidates;
+            }
+        }
+
+        Collections.shuffle(selectedCandidates, random);
+
+        List<EuropeanCompetitionParticipant> nextHomeTeams = new ArrayList<>(remainingHomeTeams);
+        nextHomeTeams.remove(selectedHome);
+
+        for (EuropeanCompetitionParticipant away : selectedCandidates) {
+            usedAwayTeams.add(participantKey(away));
+
+            EuropeanMatch created = registerLeaguePhaseMatch(
+                    selectedHome,
+                    away,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters
+            );
+
+            if (buildCrossPotPerfectMatching(
+                    nextHomeTeams,
+                    awayTeams,
+                    usedAwayTeams,
+                    season,
+                    competitionSlug,
+                    matches,
+                    usedPairs,
+                    associationCounters,
+                    random
+            )) {
+                return true;
+            }
+
+            unregisterLeaguePhaseMatch(
+                    created,
+                    selectedHome,
+                    away,
+                    matches,
+                    usedPairs,
+                    associationCounters
+            );
+
+            usedAwayTeams.remove(participantKey(away));
+        }
+
+        return false;
+    }
+
+    private boolean canCreateLeaguePhasePair(
+            EuropeanCompetitionParticipant first,
+            EuropeanCompetitionParticipant second,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters
+    ) {
+        if (participantKey(first).equals(participantKey(second))) {
+            return false;
+        }
+
+        if (usedPairs.contains(canonicalPairKey(first, second))) {
+            return false;
+        }
+
+        if (sameAssociation(first, second)) {
+            return false;
+        }
+
+        String firstKey = participantKey(first);
+        String secondKey = participantKey(second);
+
+        String firstAssociation = first.getCountryCode();
+        String secondAssociation = second.getCountryCode();
+
+        if (secondAssociation != null && !secondAssociation.isBlank()
+                && associationCounters.get(firstKey).getOrDefault(secondAssociation, 0) >= 2) {
+            return false;
+        }
+
+        return firstAssociation == null
+                || firstAssociation.isBlank()
+                || associationCounters.get(secondKey).getOrDefault(firstAssociation, 0) < 2;
+    }
+
+    private EuropeanMatch registerLeaguePhaseMatch(
+            EuropeanCompetitionParticipant home,
+            EuropeanCompetitionParticipant away,
+            String season,
+            String competitionSlug,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters
+    ) {
+        EuropeanMatch match = new EuropeanMatch();
+        match.setSeason(season);
+        match.setCompetitionSlug(competitionSlug);
+        match.setHomeTeam(home.getClubName());
+        match.setAwayTeam(away.getClubName());
+        match.setHomeClubSlug(home.getClubSlug());
+        match.setAwayClubSlug(away.getClubSlug());
+        match.setHomeLeagueSlug(home.getLeagueSlug());
+        match.setAwayLeagueSlug(away.getLeagueSlug());
+        match.setHomeGoals(0);
+        match.setAwayGoals(0);
+        match.setStatus("SCHEDULED");
+        match.setRoundNumber(0);
+
+        matches.add(match);
+        usedPairs.add(canonicalPairKey(home, away));
+
+        incrementAssociationCounter(associationCounters, participantKey(home), away.getCountryCode());
+        incrementAssociationCounter(associationCounters, participantKey(away), home.getCountryCode());
+
+        return match;
+    }
+
+    private void unregisterLeaguePhaseMatch(
+            EuropeanMatch match,
+            EuropeanCompetitionParticipant first,
+            EuropeanCompetitionParticipant second,
+            List<EuropeanMatch> matches,
+            Set<String> usedPairs,
+            Map<String, Map<String, Integer>> associationCounters
+    ) {
+        matches.remove(match);
+        usedPairs.remove(canonicalPairKey(first, second));
+
+        decrementAssociationCounter(associationCounters, participantKey(first), second.getCountryCode());
+        decrementAssociationCounter(associationCounters, participantKey(second), first.getCountryCode());
+    }
+
+    private void incrementAssociationCounter(
+            Map<String, Map<String, Integer>> counters,
+            String teamKey,
+            String association
+    ) {
+        if (association == null || association.isBlank()) {
+            return;
+        }
+
+        counters.get(teamKey).merge(association, 1, Integer::sum);
+    }
+
+    private void decrementAssociationCounter(
+            Map<String, Map<String, Integer>> counters,
+            String teamKey,
+            String association
+    ) {
+        if (association == null || association.isBlank()) {
+            return;
+        }
+
+        Map<String, Integer> teamCounters = counters.get(teamKey);
+        int updated = teamCounters.getOrDefault(association, 0) - 1;
+
+        if (updated <= 0) {
+            teamCounters.remove(association);
+        } else {
+            teamCounters.put(association, updated);
+        }
+    }
+
+    private boolean sameAssociation(
+            EuropeanCompetitionParticipant first,
+            EuropeanCompetitionParticipant second
+    ) {
+        return first.getCountryCode() != null
+                && !first.getCountryCode().isBlank()
+                && Objects.equals(first.getCountryCode(), second.getCountryCode());
+    }
+
+    private String participantKey(EuropeanCompetitionParticipant participant) {
+        return participant.getLeagueSlug() + "|" + participant.getClubSlug();
+    }
+
+    private String canonicalPairKey(
+            EuropeanCompetitionParticipant first,
+            EuropeanCompetitionParticipant second
+    ) {
+        String firstKey = participantKey(first);
+        String secondKey = participantKey(second);
+
+        return firstKey.compareTo(secondKey) <= 0
+                ? firstKey + "<>" + secondKey
+                : secondKey + "<>" + firstKey;
+    }
+
+    private String canonicalPairKey(String firstKey, String secondKey) {
+        return firstKey.compareTo(secondKey) <= 0
+                ? firstKey + "<>" + secondKey
+                : secondKey + "<>" + firstKey;
+    }
+
+    private String homeKey(EuropeanMatch match) {
+        return match.getHomeLeagueSlug() + "|" + match.getHomeClubSlug();
+    }
+
+    private String awayKey(EuropeanMatch match) {
+        return match.getAwayLeagueSlug() + "|" + match.getAwayClubSlug();
+    }
+
+    private void validateLeaguePhasePots(List<EuropeanCompetitionParticipant> teams) {
+        if (teams.size() != LEAGUE_PHASE_TEAM_COUNT) {
+            throw new RuntimeException(
+                    "Competition must have exactly " + LEAGUE_PHASE_TEAM_COUNT + " teams. Found: " + teams.size()
+            );
+        }
+
+        Set<String> uniqueTeams = new HashSet<>();
+        for (EuropeanCompetitionParticipant team : teams) {
+            if (!uniqueTeams.add(participantKey(team))) {
+                throw new RuntimeException("Duplicate European participant: " + team.getClubName());
+            }
+        }
+
+        for (int pot = 1; pot <= LEAGUE_PHASE_POT_COUNT; pot++) {
+            final int currentPot = pot;
+            long count = teams.stream()
+                    .filter(team -> team.getPotNumber() == currentPot)
+                    .count();
+
+            if (count != LEAGUE_PHASE_TEAMS_PER_POT) {
+                throw new RuntimeException(
+                        "Pot " + currentPot + " must contain exactly "
+                                + LEAGUE_PHASE_TEAMS_PER_POT + " teams. Found: " + count
+                );
+            }
+        }
+    }
+
+    private void validateLeaguePhaseDraw(
+            List<EuropeanMatch> matches,
+            List<EuropeanCompetitionParticipant> teams
+    ) {
+        if (matches.size() != LEAGUE_PHASE_MATCH_COUNT) {
+            throw new RuntimeException(
+                    "Invalid league phase draw. Expected " + LEAGUE_PHASE_MATCH_COUNT
+                            + " matches, found: " + matches.size()
+            );
+        }
+
+        Map<String, EuropeanCompetitionParticipant> participantsByKey = teams.stream()
+                .collect(Collectors.toMap(this::participantKey, participant -> participant));
+
+        Map<String, Set<String>> opponents = new HashMap<>();
+        Map<String, Integer> homeCounts = new HashMap<>();
+        Map<String, Integer> awayCounts = new HashMap<>();
+        Map<String, Map<Integer, Integer>> opponentPotCounts = new HashMap<>();
+        Map<String, Map<Integer, Integer>> homePotCounts = new HashMap<>();
+        Map<String, Map<Integer, Integer>> awayPotCounts = new HashMap<>();
+        Map<String, Map<String, Integer>> associationCounts = new HashMap<>();
+        Set<String> pairs = new HashSet<>();
+
+        for (EuropeanCompetitionParticipant team : teams) {
+            String key = participantKey(team);
+            opponents.put(key, new HashSet<>());
+            homeCounts.put(key, 0);
+            awayCounts.put(key, 0);
+            opponentPotCounts.put(key, new HashMap<>());
+            homePotCounts.put(key, new HashMap<>());
+            awayPotCounts.put(key, new HashMap<>());
+            associationCounts.put(key, new HashMap<>());
+        }
+
+        for (EuropeanMatch match : matches) {
+            String homeKey = homeKey(match);
+            String awayKey = awayKey(match);
+
+            EuropeanCompetitionParticipant home = participantsByKey.get(homeKey);
+            EuropeanCompetitionParticipant away = participantsByKey.get(awayKey);
+
+            if (home == null || away == null) {
+                throw new RuntimeException("League phase match contains an unknown participant.");
+            }
+
+            if (sameAssociation(home, away)) {
+                throw new RuntimeException(
+                        "Same-association league phase match is not allowed: "
+                                + home.getClubName() + " - " + away.getClubName()
+                );
+            }
+
+            String pairKey = canonicalPairKey(homeKey, awayKey);
+            if (!pairs.add(pairKey)) {
+                throw new RuntimeException(
+                        "Duplicate league phase pairing: " + home.getClubName() + " - " + away.getClubName()
+                );
+            }
+
+            opponents.get(homeKey).add(awayKey);
+            opponents.get(awayKey).add(homeKey);
+
+            homeCounts.merge(homeKey, 1, Integer::sum);
+            awayCounts.merge(awayKey, 1, Integer::sum);
+
+            opponentPotCounts.get(homeKey).merge(away.getPotNumber(), 1, Integer::sum);
+            opponentPotCounts.get(awayKey).merge(home.getPotNumber(), 1, Integer::sum);
+
+            homePotCounts.get(homeKey).merge(away.getPotNumber(), 1, Integer::sum);
+            awayPotCounts.get(awayKey).merge(home.getPotNumber(), 1, Integer::sum);
+
+            incrementAssociationCounter(associationCounts, homeKey, away.getCountryCode());
+            incrementAssociationCounter(associationCounts, awayKey, home.getCountryCode());
+        }
+
+        for (EuropeanCompetitionParticipant team : teams) {
+            String key = participantKey(team);
+
+            if (opponents.get(key).size() != LEAGUE_PHASE_MATCHES_PER_TEAM) {
+                throw new RuntimeException(
+                        "Invalid number of different opponents for " + team.getClubName()
+                                + ": " + opponents.get(key).size()
+                );
+            }
+
+            if (homeCounts.get(key) != 4 || awayCounts.get(key) != 4) {
+                throw new RuntimeException(
+                        "Invalid home/away balance for " + team.getClubName()
+                                + ". HOME=" + homeCounts.get(key) + ", AWAY=" + awayCounts.get(key)
+                );
+            }
+
+            for (int pot = 1; pot <= LEAGUE_PHASE_POT_COUNT; pot++) {
+                if (opponentPotCounts.get(key).getOrDefault(pot, 0) != 2) {
+                    throw new RuntimeException(
+                            "Invalid opponent count from pot " + pot + " for " + team.getClubName()
+                    );
+                }
+
+                if (homePotCounts.get(key).getOrDefault(pot, 0) != 1) {
+                    throw new RuntimeException(
+                            "Invalid HOME opponent count from pot " + pot + " for " + team.getClubName()
+                    );
+                }
+
+                if (awayPotCounts.get(key).getOrDefault(pot, 0) != 1) {
+                    throw new RuntimeException(
+                            "Invalid AWAY opponent count from pot " + pot + " for " + team.getClubName()
+                    );
+                }
+            }
+
+            for (Map.Entry<String, Integer> entry : associationCounts.get(key).entrySet()) {
+                if (entry.getValue() > 2) {
+                    throw new RuntimeException(
+                            "Too many opponents from association " + entry.getKey()
+                                    + " for " + team.getClubName() + ": " + entry.getValue()
+                    );
+                }
+            }
+        }
+    }
+
+    private boolean tryAssignLeaguePhaseRounds(
+            List<EuropeanMatch> matches,
+            List<EuropeanCompetitionParticipant> teams,
+            LocalDateTime startDate,
+            Random random
+    ) {
+        List<String> teamKeys = teams.stream()
+                .map(this::participantKey)
+                .toList();
+
+        for (int attempt = 0; attempt < 120; attempt++) {
+            for (EuropeanMatch match : matches) {
+                match.setRoundNumber(0);
+                match.setMatchDate(null);
+            }
+
+            List<EuropeanMatch> remainingMatches = new ArrayList<>(matches);
+            boolean complete = true;
+
+            for (int round = 1; round <= LEAGUE_PHASE_ROUND_COUNT; round++) {
+                List<EuropeanMatch> roundMatches = findPerfectLeaguePhaseRound(
+                        remainingMatches,
+                        teamKeys,
+                        random
+                );
+
+                if (roundMatches == null || roundMatches.size() != 18) {
+                    complete = false;
+                    break;
+                }
+
+                for (EuropeanMatch match : roundMatches) {
+                    match.setRoundNumber(round);
+                    match.setMatchDate(startDate.plusWeeks(round - 1));
+                }
+
+                remainingMatches.removeAll(roundMatches);
+            }
+
+            if (complete && remainingMatches.isEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<EuropeanMatch> findPerfectLeaguePhaseRound(
+            List<EuropeanMatch> remainingMatches,
+            List<String> teamKeys,
+            Random random
+    ) {
+        Map<String, List<EuropeanMatch>> adjacency = new HashMap<>();
+        for (String teamKey : teamKeys) {
+            adjacency.put(teamKey, new ArrayList<>());
+        }
+
+        for (EuropeanMatch match : remainingMatches) {
+            adjacency.get(homeKey(match)).add(match);
+            adjacency.get(awayKey(match)).add(match);
+        }
+
+        Set<String> usedTeams = new HashSet<>();
+        List<EuropeanMatch> selectedMatches = new ArrayList<>();
+
+        boolean found = buildPerfectLeaguePhaseRound(
+                teamKeys,
+                adjacency,
+                usedTeams,
+                selectedMatches,
+                random
+        );
+
+        return found ? selectedMatches : null;
+    }
+
+    private boolean buildPerfectLeaguePhaseRound(
+            List<String> teamKeys,
+            Map<String, List<EuropeanMatch>> adjacency,
+            Set<String> usedTeams,
+            List<EuropeanMatch> selectedMatches,
+            Random random
+    ) {
+        if (usedTeams.size() == teamKeys.size()) {
+            return true;
+        }
+
+        String selectedTeam = null;
+        List<EuropeanMatch> selectedCandidates = null;
+
+        List<String> shuffledTeams = new ArrayList<>(teamKeys);
+        Collections.shuffle(shuffledTeams, random);
+
+        for (String teamKey : shuffledTeams) {
+            if (usedTeams.contains(teamKey)) {
+                continue;
+            }
+
+            List<EuropeanMatch> candidates = adjacency.get(teamKey).stream()
+                    .filter(match -> {
+                        String opponentKey = homeKey(match).equals(teamKey)
+                                ? awayKey(match)
+                                : homeKey(match);
+                        return !usedTeams.contains(opponentKey);
+                    })
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            if (candidates.isEmpty()) {
+                return false;
+            }
+
+            if (selectedCandidates == null || candidates.size() < selectedCandidates.size()) {
+                selectedTeam = teamKey;
+                selectedCandidates = candidates;
+            }
+        }
+
+        Collections.shuffle(selectedCandidates, random);
+
+        for (EuropeanMatch match : selectedCandidates) {
+            String opponentKey = homeKey(match).equals(selectedTeam)
+                    ? awayKey(match)
+                    : homeKey(match);
+
+            if (usedTeams.contains(opponentKey)) {
+                continue;
+            }
+
+            usedTeams.add(selectedTeam);
+            usedTeams.add(opponentKey);
+            selectedMatches.add(match);
+
+            if (buildPerfectLeaguePhaseRound(
+                    teamKeys,
+                    adjacency,
+                    usedTeams,
+                    selectedMatches,
+                    random
+            )) {
+                return true;
+            }
+
+            selectedMatches.remove(selectedMatches.size() - 1);
+            usedTeams.remove(selectedTeam);
+            usedTeams.remove(opponentKey);
+        }
+
+        return false;
+    }
+
+    private void validateLeaguePhaseRounds(
+            List<EuropeanMatch> matches,
+            List<EuropeanCompetitionParticipant> teams
+    ) {
+        Set<String> expectedTeams = teams.stream()
+                .map(this::participantKey)
+                .collect(Collectors.toSet());
+
+        for (int round = 1; round <= LEAGUE_PHASE_ROUND_COUNT; round++) {
+            final int currentRound = round;
+            List<EuropeanMatch> roundMatches = matches.stream()
+                    .filter(match -> match.getRoundNumber() == currentRound)
+                    .toList();
+
+            if (roundMatches.size() != 18) {
+                throw new RuntimeException(
+                        "Invalid league phase round " + round + ". Expected 18 matches, found: "
+                                + roundMatches.size()
+                );
+            }
+
+            Set<String> roundTeams = new HashSet<>();
+            for (EuropeanMatch match : roundMatches) {
+                if (!roundTeams.add(homeKey(match)) || !roundTeams.add(awayKey(match))) {
+                    throw new RuntimeException("A team appears more than once in league phase round " + round);
+                }
+            }
+
+            if (!roundTeams.equals(expectedTeams)) {
+                throw new RuntimeException("League phase round " + round + " does not contain all 36 teams.");
+            }
         }
     }
 
@@ -1959,33 +2637,93 @@ public class EuropeanCompetitionService {
         }
 
         List<EuropeanLeagueTableRow> teams = table.subList(0, 24);
+        Random drawRandom = new Random();
 
-        List<EuropeanKnockoutMatch> playoffs = List.of(
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 1, teams.get(8), teams.get(23), 9, 24),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 2, teams.get(9), teams.get(22), 10, 23),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 3, teams.get(10), teams.get(21), 11, 22),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 4, teams.get(11), teams.get(20), 12, 21),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 5, teams.get(12), teams.get(19), 13, 20),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 6, teams.get(13), teams.get(18), 14, 19),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 7, teams.get(14), teams.get(17), 15, 18),
-                createKnockoutMatch(season, competitionSlug, PLAY_OFF, 1, 8, teams.get(15), teams.get(16), 16, 17)
-        );
+        /*
+         * UEFA 2024/25 knockout phase play-off pairing bands:
+         *  9/10  vs 23/24
+         * 11/12  vs 21/22
+         * 13/14  vs 19/20
+         * 15/16  vs 17/18
+         *
+         * Each two-team seeded pair and two-team unseeded pair is drawn into two
+         * predetermined bracket positions. The seeded club is stored as the AWAY
+         * side of the first leg so it hosts the second leg, matching the UEFA rule.
+         */
+        List<EuropeanKnockoutMatch> playoffs = new ArrayList<>();
 
+        // Bracket slots mirror the UEFA knockout bracket layout. Adjacent round-of-16
+        // slots then progress naturally to the quarter-finals in createNextRound().
+        playoffs.addAll(createPlayoffPairGroup(
+                season, competitionSlug, teams,
+                15, 16, 17, 18,
+                1, 7,
+                drawRandom
+        ));
+        playoffs.addAll(createPlayoffPairGroup(
+                season, competitionSlug, teams,
+                9, 10, 23, 24,
+                2, 8,
+                drawRandom
+        ));
+        playoffs.addAll(createPlayoffPairGroup(
+                season, competitionSlug, teams,
+                11, 12, 21, 22,
+                3, 6,
+                drawRandom
+        ));
+        playoffs.addAll(createPlayoffPairGroup(
+                season, competitionSlug, teams,
+                13, 14, 19, 20,
+                4, 5,
+                drawRandom
+        ));
+
+        playoffs.sort(Comparator.comparingInt(EuropeanKnockoutMatch::getBracketOrder));
         playoffs.forEach(this::simulateTwoLeggedTie);
         playoffs = europeanKnockoutMatchRepository.saveAll(playoffs);
         generateKnockoutEvents(playoffs);
 
-        List<EuropeanKnockoutMatch> roundOf16 = List.of(
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 1, teams.get(0), playoffs.get(7), 1),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 2, teams.get(1), playoffs.get(6), 2),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 3, teams.get(2), playoffs.get(5), 3),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 4, teams.get(3), playoffs.get(4), 4),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 5, teams.get(4), playoffs.get(3), 5),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 6, teams.get(5), playoffs.get(2), 6),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 7, teams.get(6), playoffs.get(1), 7),
-                createKnockoutMatchFromWinner(season, competitionSlug, ROUND_OF_16, 2, 8, teams.get(7), playoffs.get(0), 8)
+        Map<Integer, EuropeanKnockoutMatch> playoffByBracketSlot = playoffs.stream()
+                .collect(Collectors.toMap(
+                        EuropeanKnockoutMatch::getBracketOrder,
+                        match -> match
+                ));
+
+        List<EuropeanKnockoutMatch> roundOf16 = new ArrayList<>();
+
+        // Top-eight teams are drawn in ranking pairs into the two bracket positions
+        // reserved for that pair: 1/2, 3/4, 5/6 and 7/8.
+        addRoundOf16SeedPair(
+                roundOf16, season, competitionSlug, teams,
+                playoffByBracketSlot,
+                1, 2,
+                1, 7,
+                drawRandom
+        );
+        addRoundOf16SeedPair(
+                roundOf16, season, competitionSlug, teams,
+                playoffByBracketSlot,
+                3, 4,
+                4, 5,
+                drawRandom
+        );
+        addRoundOf16SeedPair(
+                roundOf16, season, competitionSlug, teams,
+                playoffByBracketSlot,
+                5, 6,
+                3, 6,
+                drawRandom
+        );
+        addRoundOf16SeedPair(
+                roundOf16, season, competitionSlug, teams,
+                playoffByBracketSlot,
+                7, 8,
+                2, 8,
+                drawRandom
         );
 
+        roundOf16.sort(Comparator.comparingInt(EuropeanKnockoutMatch::getBracketOrder));
         roundOf16.forEach(this::simulateTwoLeggedTie);
         roundOf16 = europeanKnockoutMatchRepository.saveAll(roundOf16);
         generateKnockoutEvents(roundOf16);
@@ -2010,6 +2748,90 @@ public class EuropeanCompetitionService {
         finalMatch.forEach(this::simulateFinalMatch);
         finalMatch = europeanKnockoutMatchRepository.saveAll(finalMatch);
         generateKnockoutEvents(finalMatch);
+    }
+
+    private List<EuropeanKnockoutMatch> createPlayoffPairGroup(
+            String season,
+            String competitionSlug,
+            List<EuropeanLeagueTableRow> teams,
+            int seededPositionOne,
+            int seededPositionTwo,
+            int unseededPositionOne,
+            int unseededPositionTwo,
+            int bracketSlotOne,
+            int bracketSlotTwo,
+            Random random
+    ) {
+        List<Integer> seededPositions = new ArrayList<>(
+                List.of(seededPositionOne, seededPositionTwo)
+        );
+        List<Integer> unseededPositions = new ArrayList<>(
+                List.of(unseededPositionOne, unseededPositionTwo)
+        );
+
+        Collections.shuffle(seededPositions, random);
+        Collections.shuffle(unseededPositions, random);
+
+        List<Integer> bracketSlots = List.of(bracketSlotOne, bracketSlotTwo);
+        List<EuropeanKnockoutMatch> result = new ArrayList<>();
+
+        for (int i = 0; i < 2; i++) {
+            int seededPosition = seededPositions.get(i);
+            int unseededPosition = unseededPositions.get(i);
+
+            // Unseeded team hosts the first leg; seeded team hosts the return leg.
+            result.add(createKnockoutMatch(
+                    season,
+                    competitionSlug,
+                    PLAY_OFF,
+                    1,
+                    bracketSlots.get(i),
+                    teams.get(unseededPosition - 1),
+                    teams.get(seededPosition - 1),
+                    unseededPosition,
+                    seededPosition
+            ));
+        }
+
+        return result;
+    }
+
+    private void addRoundOf16SeedPair(
+            List<EuropeanKnockoutMatch> roundOf16,
+            String season,
+            String competitionSlug,
+            List<EuropeanLeagueTableRow> teams,
+            Map<Integer, EuropeanKnockoutMatch> playoffByBracketSlot,
+            int firstSeed,
+            int secondSeed,
+            int firstBracketSlot,
+            int secondBracketSlot,
+            Random random
+    ) {
+        List<Integer> seeds = new ArrayList<>(List.of(firstSeed, secondSeed));
+        Collections.shuffle(seeds, random);
+
+        List<Integer> slots = List.of(firstBracketSlot, secondBracketSlot);
+
+        for (int i = 0; i < 2; i++) {
+            int slot = slots.get(i);
+            EuropeanKnockoutMatch playoff = playoffByBracketSlot.get(slot);
+
+            if (playoff == null) {
+                throw new RuntimeException("Missing play-off match for bracket slot " + slot);
+            }
+
+            roundOf16.add(createKnockoutMatchFromWinner(
+                    season,
+                    competitionSlug,
+                    ROUND_OF_16,
+                    2,
+                    slot,
+                    teams.get(seeds.get(i) - 1),
+                    playoff,
+                    seeds.get(i)
+            ));
+        }
     }
 
     private void generateKnockoutEvents(List<EuropeanKnockoutMatch> matches) {
@@ -2203,19 +3025,22 @@ public class EuropeanCompetitionService {
         match.setRoundOrder(roundOrder);
         match.setBracketOrder(bracketOrder);
 
-        match.setHomeSeed(seededTeamSeed);
-        match.setAwaySeed(null);
+        // The top-eight seeded club hosts the second leg. Because EuropeanKnockoutMatch
+        // stores the first-leg home side in homeTeam, the play-off winner is HOME
+        // here and the seeded team is AWAY for the first leg.
+        match.setHomeSeed(null);
+        match.setAwaySeed(seededTeamSeed);
 
         match.setSourceMatchOneId(previousMatch.getId());
         match.setSourceMatchTwoId(null);
 
-        match.setHomeTeam(seededTeam.getTeam());
-        match.setHomeLeagueSlug(seededTeam.getLeagueSlug());
-        match.setHomeClubSlug(createSlug(seededTeam.getTeam()));
+        match.setHomeTeam(previousMatch.getWinnerTeam());
+        match.setHomeLeagueSlug(previousMatch.getWinnerLeagueSlug());
+        match.setHomeClubSlug(previousMatch.getWinnerClubSlug());
 
-        match.setAwayTeam(previousMatch.getWinnerTeam());
-        match.setAwayLeagueSlug(previousMatch.getWinnerLeagueSlug());
-        match.setAwayClubSlug(previousMatch.getWinnerClubSlug());
+        match.setAwayTeam(seededTeam.getTeam());
+        match.setAwayLeagueSlug(seededTeam.getLeagueSlug());
+        match.setAwayClubSlug(createSlug(seededTeam.getTeam()));
 
         match.setMatchDate(LocalDateTime.now().plusDays(8 + bracketOrder));
         match.setStatus("FINISHED");

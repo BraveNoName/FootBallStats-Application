@@ -178,29 +178,29 @@
           <div class="team-fixtures-grid">
             <div class="team-fixture-card"
                  th:each="match : ${matches}"
-                 th:if="${match.homeTeam == participant.clubName or match.awayTeam == participant.clubName}">
+                 th:if="${(match.homeClubSlug == participant.clubSlug and match.homeLeagueSlug == participant.leagueSlug) or (match.awayClubSlug == participant.clubSlug and match.awayLeagueSlug == participant.leagueSlug)}">
 
               <div class="fixture-side"
-                   th:classappend="${match.homeTeam == participant.clubName} ? ' home-game' : ' away-game'">
-                <span th:if="${match.homeTeam == participant.clubName}">HOME</span>
-                <span th:if="${match.awayTeam == participant.clubName}">AWAY</span>
+                   th:classappend="${(match.homeClubSlug == participant.clubSlug and match.homeLeagueSlug == participant.leagueSlug)} ? ' home-game' : ' away-game'">
+                <span th:if="${(match.homeClubSlug == participant.clubSlug and match.homeLeagueSlug == participant.leagueSlug)}">HOME</span>
+                <span th:if="${(match.awayClubSlug == participant.clubSlug and match.awayLeagueSlug == participant.leagueSlug)}">AWAY</span>
               </div>
 
               <div class="fixture-opponent">
-                <img th:if="${match.homeTeam == participant.clubName}"
+                <img th:if="${(match.homeClubSlug == participant.clubSlug and match.homeLeagueSlug == participant.leagueSlug)}"
                      th:src="@{'/Images/leagues/' + ${leagueFolders[match.awayLeagueSlug]} + '/' + ${match.awayTeam} + '.png'}"
                      onerror="this.src='/Images/Favicon.png'"
                      alt="Opponent crest">
 
-                <img th:if="${match.awayTeam == participant.clubName}"
+                <img th:if="${(match.awayClubSlug == participant.clubSlug and match.awayLeagueSlug == participant.leagueSlug)}"
                      th:src="@{'/Images/leagues/' + ${leagueFolders[match.homeLeagueSlug]} + '/' + ${match.homeTeam} + '.png'}"
                      onerror="this.src='/Images/Favicon.png'"
                      alt="Opponent crest">
 
-                <strong th:if="${match.homeTeam == participant.clubName}"
+                <strong th:if="${(match.homeClubSlug == participant.clubSlug and match.homeLeagueSlug == participant.leagueSlug)}"
                         th:text="${match.awayTeam}">Opponent</strong>
 
-                <strong th:if="${match.awayTeam == participant.clubName}"
+                <strong th:if="${(match.awayClubSlug == participant.clubSlug and match.awayLeagueSlug == participant.leagueSlug)}"
                         th:text="${match.homeTeam}">Opponent</strong>
 
                 <small th:text="'Round ' + ${match.roundNumber}">Round 1</small>
