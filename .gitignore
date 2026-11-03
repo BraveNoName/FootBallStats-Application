@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Baza danych H2 / pliki lokalne i ustawienia do baz danych i silnikow
+data/footballstats.mv.db
+data/footballstats.trace.db
+src/main/resources/application-*.properties
