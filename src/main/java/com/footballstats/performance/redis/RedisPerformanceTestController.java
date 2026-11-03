@@ -3,15 +3,9 @@ package com.footballstats.performance.redis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.footballstats.dto.EuropeanLeaguePhaseRoundView;
-import com.footballstats.dto.EuropeanLeagueTableRow;
-import com.footballstats.dto.LeagueTableRow;
-import com.footballstats.model.*;
-import com.footballstats.repository.*;
-import com.footballstats.service.LeagueTableService;
-import com.footballstats.service.MatchGeneratorService;
+import com.footballstats.model.GeneratedPlayer;
+import com.footballstats.model.RealTeam;
 import com.footballstats.service.PlayerGenerator;
-import com.footballstats.service.europe.EuropeanCompetitionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -19,11 +13,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -39,14 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
-import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,7 +36,7 @@ import java.lang.reflect.Method;
 public class RedisPerformanceTestController {
 
     private static final String SEASON = "2025/2026";
-    private static final int TRIALS = 1;
+    private static final int TRIALS = 10;
 
     private static final String K_COMPETITIONS = "redis:competitions:";
     private static final String K_REAL_TEAMS = "redis:realTeam:";
@@ -65,9 +47,6 @@ public class RedisPerformanceTestController {
     private static final String K_EUROPEAN_MATCHES = "redis:europeanMatch:";
     private static final String K_EUROPEAN_MATCH_EVENTS = "redis:europeanMatchEvent:";
     private static final String K_EUROPEAN_KNOCKOUT = "redis:europeanKnockoutMatch:";
-    private static final String K_PARTICIPANTS = "redis:europeanCompetitionParticipant:";
-    private static final String K_SEQUENCE = "redis:sequence:";
-    private static final String K_INDEX = "redis:index:";
 
     private static final String[] LEAGUES = {
             "england", "spain", "germany", "italy", "france",
@@ -116,19 +95,7 @@ public class RedisPerformanceTestController {
     private final ObjectMapper objectMapper;
 
     private final PlayerGenerator playerGenerator = new PlayerGenerator();
-    private final LeagueTableService leagueTableService = new LeagueTableService();
     private final Random random = new Random();
-
-    private volatile MatchRepository appMatchRepository;
-    private volatile MatchEventRepository appMatchEventRepository;
-    private volatile GeneratedPlayerRepository appGeneratedPlayerRepository;
-    private volatile EuropeanCompetitionParticipantRepository appParticipantRepository;
-    private volatile EuropeanMatchRepository appEuropeanMatchRepository;
-    private volatile EuropeanMatchEventRepository appEuropeanMatchEventRepository;
-    private volatile EuropeanKnockoutMatchRepository appEuropeanKnockoutRepository;
-    private volatile RefereeRepository appRefereeRepository;
-    private volatile MatchGeneratorService appMatchGeneratorService;
-    private volatile EuropeanCompetitionService appEuropeanCompetitionService;
 
     @GetMapping("/admin/performance/app-flow-redis")
     public String runRedisApplicationFlowPerformanceTests() {
@@ -172,32 +139,29 @@ public class RedisPerformanceTestController {
 
     @GetMapping("/admin/performance/reset-redis")
     public String resetRedisPerformanceData() {
+        deleteByPrefix(K_COMPETITIONS);
+        deleteByPrefix(K_REAL_TEAMS);
+        deleteByPrefix(K_REFEREES);
         deleteByPrefix(K_GENERATED_PLAYERS);
         deleteByPrefix(K_MATCHES);
         deleteByPrefix(K_MATCH_EVENTS);
         deleteByPrefix(K_EUROPEAN_MATCHES);
         deleteByPrefix(K_EUROPEAN_MATCH_EVENTS);
         deleteByPrefix(K_EUROPEAN_KNOCKOUT);
-        deleteByPrefix(K_PARTICIPANTS);
-        deleteByPrefix(K_SEQUENCE);
-        deleteByPrefix(K_INDEX);
 
         return """
                 REDIS PERFORMANCE DATA RESET COMPLETED
 
-                Deleted generated data only:
-                - generated players
-                - league matches
-                - league match events
-                - european participants
-                - european matches
-                - european match events
-                - european knockout matches
-
-                Kept setup data:
+                Deleted key prefixes:
                 - competitions
                 - real teams
                 - referees
+                - generated players
+                - league matches
+                - league match events
+                - european matches
+                - european match events
+                - european knockout matches
                 """;
     }
 
@@ -295,22 +259,28 @@ public class RedisPerformanceTestController {
 
     private PerformanceResult runGeneratePlayersForAllTeams() {
         return runMeasuredTest("REDIS_APP_FLOW_GENERATE_PLAYERS_ALL", () -> {
-
             deleteByPrefix(K_GENERATED_PLAYERS);
-            deleteByPrefix(K_SEQUENCE + "GeneratedPlayer");
-            deleteByPrefix(K_INDEX + "players:");
 
+            AtomicLong playerId = new AtomicLong(1);
             long insertedPlayers = 0;
-            List<RealTeam> teams =
-                    readAllRedis(K_REAL_TEAMS, RealTeam.class);
 
-            for (RealTeam team : teams) {
-                List<GeneratedPlayer> squad =
-                        playerGenerator.generateSquadForTeam(team);
+            List<Map<String, Object>> teams = findAll(K_REAL_TEAMS);
 
-                generatedPlayerRepositoryAdapter().saveAll(squad);
+            for (Map<String, Object> teamDoc : teams) {
+                RealTeam team = toRealTeam(teamDoc);
+                List<GeneratedPlayer> squad = playerGenerator.generateSquadForTeam(team);
 
-                insertedPlayers += squad.size();
+                Map<String, String> rows = new LinkedHashMap<>();
+
+                for (GeneratedPlayer player : squad) {
+                    long id = playerId.getAndIncrement();
+                    rows.put(K_GENERATED_PLAYERS + id, toJson(toPlayerMap(id, player)));
+                    insertedPlayers++;
+                }
+
+                if (!rows.isEmpty()) {
+                    redisTemplate.opsForValue().multiSet(rows);
+                }
             }
 
             return insertedPlayers;
@@ -319,632 +289,400 @@ public class RedisPerformanceTestController {
 
     private PerformanceResult runGenerateAllLeagueSeasons() {
         return runMeasuredTest("REDIS_APP_FLOW_GENERATE_ALL_LEAGUE_SEASONS", () -> {
-            synchronized (this) {
-                long totalMatches = 0;
+            deleteByPrefix(K_MATCHES);
+            deleteByPrefix(K_MATCH_EVENTS);
 
-                for (String league : LEAGUES) {
-                    matchGeneratorServiceAdapter().generateLeagueSeason(league);
+            AtomicLong matchId = new AtomicLong(1);
+            AtomicLong eventId = new AtomicLong(1);
+            long totalMatches = 0;
 
-                    totalMatches += matchRepositoryAdapter()
-                            .findByLeagueOrderByRoundNumberAscMatchDateAsc(league)
-                            .size();
+            for (String league : LEAGUES) {
+                List<Map<String, Object>> teams = findTeamsByLeague(league);
+                int round = 1;
+
+                for (int i = 0; i < teams.size(); i++) {
+                    for (int j = i + 1; j < teams.size(); j++) {
+                        Map<String, Object> home = teams.get(i);
+                        Map<String, Object> away = teams.get(j);
+
+                        long firstMatchId = matchId.getAndIncrement();
+                        Map<String, Object> firstMatch = createLeagueMatch(firstMatchId, league, home, away, round++);
+                        save(K_MATCHES + firstMatchId, firstMatch);
+                        insertMatchEvents(eventId, firstMatchId, firstMatch, false);
+                        totalMatches++;
+
+                        long secondMatchId = matchId.getAndIncrement();
+                        Map<String, Object> secondMatch = createLeagueMatch(secondMatchId, league, away, home, round++);
+                        save(K_MATCHES + secondMatchId, secondMatch);
+                        insertMatchEvents(eventId, secondMatchId, secondMatch, false);
+                        totalMatches++;
+                    }
                 }
-
-                return totalMatches;
             }
+
+            return totalMatches;
         });
     }
 
     private PerformanceResult runCalculateAllLeagueTables() {
         return runMeasuredTest("REDIS_APP_FLOW_CALCULATE_ALL_LEAGUE_TABLES", () -> {
             long totalRows = 0;
+
             for (String league : LEAGUES) {
-                List<Match> matches = matchRepositoryAdapter()
-                        .findByLeagueOrderByRoundNumberAscMatchDateAsc(league);
-                List<LeagueTableRow> table = leagueTableService.calculateTable(matches, league);
+                final String currentLeague = league;
+
+                List<Map<String, Object>> teams = findTeamsByLeague(currentLeague);
+                Map<String, TableRow> table = new LinkedHashMap<>();
+
+                for (Map<String, Object> team : teams) {
+                    table.put(asString(team.get("clubSlug")), new TableRow());
+                }
+
+                List<Map<String, Object>> matches = findAll(K_MATCHES).stream()
+                        .filter(match -> currentLeague.equals(asString(match.get("league"))))
+                        .toList();
+
+                for (Map<String, Object> match : matches) {
+                    String homeSlug = asString(match.get("homeClubSlug"));
+                    String awaySlug = asString(match.get("awayClubSlug"));
+                    int homeGoals = asInt(match.get("homeGoals"));
+                    int awayGoals = asInt(match.get("awayGoals"));
+
+                    TableRow home = table.get(homeSlug);
+                    TableRow away = table.get(awaySlug);
+
+                    if (home == null || away == null) {
+                        continue;
+                    }
+
+                    home.played++;
+                    away.played++;
+                    home.goalsFor += homeGoals;
+                    home.goalsAgainst += awayGoals;
+                    away.goalsFor += awayGoals;
+                    away.goalsAgainst += homeGoals;
+
+                    if (homeGoals > awayGoals) {
+                        home.points += 3;
+                        home.wins++;
+                        away.losses++;
+                    } else if (homeGoals < awayGoals) {
+                        away.points += 3;
+                        away.wins++;
+                        home.losses++;
+                    } else {
+                        home.points++;
+                        away.points++;
+                        home.draws++;
+                        away.draws++;
+                    }
+                }
+
                 totalRows += table.size();
             }
+
             return totalRows;
         });
     }
 
     private PerformanceResult runSelectAllLeagueMatches() {
         return runMeasuredTest("REDIS_APP_FLOW_SELECT_ALL_LEAGUE_MATCHES", () -> {
-            long total = 0;
+            long totalMatches = 0;
+
             for (String league : LEAGUES) {
-                total += matchRepositoryAdapter()
-                        .findByLeagueOrderByRoundNumberAscMatchDateAsc(league)
-                        .size();
+                final String currentLeague = league;
+
+                List<Map<String, Object>> matches = findAll(K_MATCHES).stream()
+                        .filter(match -> currentLeague.equals(asString(match.get("league"))))
+                        .sorted(Comparator
+                                .comparingInt((Map<String, Object> match) -> asInt(match.get("roundNumber")))
+                                .thenComparing(match -> asString(match.get("matchDate"))))
+                        .toList();
+
+                totalMatches += matches.size();
             }
-            return total;
+
+            return totalMatches;
         });
     }
 
     private PerformanceResult runSelectSampleMatchEvents() {
+
         return runMeasuredTest("REDIS_APP_FLOW_SELECT_SAMPLE_MATCH_EVENTS", () -> {
-            List<Match> england = matchRepositoryAdapter()
-                    .findByLeagueOrderByRoundNumberAscMatchDateAsc("england");
-            if (england.isEmpty()) return 0;
-            return matchEventRepositoryAdapter()
-                    .findByMatchIdOrderByEventMinuteAsc(england.get(0).getId())
-                    .size();
+
+            Map<String, Object> match = findAll(K_MATCHES)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (match == null) {
+                return 0;
+            }
+
+            long matchId = asLong(match.get("_id"));
+
+            return findAll(K_MATCH_EVENTS)
+                    .stream()
+                    .filter(event -> asLong(event.get("matchId")) == matchId)
+                    .sorted(Comparator.comparingInt(event -> asInt(event.get("eventMinute"))))
+                    .count();
         });
     }
 
     private PerformanceResult runSelectAllGeneratedPlayers() {
         return runMeasuredTest("REDIS_APP_FLOW_SELECT_ALL_GENERATED_PLAYERS", () ->
-                readAllRedis(K_GENERATED_PLAYERS, GeneratedPlayer.class).size()
+                findAll(K_GENERATED_PLAYERS).size()
         );
     }
 
     private PerformanceResult runGenerateAllEuropeanCompetitions() {
         return runMeasuredTest("REDIS_APP_FLOW_GENERATE_ALL_EUROPEAN_COMPETITIONS", () -> {
-            synchronized (this) {
-                long total = 0;
+            deleteByPrefix(K_EUROPEAN_MATCHES);
+            deleteByPrefix(K_EUROPEAN_MATCH_EVENTS);
 
-                for (String competition : EUROPEAN_COMPETITIONS) {
-                    europeanCompetitionServiceAdapter()
-                            .generateOrRegenerateEuropeanCompetition(SEASON, competition);
+            AtomicLong matchId = new AtomicLong(1);
+            AtomicLong eventId = new AtomicLong(1);
+            long totalMatches = 0;
 
-                    total += europeanMatchRepositoryAdapter()
-                            .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(SEASON, competition)
-                            .size();
+            List<Map<String, Object>> allTeams = findAll(K_REAL_TEAMS);
+
+            for (String competition : EUROPEAN_COMPETITIONS) {
+                List<Map<String, Object>> participants = allTeams.stream().limit(36).toList();
+
+                for (int round = 1; round <= 8; round++) {
+                    for (int i = 0; i < participants.size(); i += 2) {
+                        Map<String, Object> home = participants.get((i + round - 1) % participants.size());
+                        Map<String, Object> away = participants.get((i + round) % participants.size());
+
+                        long id = matchId.getAndIncrement();
+                        Map<String, Object> match = createEuropeanMatch(id, competition, home, away, round);
+                        save(K_EUROPEAN_MATCHES + id, match);
+                        insertMatchEvents(eventId, id, match, true);
+                        totalMatches++;
+                    }
                 }
-
-                return total;
             }
+
+            return totalMatches;
         });
     }
 
     private PerformanceResult runCalculateAllEuropeanTables() {
         return runMeasuredTest("REDIS_APP_FLOW_CALCULATE_ALL_EUROPEAN_TABLES", () -> {
-            long total = 0;
+            long totalRows = 0;
+
             for (String competition : EUROPEAN_COMPETITIONS) {
-                List<EuropeanLeagueTableRow> table = europeanCompetitionServiceAdapter()
-                        .calculateLeaguePhaseTable(SEASON, competition);
-                total += table.size();
+                final String currentCompetition = competition;
+
+                List<Map<String, Object>> matches = findAll(K_EUROPEAN_MATCHES).stream()
+                        .filter(match -> currentCompetition.equals(asString(match.get("competitionSlug"))))
+                        .toList();
+
+                Map<String, TableRow> table = new LinkedHashMap<>();
+
+                for (Map<String, Object> match : matches) {
+                    table.putIfAbsent(asString(match.get("homeClubSlug")), new TableRow());
+                    table.putIfAbsent(asString(match.get("awayClubSlug")), new TableRow());
+
+                    TableRow home = table.get(asString(match.get("homeClubSlug")));
+                    TableRow away = table.get(asString(match.get("awayClubSlug")));
+
+                    int homeGoals = asInt(match.get("homeGoals"));
+                    int awayGoals = asInt(match.get("awayGoals"));
+
+                    home.played++;
+                    away.played++;
+                    home.goalsFor += homeGoals;
+                    home.goalsAgainst += awayGoals;
+                    away.goalsFor += awayGoals;
+                    away.goalsAgainst += homeGoals;
+
+                    if (homeGoals > awayGoals) {
+                        home.points += 3;
+                        home.wins++;
+                        away.losses++;
+                    } else if (homeGoals < awayGoals) {
+                        away.points += 3;
+                        away.wins++;
+                        home.losses++;
+                    } else {
+                        home.points++;
+                        away.points++;
+                        home.draws++;
+                        away.draws++;
+                    }
+                }
+
+                totalRows += table.size();
             }
-            return total;
+
+            return totalRows;
         });
     }
 
     private PerformanceResult runBuildAllEuropeanRoundViews() {
         return runMeasuredTest("REDIS_APP_FLOW_BUILD_ALL_EUROPEAN_ROUND_VIEWS", () -> {
-            long total = 0;
+            long totalRounds = 0;
+
             for (String competition : EUROPEAN_COMPETITIONS) {
-                List<EuropeanLeaguePhaseRoundView> rounds = europeanCompetitionServiceAdapter()
-                        .buildLeaguePhaseRoundViews(SEASON, competition);
-                total += rounds.size();
+                final String currentCompetition = competition;
+
+                for (int round = 1; round <= 8; round++) {
+                    final int currentRound = round;
+
+                    findAll(K_EUROPEAN_MATCHES).stream()
+                            .filter(match -> currentCompetition.equals(asString(match.get("competitionSlug"))))
+                            .filter(match -> asInt(match.get("roundNumber")) == currentRound)
+                            .sorted(Comparator.comparing(match -> asString(match.get("matchDate"))))
+                            .toList();
+
+                    totalRounds++;
+                }
             }
-            return total;
+
+            return totalRounds;
         });
     }
 
     private PerformanceResult runGenerateAllEuropeanKnockouts() {
         return runMeasuredTest("REDIS_APP_FLOW_GENERATE_ALL_EUROPEAN_KNOCKOUTS", () -> {
-            long total = 0;
+            deleteByPrefix(K_EUROPEAN_KNOCKOUT);
+
+            AtomicLong knockoutId = new AtomicLong(1);
+            long totalKnockoutMatches = 0;
+
             for (String competition : EUROPEAN_COMPETITIONS) {
-                if (!europeanCompetitionServiceAdapter().isKnockoutGenerated(SEASON, competition)) {
-                    europeanCompetitionServiceAdapter().generateKnockoutStage(SEASON, competition);
+                List<Map<String, Object>> teams = findAll(K_REAL_TEAMS).stream()
+                        .limit(36)
+                        .toList();
+
+                if (teams.size() < 24) {
+                    continue;
                 }
-                total += europeanCompetitionServiceAdapter()
-                        .getKnockoutMatches(SEASON, competition)
-                        .size();
+
+                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "PLAY-OFF", 1, teams, 8, 24, 8);
+                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "ROUND-OF-16", 2, teams, 0, 8, 8);
+                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "QUARTER-FINAL", 3, teams, 0, 4, 4);
+                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "SEMI-FINAL", 4, teams, 0, 2, 2);
+                totalKnockoutMatches += createKnockoutRound(knockoutId, competition, "FINAL", 5, teams, 0, 1, 1);
             }
-            return total;
+
+            return totalKnockoutMatches;
         });
+    }
+
+    private long createKnockoutRound(
+            AtomicLong knockoutId,
+            String competition,
+            String round,
+            int roundOrder,
+            List<Map<String, Object>> teams,
+            int startIndex,
+            int awayStartIndex,
+            int matchesCount
+    ) {
+        long created = 0;
+
+        for (int i = 0; i < matchesCount; i++) {
+            Map<String, Object> home = teams.get((startIndex + i) % teams.size());
+            Map<String, Object> away = teams.get((awayStartIndex - 1 - i + teams.size()) % teams.size());
+
+            long id = knockoutId.getAndIncrement();
+
+            Map<String, Object> match = new LinkedHashMap<>();
+            match.put("_id", id);
+            match.put("season", SEASON);
+            match.put("competitionSlug", competition);
+            match.put("round", round);
+            match.put("roundOrder", roundOrder);
+            match.put("bracketOrder", i + 1);
+            match.put("homeTeam", asString(home.get("apiTeamName")));
+            match.put("awayTeam", asString(away.get("apiTeamName")));
+            match.put("homeClubSlug", asString(home.get("clubSlug")));
+            match.put("awayClubSlug", asString(away.get("clubSlug")));
+            match.put("homeLeagueSlug", asString(home.get("leagueSlug")));
+            match.put("awayLeagueSlug", asString(away.get("leagueSlug")));
+            match.put("homeGoals", random.nextInt(5));
+            match.put("awayGoals", random.nextInt(5));
+            match.put("matchDate", LocalDateTime.now().plusDays(roundOrder * 7L + i).toString());
+            match.put("status", "FINISHED");
+
+            save(K_EUROPEAN_KNOCKOUT + id, match);
+            created++;
+        }
+
+        return created;
     }
 
     private PerformanceResult runSelectSampleEuropeanMatchEvents() {
         return runMeasuredTest("REDIS_APP_FLOW_SELECT_SAMPLE_EUROPEAN_MATCH_EVENTS", () -> {
-            List<EuropeanMatch> matches = europeanMatchRepositoryAdapter()
-                    .findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc(SEASON, "champions-league");
-            if (matches.isEmpty()) return 0;
-            return europeanMatchEventRepositoryAdapter()
-                    .findByMatchIdOrderByEventMinuteAsc(matches.get(0).getId())
-                    .size();
+            Map<String, Object> match = findAll(K_EUROPEAN_MATCHES).stream().findFirst().orElse(null);
+
+            if (match == null) {
+                return 0;
+            }
+
+            long matchId = asLong(match.get("_id"));
+
+            return findAll(K_EUROPEAN_MATCH_EVENTS).stream()
+                    .filter(event -> asLong(event.get("matchId")) == matchId)
+                    .sorted(Comparator.comparingInt(event -> asInt(event.get("eventMinute"))))
+                    .count();
         });
     }
 
     private PerformanceResult runQueryPaginationMatches() {
-        return runMeasuredTest("REDIS_QUERY_PAGINATION_MATCHES", () -> {
-            List<Match> all = readAllRedis(K_MATCHES, Match.class).stream()
-                    .sorted(Comparator.comparingInt(Match::getRoundNumber)
-                            .thenComparing(Match::getMatchDate))
-                    .toList();
-            int from = Math.min(1000, all.size());
-            int to = Math.min(from + 100, all.size());
-            return all.subList(from, to).size();
-        });
+        return runMeasuredTest("REDIS_QUERY_PAGINATION_MATCHES", () ->
+                findAll(K_MATCHES).stream()
+                        .sorted(Comparator
+                                .comparingInt((Map<String, Object> match) -> asInt(match.get("roundNumber")))
+                                .thenComparing(match -> asString(match.get("matchDate"))))
+                        .skip(1000)
+                        .limit(100)
+                        .count()
+        );
     }
 
     private PerformanceResult runQueryJoinMatchesEventsPlayers() {
         return runMeasuredTest("REDIS_QUERY_COMPLEX_JOIN_MATCHES_EVENTS_PLAYERS", () -> {
-            List<MatchEvent> events = readAllRedis(K_MATCH_EVENTS, MatchEvent.class);
-            long rows = 0;
-            int checked = 0;
-            for (MatchEvent event : events) {
-                if (checked++ >= 1000) break;
-                Match match = readRedis(K_MATCHES + event.getMatchId(), Match.class);
-                GeneratedPlayer player = event.getPlayerId() == null
-                        ? null
-                        : readRedis(K_GENERATED_PLAYERS + event.getPlayerId(), GeneratedPlayer.class);
-                if (match != null && player != null) rows++;
+            List<Map<String, Object>> events = findAll(K_MATCH_EVENTS).stream().limit(1000).toList();
+            List<Map<String, Object>> matches = findAll(K_MATCHES);
+            List<Map<String, Object>> players = findAll(K_GENERATED_PLAYERS);
+
+            Map<Long, Map<String, Object>> matchesById = new LinkedHashMap<>();
+            for (Map<String, Object> match : matches) {
+                matchesById.put(asLong(match.get("_id")), match);
             }
+
+            Map<Long, Map<String, Object>> playersById = new LinkedHashMap<>();
+            for (Map<String, Object> player : players) {
+                playersById.put(asLong(player.get("_id")), player);
+            }
+
+            long rows = 0;
+
+            for (Map<String, Object> event : events) {
+                long matchId = asLong(event.get("matchId"));
+                long playerId = asLong(event.get("playerId"));
+
+                if (matchesById.containsKey(matchId) && playersById.containsKey(playerId)) {
+                    rows++;
+                }
+            }
+
             return rows;
         });
     }
 
     private PerformanceResult runQuerySortFilterPlayersByValue() {
         return runMeasuredTest("REDIS_QUERY_SORT_FILTER_PLAYERS_BY_VALUE", () ->
-                readAllRedis(K_GENERATED_PLAYERS, GeneratedPlayer.class).stream()
-                        .filter(p -> "england".equals(p.getLeagueSlug()))
-                        .filter(p -> p.getMarketValue() != null && p.getMarketValue().signum() > 0)
-                        .sorted(Comparator.comparing(GeneratedPlayer::getMarketValue).reversed())
+                findAll(K_GENERATED_PLAYERS).stream()
+                        .filter(player -> "england".equals(asString(player.get("leagueSlug"))))
+                        .filter(player -> asLong(player.get("marketValue")) > 0)
+                        .sorted(Comparator.comparingLong((Map<String, Object> player) -> asLong(player.get("marketValue"))).reversed())
                         .limit(100)
                         .count()
         );
-    }
-
-    // -------------------------------------------------------------------------
-    // Adaptery repozytoriów do Redis. Dzięki nim testy używają dokładnie
-    // MatchGeneratorService i EuropeanCompetitionService z normalnej aplikacji.
-    // -------------------------------------------------------------------------
-
-    private MatchGeneratorService matchGeneratorServiceAdapter() {
-        if (appMatchGeneratorService == null) {
-            synchronized (this) {
-                if (appMatchGeneratorService == null) {
-                    appMatchGeneratorService = new MatchGeneratorService(
-                            matchRepositoryAdapter(),
-                            matchEventRepositoryAdapter(),
-                            generatedPlayerRepositoryAdapter()
-                    );
-                }
-            }
-        }
-        return appMatchGeneratorService;
-    }
-
-    private EuropeanCompetitionService europeanCompetitionServiceAdapter() {
-        if (appEuropeanCompetitionService == null) {
-            synchronized (this) {
-                if (appEuropeanCompetitionService == null) {
-                    appEuropeanCompetitionService = new EuropeanCompetitionService(
-                            participantRepositoryAdapter(),
-                            europeanMatchRepositoryAdapter(),
-                            europeanKnockoutRepositoryAdapter(),
-                            matchRepositoryAdapter(),
-                            leagueTableService,
-                            generatedPlayerRepositoryAdapter(),
-                            europeanMatchEventRepositoryAdapter(),
-                            matchGeneratorServiceAdapter(),
-                            refereeRepositoryAdapter()
-                    );
-                }
-            }
-        }
-        return appEuropeanCompetitionService;
-    }
-
-    private MatchRepository matchRepositoryAdapter() {
-        if (appMatchRepository == null) {
-            appMatchRepository = proxyRepository(MatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findByLeagueOrderByRoundNumberAscMatchDateAsc" -> indexedRedis(
-                        indexLeagueMatches((String) args[0]), Match.class).stream()
-                        .sorted(Comparator.comparingInt(Match::getRoundNumber).thenComparing(Match::getMatchDate))
-                        .toList();
-                case "existsByLeague" -> !members(indexLeagueMatches((String) args[0])).isEmpty();
-                case "deleteByLeague" -> { deleteIndexed(indexLeagueMatches((String) args[0])); yield null; }
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appMatchRepository;
-    }
-
-    private MatchEventRepository matchEventRepositoryAdapter() {
-        if (appMatchEventRepository == null) {
-            appMatchEventRepository = proxyRepository(MatchEventRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findByMatchIdOrderByEventMinuteAsc" -> indexedRedis(
-                        indexMatchEvents((Long) args[0]), MatchEvent.class).stream()
-                        .sorted(Comparator.comparing(MatchEvent::getEventMinute))
-                        .toList();
-                case "deleteByMatchIdIn" -> {
-                    for (Object id : (Collection<?>) args[0]) deleteIndexed(indexMatchEvents(((Number) id).longValue()));
-                    yield null;
-                }
-                case "save" -> saveRedis(args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appMatchEventRepository;
-    }
-
-    private GeneratedPlayerRepository generatedPlayerRepositoryAdapter() {
-        if (appGeneratedPlayerRepository == null) {
-            appGeneratedPlayerRepository = proxyRepository(GeneratedPlayerRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findByLeagueSlugAndClubSlug" -> indexedRedis(
-                        indexPlayersLeagueClub((String) args[0], (String) args[1]), GeneratedPlayer.class);
-                case "findByClubSlug" -> indexedRedis(indexPlayersClub((String) args[0]), GeneratedPlayer.class);
-                case "existsByLeagueSlugAndClubSlug" -> !members(
-                        indexPlayersLeagueClub((String) args[0], (String) args[1])).isEmpty();
-                case "save" -> saveRedis(args[0]);
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appGeneratedPlayerRepository;
-    }
-
-    private EuropeanCompetitionParticipantRepository participantRepositoryAdapter() {
-        if (appParticipantRepository == null) {
-            appParticipantRepository = proxyRepository(EuropeanCompetitionParticipantRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findBySeasonAndCompetitionSlugOrderByPotNumberAscUefaRankingPointsDesc" -> indexedRedis(
-                        indexParticipants((String) args[0], (String) args[1]), EuropeanCompetitionParticipant.class).stream()
-                        .sorted(Comparator.comparingInt(EuropeanCompetitionParticipant::getPotNumber)
-                                .thenComparing(Comparator.comparingInt(EuropeanCompetitionParticipant::getUefaRankingPoints).reversed()))
-                        .toList();
-                case "existsBySeasonAndCompetitionSlug" -> !members(indexParticipants((String) args[0], (String) args[1])).isEmpty();
-                case "deleteBySeason" -> { deleteParticipantSeason((String) args[0]); yield null; }
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appParticipantRepository;
-    }
-
-    private EuropeanMatchRepository europeanMatchRepositoryAdapter() {
-        if (appEuropeanMatchRepository == null) {
-            appEuropeanMatchRepository = proxyRepository(EuropeanMatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "existsBySeasonAndCompetitionSlug" -> !members(indexEuropeanMatches((String) args[0], (String) args[1])).isEmpty();
-                case "findBySeasonAndCompetitionSlugOrderByRoundNumberAscMatchDateAsc" -> indexedRedis(
-                        indexEuropeanMatches((String) args[0], (String) args[1]), EuropeanMatch.class).stream()
-                        .sorted(Comparator.comparingInt(EuropeanMatch::getRoundNumber).thenComparing(EuropeanMatch::getMatchDate))
-                        .toList();
-                case "deleteBySeasonAndCompetitionSlug" -> { deleteIndexed(indexEuropeanMatches((String) args[0], (String) args[1])); yield null; }
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appEuropeanMatchRepository;
-    }
-
-    private EuropeanMatchEventRepository europeanMatchEventRepositoryAdapter() {
-        if (appEuropeanMatchEventRepository == null) {
-            appEuropeanMatchEventRepository = proxyRepository(EuropeanMatchEventRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findByMatchIdOrderByEventMinuteAsc" -> indexedRedis(
-                        indexEuropeanEventsMatch((Long) args[0]), EuropeanMatchEvent.class).stream()
-                        .sorted(Comparator.comparing(EuropeanMatchEvent::getEventMinute))
-                        .toList();
-                case "findByKnockoutMatchIdAndKnockoutLegOrderByEventMinuteAsc" -> indexedRedis(
-                        indexEuropeanEventsKnockoutLeg((Long) args[0], (String) args[1]), EuropeanMatchEvent.class).stream()
-                        .sorted(Comparator.comparing(EuropeanMatchEvent::getEventMinute))
-                        .toList();
-                case "deleteByMatchIdIn" -> {
-                    for (Object id : (Collection<?>) args[0]) deleteIndexed(indexEuropeanEventsMatch(((Number) id).longValue()));
-                    yield null;
-                }
-                case "deleteByKnockoutMatchIdIn" -> {
-                    for (Object id : (Collection<?>) args[0]) deleteEuropeanKnockoutEvents(((Number) id).longValue());
-                    yield null;
-                }
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appEuropeanMatchEventRepository;
-    }
-
-    private EuropeanKnockoutMatchRepository europeanKnockoutRepositoryAdapter() {
-        if (appEuropeanKnockoutRepository == null) {
-            appEuropeanKnockoutRepository = proxyRepository(EuropeanKnockoutMatchRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "existsBySeasonAndCompetitionSlug" -> !members(indexKnockout((String) args[0], (String) args[1])).isEmpty();
-                case "findBySeasonAndCompetitionSlugOrderByRoundOrderAscBracketOrderAsc" -> indexedRedis(
-                        indexKnockout((String) args[0], (String) args[1]), EuropeanKnockoutMatch.class).stream()
-                        .sorted(Comparator.comparingInt(EuropeanKnockoutMatch::getRoundOrder)
-                                .thenComparingInt(EuropeanKnockoutMatch::getBracketOrder))
-                        .toList();
-                case "deleteBySeasonAndCompetitionSlug" -> { deleteIndexed(indexKnockout((String) args[0], (String) args[1])); yield null; }
-                case "saveAll" -> saveAllRedis((Iterable<?>) args[0]);
-                default -> unsupported(method);
-            });
-        }
-        return appEuropeanKnockoutRepository;
-    }
-
-    private RefereeRepository refereeRepositoryAdapter() {
-        if (appRefereeRepository == null) {
-            appRefereeRepository = proxyRepository(RefereeRepository.class, (proxy, method, args) -> switch (method.getName()) {
-                case "findAll" -> readAllRedis(K_REFEREES, Referee.class);
-                default -> unsupported(method);
-            });
-        }
-        return appRefereeRepository;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T proxyRepository(Class<T> type, InvocationHandler handler) {
-        return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, handler);
-    }
-
-    private Object unsupported(Method method) {
-        throw new UnsupportedOperationException("Redis repository adapter does not implement: " + method.getName());
-    }
-
-    private List<Object> saveAllRedis(Iterable<?> values) {
-        List<Object> saved = new ArrayList<>();
-
-        for (Object value : values) {
-            saved.add(value);
-        }
-
-        if (saved.isEmpty()) {
-            return saved;
-        }
-
-        long missingIds = saved.stream()
-                .filter(value -> getId(value) == null)
-                .count();
-
-        if (missingIds > 0) {
-            String sequenceKey =
-                    K_SEQUENCE + saved.get(0).getClass().getSimpleName();
-
-            Long lastId = redisTemplate.opsForValue()
-                    .increment(sequenceKey, missingIds);
-
-            long nextId = (lastId == null ? missingIds : lastId)
-                    - missingIds + 1;
-
-            for (Object value : saved) {
-                if (getId(value) == null) {
-                    setId(value, nextId++);
-                }
-            }
-        }
-
-        Map<String, String> data = new LinkedHashMap<>();
-
-        try {
-            objectMapper.registerModule(new JavaTimeModule());
-
-            for (Object value : saved) {
-                String key = entityPrefix(value) + getId(value);
-                data.put(key, objectMapper.writeValueAsString(value));
-            }
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(
-                    "Cannot serialize Redis entities",
-                    e
-            );
-        }
-
-        redisTemplate.opsForValue().multiSet(data);
-
-        for (Object value : saved) {
-            String key = entityPrefix(value) + getId(value);
-            indexEntity(key, value);
-        }
-
-        return saved;
-    }
-
-    private Object saveRedis(Object value) {
-        Long id = getId(value);
-        if (id == null) {
-            id = redisTemplate.opsForValue().increment(K_SEQUENCE + value.getClass().getSimpleName());
-            setId(value, id == null ? 1L : id);
-        }
-
-        String key = entityPrefix(value) + getId(value);
-        writeJson(key, value);
-        indexEntity(key, value);
-        return value;
-    }
-
-    private String entityPrefix(Object value) {
-        if (value instanceof GeneratedPlayer) return K_GENERATED_PLAYERS;
-        if (value instanceof Match) return K_MATCHES;
-        if (value instanceof MatchEvent) return K_MATCH_EVENTS;
-        if (value instanceof EuropeanCompetitionParticipant) return K_PARTICIPANTS;
-        if (value instanceof EuropeanMatch) return K_EUROPEAN_MATCHES;
-        if (value instanceof EuropeanMatchEvent) return K_EUROPEAN_MATCH_EVENTS;
-        if (value instanceof EuropeanKnockoutMatch) return K_EUROPEAN_KNOCKOUT;
-        throw new IllegalArgumentException("Unsupported Redis entity: " + value.getClass().getName());
-    }
-
-    private void indexEntity(String key, Object value) {
-        if (value instanceof GeneratedPlayer p) {
-            addIndex(indexPlayersLeagueClub(p.getLeagueSlug(), p.getClubSlug()), key);
-            addIndex(indexPlayersClub(p.getClubSlug()), key);
-        } else if (value instanceof Match m) {
-            addIndex(indexLeagueMatches(m.getLeague()), key);
-        } else if (value instanceof MatchEvent e) {
-            addIndex(indexMatchEvents(e.getMatchId()), key);
-        } else if (value instanceof EuropeanCompetitionParticipant p) {
-            addIndex(indexParticipants(p.getSeason(), p.getCompetitionSlug()), key);
-        } else if (value instanceof EuropeanMatch m) {
-            addIndex(indexEuropeanMatches(m.getSeason(), m.getCompetitionSlug()), key);
-        } else if (value instanceof EuropeanMatchEvent e) {
-            if (e.getMatchId() != null) addIndex(indexEuropeanEventsMatch(e.getMatchId()), key);
-            if (e.getKnockoutMatchId() != null && e.getKnockoutLeg() != null) {
-                addIndex(indexEuropeanEventsKnockoutLeg(e.getKnockoutMatchId(), e.getKnockoutLeg()), key);
-            }
-        } else if (value instanceof EuropeanKnockoutMatch m) {
-            addIndex(indexKnockout(m.getSeason(), m.getCompetitionSlug()), key);
-        }
-    }
-
-    private void addIndex(String index, String key) {
-        redisTemplate.opsForSet().add(index, key);
-    }
-
-    private Set<String> members(String index) {
-        Set<String> result = redisTemplate.opsForSet().members(index);
-        return result == null ? Set.of() : result;
-    }
-
-    private <T> List<T> indexedRedis(String index, Class<T> type) {
-        Set<String> keySet = members(index);
-
-        if (keySet.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> keys = new ArrayList<>(keySet);
-        List<String> values = redisTemplate.opsForValue().multiGet(keys);
-
-        if (values == null || values.isEmpty()) {
-            return List.of();
-        }
-
-        List<T> result = new ArrayList<>();
-
-        for (String json : values) {
-            if (json == null) {
-                continue;
-            }
-
-            try {
-                JsonNode node = objectMapper.readTree(json);
-
-                if (node.isObject() && node.has("_id") && !node.has("id")) {
-                    ObjectNode objectNode = (ObjectNode) node;
-                    objectNode.set("id", objectNode.get("_id"));
-                    objectNode.remove("_id");
-                }
-
-                result.add(objectMapper.treeToValue(node, type));
-
-            } catch (Exception e) {
-                throw new IllegalStateException(
-                        "Cannot deserialize Redis indexed values",
-                        e
-                );
-            }
-        }
-
-        return result;
-    }
-
-    private void deleteIndexed(String index) {
-        Set<String> keys = new HashSet<>(members(index));
-        if (!keys.isEmpty()) redisTemplate.delete(keys);
-        redisTemplate.delete(index);
-    }
-
-    private void deleteParticipantSeason(String season) {
-        for (String competition : EUROPEAN_COMPETITIONS) {
-            deleteIndexed(indexParticipants(season, competition));
-        }
-    }
-
-    private void deleteEuropeanKnockoutEvents(long knockoutId) {
-        deleteIndexed(indexEuropeanEventsKnockoutLeg(knockoutId, "FIRST_LEG"));
-        deleteIndexed(indexEuropeanEventsKnockoutLeg(knockoutId, "SECOND_LEG"));
-        deleteIndexed(indexEuropeanEventsKnockoutLeg(knockoutId, "FINAL"));
-    }
-
-    private String indexPlayersLeagueClub(String league, String club) {
-        return K_INDEX + "players:leagueClub:" + league + ":" + club;
-    }
-    private String indexPlayersClub(String club) { return K_INDEX + "players:club:" + club; }
-    private String indexLeagueMatches(String league) { return K_INDEX + "matches:league:" + league; }
-    private String indexMatchEvents(Long matchId) { return K_INDEX + "matchEvents:match:" + matchId; }
-    private String indexParticipants(String season, String competition) { return K_INDEX + "participants:" + season + ":" + competition; }
-    private String indexEuropeanMatches(String season, String competition) { return K_INDEX + "europeanMatches:" + season + ":" + competition; }
-    private String indexEuropeanEventsMatch(Long matchId) { return K_INDEX + "europeanEvents:match:" + matchId; }
-    private String indexEuropeanEventsKnockoutLeg(Long id, String leg) { return K_INDEX + "europeanEvents:knockout:" + id + ":" + leg; }
-    private String indexKnockout(String season, String competition) { return K_INDEX + "knockout:" + season + ":" + competition; }
-
-    private <T> List<T> readAllRedis(String prefix, Class<T> type) {
-        Set<String> keys = redisTemplate.keys(prefix + "*");
-        if (keys == null || keys.isEmpty()) return List.of();
-        List<T> result = new ArrayList<>();
-        for (String key : keys) {
-            T value = readRedis(key, type);
-            if (value != null) result.add(value);
-        }
-        return result;
-    }
-
-    private <T> T readRedis(String key, Class<T> type) {
-        String json = redisTemplate.opsForValue().get(key);
-
-        if (json == null) {
-            return null;
-        }
-
-        try {
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.configure(
-                    DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-                    false
-            );
-
-            JsonNode node = objectMapper.readTree(json);
-
-            if (node.isObject() && node.has("_id") && !node.has("id")) {
-                ObjectNode objectNode = (ObjectNode) node;
-                objectNode.set("id", objectNode.get("_id"));
-                objectNode.remove("_id");
-            }
-
-            return objectMapper.treeToValue(node, type);
-
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                    "Cannot read Redis JSON: " + key,
-                    e
-            );
-        }
-    }
-
-    private void writeJson(String key, Object value) {
-        try {
-            objectMapper.registerModule(new JavaTimeModule());
-
-
-            redisTemplate.opsForValue().set(
-                    key,
-                    objectMapper.writeValueAsString(value)
-            );
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(
-                    "Cannot write Redis JSON: " + key,
-                    e
-            );
-        }
-    }
-
-    private Long getId(Object value) {
-        try {
-            Field field = findField(value.getClass(), "id");
-            field.setAccessible(true);
-            return (Long) field.get(value);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Cannot read Redis id", e);
-        }
-    }
-
-    private void setId(Object value, Long id) {
-        try {
-            Field field = findField(value.getClass(), "id");
-            field.setAccessible(true);
-            field.set(value, id);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Cannot assign Redis id", e);
-        }
-    }
-
-    private Field findField(Class<?> type, String name) throws NoSuchFieldException {
-        Class<?> current = type;
-        while (current != null) {
-            try { return current.getDeclaredField(name); }
-            catch (NoSuchFieldException ignored) { current = current.getSuperclass(); }
-        }
-        throw new NoSuchFieldException(name);
     }
 
     private Map<String, Object> createLeagueMatch(long id, String league, Map<String, Object> home, Map<String, Object> away, int roundNumber) {
