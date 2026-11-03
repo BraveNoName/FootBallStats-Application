@@ -1,2 +1,0 @@
-timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
-1789509275116,559492,HTTP Request,200,,Thread Group 1-1,text,true,,466,150,1,1,http://localhost:8081/admin/performance/generate-leagues,559492,0,1
