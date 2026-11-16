@@ -2,7 +2,7 @@
 
 **Football statistics web application built with Java and Spring Boot, featuring domestic league generation, European competitions and database performance testing.**
 
-FootballStats is a web application developed as part of my Master's thesis in Computer Science. The project focuses on generating and managing football competition data while providing a testing environment for comparing the performance of different database management systems.
+FootballStats is a web application developed  focuses on generating and managing football competition data while providing a testing environment for comparing the performance of different database management systems.
 
 The application simulates domestic football leagues and UEFA club competitions, including team and player generation, match scheduling, match events, league standings and European qualification processes.
 
@@ -288,13 +288,6 @@ The performance evaluation includes:
 | Block Write   | Amount of data written to block devices.           |
 
 The tests are repeated to obtain comparable results and reduce the influence of individual measurement fluctuations.
-
-### Load Testing
-
-Apache JMeter is also used to perform load tests.
-
-The purpose is to examine how the application and database services behave when handling multiple simultaneous HTTP requests.
-
 ---
 
 ## 🛠️ Technologies
@@ -389,7 +382,7 @@ The H2 database is used for local development and testing, so no external databa
 
 **Aplikacja internetowa prezentująca statystyki piłkarskie, stworzona w Javie i Spring Boot. Umożliwia generowanie lig krajowych, rozgrywek europejskich oraz przeprowadzanie testów wydajnościowych systemów bazodanowych.**
 
-FootballStats to aplikacja internetowa opracowana w ramach pracy magisterskiej na kierunku Informatyka. Projekt koncentruje się na generowaniu i zarządzaniu danymi dotyczącymi rozgrywek piłkarskich, a także umożliwia porównywanie wydajności różnych systemów zarządzania bazami danych.
+FootballStats to aplikacja internetowa która koncentruje się na generowaniu i zarządzaniu danymi dotyczącymi rozgrywek piłkarskich, a także umożliwia porównywanie wydajności różnych systemów zarządzania bazami danych.
 
 Aplikacja symuluje rozgrywki lig krajowych oraz europejskie rozgrywki klubowe UEFA. Obejmuje generowanie drużyn i zawodników, terminarzy, meczów i zdarzeń meczowych, obliczanie tabel ligowych oraz procesy kwalifikacji do europejskich pucharów.
 
@@ -675,13 +668,6 @@ W ramach oceny wydajności analizowane są następujące parametry:
 | Zapis blokowy (Block Write) | Ilość danych zapisanych na urządzeniach blokowych. |
 
 Testy są powtarzane w celu uzyskania porównywalnych wyników i ograniczenia wpływu pojedynczych odchyleń pomiarowych.
-
-### Testy obciążeniowe
-
-Do przeprowadzania testów obciążeniowych wykorzystywane jest narzędzie Apache JMeter.
-
-Ich celem jest sprawdzenie zachowania aplikacji i usług bazodanowych podczas obsługi wielu jednoczesnych żądań HTTP.
-
 ---
 
 ## 🛠️ Wykorzystane technologie
