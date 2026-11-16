@@ -36,3 +36,5 @@ build/
 data/footballstats.mv.db
 data/footballstats.trace.db
 src/main/resources/application-*.properties
+
+application-*.properties
