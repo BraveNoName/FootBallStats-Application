@@ -317,7 +317,6 @@ The project uses the following technologies:
 | Oracle Database | Relational database |
 | MongoDB | Document database |
 | Redis | Key-value database |
-| Apache JMeter | Load testing |
 | Maven | Project build and dependency management |
 | REST API | Communication with application services |
 
@@ -747,7 +746,6 @@ W projekcie wykorzystano następujące technologie:
 | Oracle Database | Relacyjny system bazodanowy |
 | MongoDB | Dokumentowy system bazodanowy |
 | Redis | System bazodanowy typu klucz-wartość |
-| Apache JMeter | Testy obciążeniowe |
 | Maven | Budowanie projektu i zarządzanie zależnościami |
 | REST API | Komunikacja z usługami aplikacji |
 
