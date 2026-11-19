@@ -78,9 +78,9 @@ Player quality and market values are also used to estimate overall club strength
 
 For the application to generate competition data correctly, the following order must be followed:
 
-1. **Generate players** – create player squads and assign players to their respective clubs.
-2. **Generate domestic leagues** – generate league matches, simulate match results and events, and calculate league standings.
-3. **Generate European competitions** – generate the UEFA Champions League, Europa League and Conference League using the completed domestic league standings and generated player data.
+1. **Generate players** - create player squads and assign players to their respective clubs.
+2. **Generate domestic leagues** - generate league matches, simulate match results and events, and calculate league standings.
+3. **Generate European competitions** - generate the UEFA Champions League, Europa League and Conference League using the completed domestic league standings and generated player data.
 
 This order is required because European competition generation depends on the results of domestic leagues and on player data used to evaluate club strength during qualification simulations.
 
@@ -268,14 +268,14 @@ Each database system is tested using corresponding scenarios and comparable inpu
 
 The performance tests cover several types of operations:
 
-- **CRUD operations** – inserting, retrieving, updating and deleting records.
-- **Data generation** – creating players, leagues, matches and match events.
-- **League operations** – generating and retrieving league standings.
-- **European competitions** – generating European competition data and retrieving competition information.
-- **Pagination** – retrieving data in pages.
-- **JOIN queries** – retrieving related data using relational joins.
-- **Sorting and filtering** – querying records based on selected conditions.
-- **Application workflows** – executing sequences of operations representing application functionality.
+- **CRUD operations** - inserting, retrieving, updating and deleting records.
+- **Data generation** - creating players, leagues, matches and match events.
+- **League operations** - generating and retrieving league standings.
+- **European competitions** - generating European competition data and retrieving competition information.
+- **Pagination** - retrieving data in pages.
+- **JOIN queries** - retrieving related data using relational joins.
+- **Sorting and filtering** - querying records based on selected conditions.
+- **Application workflows** - executing sequences of operations representing application functionality.
 
 ### CRUD Data Volumes
 
@@ -332,10 +332,10 @@ The application is organized around services responsible for business logic and 
 
 The main application components include:
 
-- **Controllers** – expose application functionality through HTTP endpoints.
-- **Services** – implement business logic, data generation and competition calculations.
-- **Repositories** – handle database access and data persistence.
-- **Models and Entities** – represent application data, including leagues, clubs, players, matches and competition participants.
+- **Controllers** - expose application functionality through HTTP endpoints.
+- **Services** - implement business logic, data generation and competition calculations.
+- **Repositories** - handle database access and data persistence.
+- **Models and Entities** - represent application data, including leagues, clubs, players, matches and competition participants.
 
 The application can be started with different Spring profiles depending on the selected database implementation.
 
@@ -507,9 +507,9 @@ Umiejętności zawodników oraz ich wartości rynkowe są również wykorzystywa
 
 Aby aplikacja poprawnie generowała dane dotyczące rozgrywek, należy zachować następującą kolejność:
 
-1. **Generowanie zawodników** – utworzenie składów zawodników i przypisanie ich do odpowiednich klubów.
-2. **Generowanie lig krajowych** – wygenerowanie meczów ligowych, symulacja wyników i zdarzeń meczowych oraz obliczenie tabel ligowych.
-3. **Generowanie rozgrywek europejskich** – utworzenie Ligi Mistrzów, Ligi Europy i Ligi Konferencji na podstawie zakończonych rozgrywek krajowych oraz wygenerowanych danych zawodników.
+1. **Generowanie zawodników** - utworzenie składów zawodników i przypisanie ich do odpowiednich klubów.
+2. **Generowanie lig krajowych** - wygenerowanie meczów ligowych, symulacja wyników i zdarzeń meczowych oraz obliczenie tabel ligowych.
+3. **Generowanie rozgrywek europejskich** - utworzenie Ligi Mistrzów, Ligi Europy i Ligi Konferencji na podstawie zakończonych rozgrywek krajowych oraz wygenerowanych danych zawodników.
 
 Zachowanie tej kolejności jest wymagane, ponieważ generowanie rozgrywek europejskich zależy od wyników lig krajowych oraz danych zawodników wykorzystywanych do oceny siły drużyn podczas symulacji rund kwalifikacyjnych.
 
@@ -697,14 +697,14 @@ Każdy system jest testowany z wykorzystaniem odpowiadających sobie scenariuszy
 
 Testy wydajnościowe obejmują kilka rodzajów operacji:
 
-- **Operacje CRUD** – dodawanie, odczytywanie, aktualizowanie i usuwanie rekordów.
-- **Generowanie danych** – tworzenie zawodników, lig, meczów i zdarzeń meczowych.
-- **Operacje ligowe** – generowanie i pobieranie tabel ligowych.
-- **Rozgrywki europejskie** – generowanie danych dotyczących rozgrywek europejskich i pobieranie informacji o uczestnikach.
-- **Paginacja** – pobieranie danych z podziałem na strony.
-- **Zapytania JOIN** – pobieranie powiązanych danych z wykorzystaniem złączeń tabel relacyjnych.
-- **Sortowanie i filtrowanie** – wyszukiwanie rekordów według określonych kryteriów.
-- **Przepływy aplikacyjne** – wykonywanie sekwencji operacji odwzorowujących działanie aplikacji.
+- **Operacje CRUD** - dodawanie, odczytywanie, aktualizowanie i usuwanie rekordów.
+- **Generowanie danych** - tworzenie zawodników, lig, meczów i zdarzeń meczowych.
+- **Operacje ligowe** - generowanie i pobieranie tabel ligowych.
+- **Rozgrywki europejskie** - generowanie danych dotyczących rozgrywek europejskich i pobieranie informacji o uczestnikach.
+- **Paginacja** - pobieranie danych z podziałem na strony.
+- **Zapytania JOIN** - pobieranie powiązanych danych z wykorzystaniem złączeń tabel relacyjnych.
+- **Sortowanie i filtrowanie** - wyszukiwanie rekordów według określonych kryteriów.
+- **Przepływy aplikacyjne** - wykonywanie sekwencji operacji odwzorowujących działanie aplikacji.
 
 ### Liczba rekordów w testach CRUD
 
@@ -761,10 +761,10 @@ Aplikacja została zorganizowana wokół warstwy serwisów odpowiedzialnych za l
 
 Główne komponenty aplikacji obejmują:
 
-- **Kontrolery (Controllers)** – udostępniają funkcjonalności aplikacji za pośrednictwem punktów końcowych HTTP.
-- **Serwisy (Services)** – realizują logikę biznesową, generowanie danych i obliczenia związane z rozgrywkami.
-- **Repozytoria (Repositories)** – odpowiadają za dostęp do baz danych i zapisywanie danych.
-- **Modele i encje (Models and Entities)** – reprezentują dane aplikacji, w tym ligi, kluby, zawodników, mecze i uczestników rozgrywek.
+- **Kontrolery (Controllers)** - udostępniają funkcjonalności aplikacji za pośrednictwem punktów końcowych HTTP.
+- **Serwisy (Services)** - realizują logikę biznesową, generowanie danych i obliczenia związane z rozgrywkami.
+- **Repozytoria (Repositories)** - odpowiadają za dostęp do baz danych i zapisywanie danych.
+- **Modele i encje (Models and Entities)** - reprezentują dane aplikacji, w tym ligi, kluby, zawodników, mecze i uczestników rozgrywek.
 
 Aplikację można uruchamiać z wykorzystaniem różnych profili Spring, w zależności od wybranej implementacji bazodanowej.
 
