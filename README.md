@@ -2,7 +2,7 @@
 
 **Football statistics web application built with Java and Spring Boot, featuring domestic league generation, European competitions and database performance testing.**
 
-FootballStats is a web application developed  focuses on generating and managing football competition data while providing a testing environment for comparing the performance of different database management systems.
+FootballStats is a web application developed focuses on generating and managing football competition data while providing a testing environment for comparing the performance of different database management systems.
 
 The application simulates domestic football leagues and UEFA club competitions, including team and player generation, match scheduling, match events, league standings and European qualification processes.
 
@@ -74,6 +74,16 @@ Generated players have attributes such as:
 
 Player quality and market values are also used to estimate overall club strength, which influences the results of European qualification simulations.
 
+### Required Data Generation Order
+
+For the application to generate competition data correctly, the following order must be followed:
+
+1. **Generate players** – create player squads and assign players to their respective clubs.
+2. **Generate domestic leagues** – generate league matches, simulate match results and events, and calculate league standings.
+3. **Generate European competitions** – generate the UEFA Champions League, Europa League and Conference League using the completed domestic league standings and generated player data.
+
+This order is required because European competition generation depends on the results of domestic leagues and on player data used to evaluate club strength during qualification simulations.
+
 ### Match Generation and Events
 
 The application generates domestic and European football matches.
@@ -139,11 +149,11 @@ This value influences qualification simulations and gives stronger clubs a highe
 
 The system enforces maximum participation limits for clubs from the same domestic league:
 
-| Competition       | Maximum clubs per domestic league |
+| Competition | Maximum clubs per domestic league |
 | ----------------- | --------------------------------: |
-| Champions League  |                                 5 |
-| Europa League     |                                 4 |
-| Conference League |                                 3 |
+| Champions League | 5 |
+| Europa League | 4 |
+| Conference League | 3 |
 
 These restrictions help prevent individual domestic leagues from dominating European competitions.
 
@@ -208,12 +218,12 @@ The system also validates domestic league participation limits throughout the ge
 
 The European competition generation process is divided into several components:
 
-| Component                        | Responsibility                                                                                              |
+| Component | Responsibility |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `LeagueTableService`             | Calculates domestic league standings and assigns European qualification positions.                          |
-| `EuropeanCompetitionService`     | Coordinates the generation of European competitions and qualification rounds.                               |
-| `GeneratedPlayerRepository`      | Provides generated player data used to evaluate club strength.                                              |
-| `MatchRepository`                | Provides domestic league match data used for calculating standings.                                         |
+| `LeagueTableService` | Calculates domestic league standings and assigns European qualification positions. |
+| `EuropeanCompetitionService` | Coordinates the generation of European competitions and qualification rounds. |
+| `GeneratedPlayerRepository` | Provides generated player data used to evaluate club strength. |
+| `MatchRepository` | Provides domestic league match data used for calculating standings. |
 | `EuropeanCompetitionParticipant` | Represents a club participating in a European competition and stores its qualification-related information. |
 
 ---
@@ -226,21 +236,21 @@ FootballStats supports six database technologies.
 
 ### Relational Database Management Systems
 
-| Database             | Type       |
+| Database | Type |
 | -------------------- | ---------- |
-| PostgreSQL           | Relational |
-| MySQL                | Relational |
+| PostgreSQL | Relational |
+| MySQL | Relational |
 | Microsoft SQL Server | Relational |
-| Oracle Database      | Relational |
+| Oracle Database | Relational |
 
 Relational implementations use Spring Data JPA for database communication and entity persistence.
 
 ### Non-Relational Database Management Systems
 
-| Database | Type              |
+| Database | Type |
 | -------- | ----------------- |
-| MongoDB  | Document-oriented |
-| Redis    | Key-value         |
+| MongoDB | Document-oriented |
+| Redis | Key-value |
 
 MongoDB stores application data using a document-based data model, while Redis uses key-value structures for data storage and retrieval.
 
@@ -279,13 +289,13 @@ CRUD tests use different data volumes:
 
 The performance evaluation includes:
 
-| Parameter     | Description                                        |
+| Parameter | Description |
 | ------------- | -------------------------------------------------- |
 | Response Time | Time required to execute an application operation. |
-| CPU Usage     | CPU utilization of the database service.           |
-| RAM Usage     | Memory consumption of the database service.        |
-| Block Read    | Amount of data read from block devices.            |
-| Block Write   | Amount of data written to block devices.           |
+| CPU Usage | CPU utilization of the database service. |
+| RAM Usage | Memory consumption of the database service. |
+| Block Read | Amount of data read from block devices. |
+| Block Write | Amount of data written to block devices. |
 
 The tests are repeated to obtain comparable results and reduce the influence of individual measurement fluctuations.
 ---
@@ -294,22 +304,22 @@ The tests are repeated to obtain comparable results and reduce the influence of 
 
 The project uses the following technologies:
 
-| Technology           | Purpose                                 |
+| Technology | Purpose |
 | -------------------- | --------------------------------------- |
-| Java 25              | Main programming language               |
-| Spring Boot 4        | Application framework                   |
-| Spring Data JPA      | Relational database persistence         |
-| SQL                  | Relational database queries             |
-| H2                   | Local development database              |
-| PostgreSQL           | Relational database                     |
-| MySQL                | Relational database                     |
-| Microsoft SQL Server | Relational database                     |
-| Oracle Database      | Relational database                     |
-| MongoDB              | Document database                       |
-| Redis                | Key-value database                      |
-| Apache JMeter        | Load testing                            |
-| Maven                | Project build and dependency management |
-| REST API             | Communication with application services |
+| Java 25 | Main programming language |
+| Spring Boot 4 | Application framework |
+| Spring Data JPA | Relational database persistence |
+| SQL | Relational database queries |
+| H2 | Local development database |
+| PostgreSQL | Relational database |
+| MySQL | Relational database |
+| Microsoft SQL Server | Relational database |
+| Oracle Database | Relational database |
+| MongoDB | Document database |
+| Redis | Key-value database |
+| Apache JMeter | Load testing |
+| Maven | Project build and dependency management |
+| REST API | Communication with application services |
 
 ---
 
@@ -345,6 +355,7 @@ For local development, the application can be configured to use an H2 database.
 - Java 25
 - Maven (or the included Maven Wrapper)
 - IntelliJ IDEA or another Java IDE
+- Docker Desktop with Docker Compose (for running the application with external database containers)
 
 ### Running the Application
 
@@ -375,6 +386,45 @@ Or on Linux/macOS:
 Run the application using the configured Spring Boot profile for local development.
 
 The H2 database is used for local development and testing, so no external database server is required for this setup.
+
+### Running with Docker Compose
+
+The project can also be run in Docker. In this setup, the Spring Boot application and the selected database management system run in **separate containers**. Docker Compose defines a separate application service and database service for each supported database.
+
+Each application service uses the Spring profile corresponding to its database implementation:
+
+| Database | Spring Profile | Application Container | Database Container |
+|---|---|---|---|
+| PostgreSQL | `postgres` | `app-postgres` | `postgres-db` |
+| MySQL | `mysql` | `app-mysql` | `mysql-db` |
+| Microsoft SQL Server | `mssql` | `app-mssql` | `mssql-db` |
+| Oracle Database | `oracle` | `app-oracle` | `oracle-db` |
+| MongoDB | `mongodb` | `app-mongodb` | `mongo-db` |
+| Redis | `redis` | `app-redis` | `redis-db` |
+
+The selected Spring profile activates the appropriate application implementation and database configuration. The application connects to its database through the Docker network, using the database service name as the host.
+
+To build and start a selected application and its database, run the corresponding pair of services. For example, for PostgreSQL:
+
+```bash
+docker compose up --build -d postgres-db app-postgres
+```
+
+Replace `postgres-db app-postgres` with the appropriate database and application service names from the table to run another implementation.
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+To stop the containers and remove their associated volumes:
+
+```bash
+docker compose down -v
+```
+
+The Docker setup is separate from local H2 development. When using Docker, both the selected application container and its corresponding database container must be running.
 
 ---
 
@@ -453,6 +503,16 @@ Wygenerowani zawodnicy posiadają między innymi następujące atrybuty:
 - Przypisanie do klubu.
 
 Umiejętności zawodników oraz ich wartości rynkowe są również wykorzystywane do szacowania siły poszczególnych drużyn. Wpływa to na wyniki symulacji rund kwalifikacyjnych do rozgrywek europejskich.
+
+### Wymagana kolejność generowania danych
+
+Aby aplikacja poprawnie generowała dane dotyczące rozgrywek, należy zachować następującą kolejność:
+
+1. **Generowanie zawodników** – utworzenie składów zawodników i przypisanie ich do odpowiednich klubów.
+2. **Generowanie lig krajowych** – wygenerowanie meczów ligowych, symulacja wyników i zdarzeń meczowych oraz obliczenie tabel ligowych.
+3. **Generowanie rozgrywek europejskich** – utworzenie Ligi Mistrzów, Ligi Europy i Ligi Konferencji na podstawie zakończonych rozgrywek krajowych oraz wygenerowanych danych zawodników.
+
+Zachowanie tej kolejności jest wymagane, ponieważ generowanie rozgrywek europejskich zależy od wyników lig krajowych oraz danych zawodników wykorzystywanych do oceny siły drużyn podczas symulacji rund kwalifikacyjnych.
 
 ### Generowanie meczów i zdarzeń
 
@@ -725,6 +785,7 @@ Na potrzeby lokalnego uruchamiania aplikacja może korzystać z bazy danych H2.
 - Java 25.
 - Maven (lub dołączony do projektu Maven Wrapper).
 - IntelliJ IDEA lub inne środowisko programistyczne obsługujące Javę.
+- Docker Desktop z Docker Compose (w przypadku uruchamiania aplikacji z wykorzystaniem zewnętrznych kontenerów bazodanowych).
 
 ### Uruchomienie aplikacji
 
@@ -755,5 +816,44 @@ Lub w systemie Linux/macOS:
 Następnie uruchom aplikację z wykorzystaniem skonfigurowanego profilu Spring przeznaczonego do lokalnego developmentu.
 
 Baza H2 jest wykorzystywana podczas lokalnego developmentu i testowania, dlatego w tym przypadku nie jest wymagane konfigurowanie zewnętrznego serwera bazodanowego.
+
+### Uruchamianie z wykorzystaniem Docker Compose
+
+Projekt można również uruchomić w środowisku Docker. W takim przypadku aplikacja Spring Boot oraz wybrany system zarządzania bazą danych działają w **osobnych kontenerach**. W konfiguracji Docker Compose zdefiniowano osobną usługę aplikacji i osobną usługę bazy danych dla każdego obsługiwanego systemu.
+
+Każda usługa aplikacji wykorzystuje profil Spring przypisany do danej implementacji bazodanowej:
+
+| System bazodanowy | Profil Spring | Kontener aplikacji | Kontener bazy danych |
+|---|---|---|---|
+| PostgreSQL | `postgres` | `app-postgres` | `postgres-db` |
+| MySQL | `mysql` | `app-mysql` | `mysql-db` |
+| Microsoft SQL Server | `mssql` | `app-mssql` | `mssql-db` |
+| Oracle Database | `oracle` | `app-oracle` | `oracle-db` |
+| MongoDB | `mongodb` | `app-mongodb` | `mongo-db` |
+| Redis | `redis` | `app-redis` | `redis-db` |
+
+Wybrany profil Spring aktywuje odpowiednią implementację aplikacji oraz konfigurację połączenia z bazą danych. Aplikacja łączy się z bazą za pośrednictwem sieci Docker, wykorzystując nazwę usługi bazodanowej jako adres hosta.
+
+Aby zbudować i uruchomić wybraną aplikację wraz z przypisaną do niej bazą danych, należy wskazać obie usługi. Przykładowo dla PostgreSQL:
+
+```bash
+docker compose up --build -d postgres-db app-postgres
+```
+
+Aby uruchomić inną implementację, należy zastąpić `postgres-db app-postgres` odpowiednimi nazwami usług z tabeli.
+
+Zatrzymanie kontenerów:
+
+```bash
+docker compose down
+```
+
+Zatrzymanie kontenerów i usunięcie powiązanych wolumenów:
+
+```bash
+docker compose down -v
+```
+
+Środowisko Docker jest niezależne od lokalnego uruchamiania aplikacji z bazą H2. W przypadku korzystania z Dockera muszą działać zarówno wybrany kontener aplikacji, jak i odpowiadający mu kontener bazy danych.
 
 ---
